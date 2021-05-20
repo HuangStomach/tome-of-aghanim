@@ -1,2 +1,2 @@
-Data/CCLE/
-Data/TCGA/
+Data/CCLE/*.gct
+Data/TCGA/*/HiSeqV2
