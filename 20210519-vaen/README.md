@@ -1,7 +1,10 @@
 ### 下载训练数据
 
 ``` bash
+# Data/CCLE/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct
 curl -x host:port -O 'https://data.broadinstitute.org/ccle/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct'
+# Data/TCGA/ACC/HiSeqV2
+curl -x host:port -O 'https://bioinfo.uth.edu/VAEN/DATA/TCGA/ACC/HiSeqV2?csrt=15326058242117628311'
 ```
 
 ### 数据预处理 以及脚本所需数据
