@@ -1,2 +1,3 @@
 Data/CCLE/*.gct
 Data/TCGA/*/HiSeqV2
+nohup.out

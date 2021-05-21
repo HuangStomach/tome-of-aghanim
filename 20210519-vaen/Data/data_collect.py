@@ -9,7 +9,7 @@ def Schedule(blocknum, blocksize, totalsize):
      
     # 设置下载进度条
     f = sys.stdout
-    pervent = recv_size / totalsize
+    pervent = min(1.0, recv_size / totalsize)
     percent_str = "%.2f%%" % (pervent * 100)
     n = round(pervent * 50)
     s = ('#' * n).ljust(50, '-')
@@ -37,10 +37,10 @@ def format_size(bytes):
         return "%.3fK" % (kb)
  
  
-#start_time = time.time()
-#filename = './CCLE/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct.jpg'
-#url = 'https://data.broadinstitute.org/ccle/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct'
-#request.urlretrieve(url, filename, Schedule)
+start_time = time.time()
+filename = './CCLE/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct.jpg'
+url = 'https://data.broadinstitute.org/ccle/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct'
+request.urlretrieve(url, filename, Schedule)
 
 tcga = ['BLCA', 'BRCA', 'CESC', 'CHOL', 'COAD', 'DLBC', 'ESCA', 'GBM', 'HNSC', 'KICH', 'KIRC', 'KIRP', 'LAML', 'LGG', 'LIHC', 'LUAD', 'LUSC', 'MESO', 'OV', 'PAAD', 'PCPG', 'PRAD', 'READ', 'SARC', 'SKCM', 'STAD', 'TGCT', 'THCA', 'THYM', 'UCEC', 'UCS', 'UVM']
 
@@ -50,4 +50,4 @@ for t in tcga:
     start_time = time.time()
     print("开始下载 {}".format(url))
     request.urlretrieve(url, filename, Schedule)
-    print('下载完毕')
+    print('\n下载完毕')
