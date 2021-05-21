@@ -9,10 +9,10 @@ tcga_rpkm = pandas.read_table("./TCGA/ACC/HiSeqV2", header = 0).to_numpy() # 读
 genes = np.intersect1d(ccle[:, 1], tcga_rpkm[:, 0]) # 获取有交集的基因 len(genes) 18217
 new_ccle = ccle[np.in1d(ccle[:, 1], genes)] # 过滤包含在交集基因中的数据
 # 排除表达度低的基因, avg.RPKM > 1 in CCLE shape (12437, 1156)
-ccle_gene_mat = np.array(list(filter(lambda cell_line: np.mean(cell_line) > 1, new_ccle[:, 2:]))) 
+ccle_gene_mat = np.array(list(filter(lambda cell_line: np.mean(cell_line) > 1, new_ccle[:, 2:]))).astype(np.float64)
 
 # 选择有 >=20 个细胞系的组织
-columns = np.array()
+columns = []
 columns_count = {}
 for col in ccle_table.columns[2:]:
     v = '_'.join(col.split('(')[0].split('_')[1:])
@@ -21,6 +21,17 @@ for col in ccle_table.columns[2:]:
 
 for i, col in enumerate(ccle_table.columns[2:]):
     v = '_'.join(col.split('(')[0].split('_')[1:])
-    if columns_count[v] >= 20: np.append(columns, i)
+    if columns_count[v] >= 20: columns.append(i)
 
+# 对ccle数据进行log2转换
 ccle_gene_mat = ccle_gene_mat[:, columns] # shape (12437, 1100)
+log2_ccle_gene_mat = np.log2(ccle_gene_mat + 1)
+
+# 选择方差变化较大的前一半样本
+variance = log2_ccle_gene_mat.var(1)
+mid = np.median(variance)
+mad5000_ccle_gene_mat = []
+for cell in log2_ccle_gene_mat:
+    if cell.var() > mid: mad5000_ccle_gene_mat.append(cell)
+mad5000_ccle_gene_mat = np.array(mad5000_ccle_gene_mat) # shape (6219, 1100)
+print(mad5000_ccle_gene_mat.shape)
