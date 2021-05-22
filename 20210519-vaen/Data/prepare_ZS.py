@@ -59,9 +59,13 @@ for i, cancer in enumerate(cancer_types):
     if i == 0: cur_genes = tcga_rpkm[:, 0]
     else: cur_genes = np.intersect1d(cur_genes, tcga_rpkm[:, 0]) # 不停获取基因的交集
 
-    if len(rpkm_mat) == 0: rpkm_mat = tcga_rpkm[np.in1d(tcga_rpkm[:, 0], cur_genes)]
-    else: rpkm_mat = rpkm_mat[np.in1d(rpkm_mat[:, 0], cur_genes)] + tcga_rpkm[np.in1d(tcga_rpkm[:, 0], cur_genes)]
-    print(cancer, "\t", len(tcga_rpkm[0]), len(rpkm_mat), len(rpkm_mat[0]))
+    t_tcga_rpkm = np.transpose(tcga_rpkm)
+    if len(rpkm_mat) == 0: rpkm_mat = t_tcga_rpkm[:, np.in1d(tcga_rpkm[:, 0], cur_genes)]
+    else:
+        rpkm_mat = np.row_stack(
+            (rpkm_mat[:, np.in1d(rpkm_mat[0, :], cur_genes)], t_tcga_rpkm[1:, np.in1d(tcga_rpkm[:, 0], cur_genes)])
+        )
+    print(cancer, "\t", len(tcga_rpkm[0]), len(rpkm_mat[0]), len(rpkm_mat))
 
 #ACC     79 6203 79
 #BLCA    426 6203 505

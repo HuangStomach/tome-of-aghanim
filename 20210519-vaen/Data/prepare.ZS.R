@@ -1,4 +1,4 @@
-setwd("/path/to/VAEN/main")
+#setwd("/path/to/VAEN/main")
 
 ### transcriptome data
 
@@ -67,77 +67,77 @@ dim(mad5000.ccle.gene.mat)
 #[1] 6203 1100
 
 ##########################################################################
-# ##########################################################################
+##########################################################################
 
-# cancer.types = dir("../DATA/TCGA/")
-# sapply(cancer.types, nchar) -> ii
-# cancer.types = cancer.types[which(ii <= 4)]
-# cancer.types = setdiff(cancer.types, c("FPPP", "LUNG"))
+cancer.types = dir("./TCGA/")
+sapply(cancer.types, nchar) -> ii
+cancer.types = cancer.types[which(ii <= 4)]
+cancer.types = setdiff(cancer.types, c("FPPP", "LUNG"))
 
 
-# RPKM.mat = c()
-# cancer.type.list = list()
-# for(k in 1:length(cancer.types)){
-# 	cancer = cancer.types[k]
-# 	original.TCGA.RPKM = read.delim(paste("../DATA/TCGA/",cancer,"/HiSeqV2", sep=""), as.is=T)
+RPKM.mat = c()
+cancer.type.list = list()
+for(k in 1:length(cancer.types)){
+	cancer = cancer.types[k]
+	original.TCGA.RPKM = read.delim(paste("./TCGA/",cancer,"/HiSeqV2", sep=""), as.is=T)
 	
-# 	### exclude genes with rowSum == 0
-# 	apply(original.TCGA.RPKM[,-1],1,sum) -> rowCheck
-# 	non0.TCGA.RPKM = original.TCGA.RPKM[which(rowCheck!=0),]
+	### exclude genes with rowSum == 0
+	apply(original.TCGA.RPKM[,-1],1,sum) -> rowCheck
+	non0.TCGA.RPKM = original.TCGA.RPKM[which(rowCheck!=0),]
 	
-# 	shared.TCGA.RPKM = non0.TCGA.RPKM[match(mad.genes, non0.TCGA.RPKM[,1]), -1]
-# 	rownames(shared.TCGA.RPKM) = mad.genes
+	shared.TCGA.RPKM = non0.TCGA.RPKM[match(mad.genes, non0.TCGA.RPKM[,1]), -1]
+	rownames(shared.TCGA.RPKM) = mad.genes
 	
-# 	apply(shared.TCGA.RPKM, 1, sum) -> check
-# 	shared.TCGA.RPKM = shared.TCGA.RPKM[!is.na(check),]
+	apply(shared.TCGA.RPKM, 1, sum) -> check
+	shared.TCGA.RPKM = shared.TCGA.RPKM[!is.na(check),]
 	
-# 	if(k==1){
-# 		cur.genes = rownames(shared.TCGA.RPKM)
-# 	} else {
-# 		cur.genes = intersect(cur.genes, rownames(shared.TCGA.RPKM) )
-# 	}
+	if(k==1){
+		cur.genes = rownames(shared.TCGA.RPKM)
+	} else {
+		cur.genes = intersect(cur.genes, rownames(shared.TCGA.RPKM) )
+	}
 	
-# 	t.shared.TCGA.RPKM = t(shared.TCGA.RPKM)
-# 	RPKM.mat = rbind(RPKM.mat[, cur.genes], t.shared.TCGA.RPKM[, cur.genes] ) ### cat by samples, columns are mad.genes
-# 	cancer.type.list[[cancer]] = colnames(shared.TCGA.RPKM)
-# 	cat(cancer, "\t", ncol(shared.TCGA.RPKM), " ", ncol(RPKM.mat), " ", nrow(RPKM.mat), "\n", sep="")
-# }
+	t.shared.TCGA.RPKM = t(shared.TCGA.RPKM)
+	RPKM.mat = rbind(RPKM.mat[, cur.genes], t.shared.TCGA.RPKM[, cur.genes] ) ### cat by samples, columns are mad.genes
+	cancer.type.list[[cancer]] = colnames(shared.TCGA.RPKM)
+	cat(cancer, "\t", ncol(shared.TCGA.RPKM), " ", ncol(RPKM.mat), " ", nrow(RPKM.mat), "\n", sep="")
+}
 
-# #ACC     79 6203 79
-# #BLCA    426 6203 505
-# #BRCA    1218 6203 1723
-# #CESC    308 6203 2031
-# #CHOL    45 6203 2076
-# #COAD    329 6203 2405
-# #DLBC    48 6203 2453
-# #ESCA    196 6203 2649
-# #GBM     172 6203 2821
-# #HNSC    566 6203 3387
-# #KICH    91 6203 3478
-# #KIRC    606 6203 4084
-# #KIRP    323 6203 4407
-# #LAML    173 6203 4580
-# #LGG     530 6203 5110
-# #LIHC    423 6203 5533
-# #LUAD    576 6203 6109
-# #LUSC    553 6203 6662
-# #MESO    87 6203 6749
-# #OV      308 6203 7057
-# #PAAD    183 6203 7240
-# #PCPG    187 6203 7427
-# #PRAD    550 6203 7977
-# #READ    105 6203 8082
-# #SARC    265 6203 8347
-# #SKCM    474 6203 8821
-# #STAD    450 6203 9271
-# #TGCT    156 6203 9427
-# #THCA    572 6203 9999
-# #THYM    122 6203 10121
-# #UCEC    201 6203 10322
-# #UCS     57 6203 10379
-# #UVM     80 6203 10459
+#ACC     79 6203 79
+#BLCA    426 6203 505
+#BRCA    1218 6203 1723
+#CESC    308 6203 2031
+#CHOL    45 6203 2076
+#COAD    329 6203 2405
+#DLBC    48 6203 2453
+#ESCA    196 6203 2649
+#GBM     172 6203 2821
+#HNSC    566 6203 3387
+#KICH    91 6203 3478
+#KIRC    606 6203 4084
+#KIRP    323 6203 4407
+#LAML    173 6203 4580
+#LGG     530 6203 5110
+#LIHC    423 6203 5533
+#LUAD    576 6203 6109
+#LUSC    553 6203 6662
+#MESO    87 6203 6749
+#OV      308 6203 7057
+#PAAD    183 6203 7240
+#PCPG    187 6203 7427
+#PRAD    550 6203 7977
+#READ    105 6203 8082
+#SARC    265 6203 8347
+#SKCM    474 6203 8821
+#STAD    450 6203 9271
+#TGCT    156 6203 9427
+#THCA    572 6203 9999
+#THYM    122 6203 10121
+#UCEC    201 6203 10322
+#UCS     57 6203 10379
+#UVM     80 6203 10459
 
-# ##########################################################################
+##########################################################################
 genes2 = intersect(mad.genes, colnames(RPKM.mat))
 
 ccle.train.mat = mad5000.ccle.gene.mat[genes2,]
