@@ -160,3 +160,4 @@ dimnames(scaled.RPKM.mat) = dimnames(RPKM.mat)
 write.table(scaled.ccle.train.mat, file=paste("V15.CCLE.4VAE.SZ.tsv", sep=""), row.names=T, quote=F, sep="\t")
 write.table(scaled.RPKM.mat, file=paste("V15.TCGA.4VAE.SZ.tsv", sep=""), row.names=T, quote=F, sep="\t")
 ##########################################################################
+print('finish')

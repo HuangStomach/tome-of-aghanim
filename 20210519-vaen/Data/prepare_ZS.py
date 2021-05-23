@@ -1,7 +1,11 @@
 import os
 import pandas
 import numpy as np
+from sklearn import preprocessing
+import gc
+np.set_printoptions(suppress=True)
 #np.set_printoptions(threshold=np.inf)
+#TODO: 大致路线如此 但是要用pandas
 
 ccle_table = pandas.read_table("./CCLE/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct", header = 0, skiprows = 2) # 读取对应的肿瘤细胞系
 ccle = ccle_table.to_numpy()
@@ -26,6 +30,13 @@ for i, col in enumerate(ccle_table.columns[2:]):
     v = '_'.join(col.split('(')[0].split('_')[1:])
     if columns_count[v] >= 20: columns.append(i)
 
+del ccle_table
+del tcga_rpkm
+del genes
+del new_ccle
+del columns_count
+gc.collect()
+
 # 对ccle数据进行log2转换
 ccle_gene_mat = ccle_gene_mat[:, columns] # shape (12437, 1100)
 log2_ccle_gene_mat = np.log2(ccle_gene_mat + 1)
@@ -43,6 +54,12 @@ for i, cell in enumerate(log2_ccle_gene_mat):
 
 mad5000_ccle_gene_mat = np.array(mad5000_ccle_gene_mat) # shape (6219, 1100)
 mad_genes = np.array(mad_genes)
+
+del columns
+del ccle_gene_mat
+del log2_ccle_gene_mat
+del variance
+gc.collect()
 
 # 按照TCGA目录下的癌症类型进行数据整理
 cancer_types = os.listdir('./TCGA')
@@ -100,3 +117,17 @@ for i, cancer in enumerate(cancer_types):
 #UCEC    201 6203 10322
 #UCS     57 6203 10379
 #UVM     80 6203 10459
+
+genes = np.intersect1d(rpkm_mat[0], mad_genes[:, 1]) # 获取有交集的基因 len(genes) 6163
+ccle_gene_mat = mad5000_ccle_gene_mat[np.in1d(mad_genes[:, 1], genes)]  # ccle_gene_mat.shape 6139, 1100
+
+sc = preprocessing.StandardScaler()
+sc.fit(ccle_gene_mat)
+sc.std_ = np.std(ccle_gene_mat, axis=0, ddof=1)
+scaled_ccle_gene_mat = sc.transform(ccle_gene_mat)
+scaled_ccle_gene_mat = np.row_stack((mad_genes[:, 1], scaled_ccle_gene_mat))
+
+sc.fit(rpkm_mat)
+sc.std_ = np.std(rpkm_mat, axis=1, ddof=1)
+scaled_rpkm_mat = sc.transform(rpkm_mat[:, 1:])
+scaled_rpkm_mat = np.column_stack((rpkm_mat[:, 0], scaled_rpkm_mat))
