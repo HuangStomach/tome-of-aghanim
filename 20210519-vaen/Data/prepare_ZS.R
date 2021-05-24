@@ -142,8 +142,8 @@ genes2 = intersect(mad.genes, colnames(RPKM.mat))
 
 ccle.train.mat = mad5000.ccle.gene.mat[genes2,]
 print(dim(ccle.train.mat))
-scaled.ccle.train.mat = apply(ccle.train.mat, 2, scale)
-dimnames(scaled.ccle.train.mat) = dimnames(ccle.train.mat)
+scaled.ccle.train.mat = t(apply(ccle.train.mat, 2, scale))
+dimnames(scaled.ccle.train.mat) = dimnames(t(ccle.train.mat))
 
 #> length(genes2)
 #[1] 6163
@@ -157,7 +157,7 @@ dimnames(scaled.RPKM.mat) = dimnames(RPKM.mat)
 
 ##########################################################################
 ### dataset for NOPEER.NO01.Sigmoid
-write.table(scaled.ccle.train.mat, file=paste("V15.CCLE.4VAE.SZ.tsv", sep=""), row.names=T, quote=F, sep="\t")
-write.table(scaled.RPKM.mat, file=paste("V15.TCGA.4VAE.SZ.tsv", sep=""), row.names=T, quote=F, sep="\t")
+write.table(scaled.ccle.train.mat, file=paste("V15.CCLE.4VAE.ZS.tsv", sep=""), row.names=T, quote=F, sep="\t")
+write.table(scaled.RPKM.mat, file=paste("V15.TCGA.4VAE.ZS.tsv", sep=""), row.names=T, quote=F, sep="\t")
 ##########################################################################
 print('finish')
