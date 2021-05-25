@@ -66,6 +66,14 @@ dim(mad5000.ccle.gene.mat)
 #[1] 6203 1100
 
 ##########################################################################
+
+### shrink to 0-1, per-gene
+zeroone.ccle.gene.mat = t(apply(mad5000.ccle.gene.mat, 1, function(u)u/max(u, na.rm=T)))
+dimnames(zeroone.ccle.gene.mat) = dimnames(mad5000.ccle.gene.mat)
+
+summary(zeroone.ccle.gene.mat[1,])
+
+##########################################################################
 ##########################################################################
 
 cancer.types = dir("./TCGA/")
@@ -87,62 +95,71 @@ for(k in 1:length(cancer.types)){
 	shared.TCGA.RPKM = non0.TCGA.RPKM[match(mad.genes, non0.TCGA.RPKM[,1]), -1]
 	rownames(shared.TCGA.RPKM) = mad.genes
 	
-	apply(shared.TCGA.RPKM, 1, sum) -> check
-	shared.TCGA.RPKM = shared.TCGA.RPKM[!is.na(check),]
-	
-	if(k==1){
-		cur.genes = rownames(shared.TCGA.RPKM)
-	} else {
-		cur.genes = intersect(cur.genes, rownames(shared.TCGA.RPKM) )
+	apply(shared.TCGA.RPKM, 1, function(u)sum(is.na(u))) -> check
+	if(sum(check!=0) > 0){
+		shared.TCGA.RPKM = shared.TCGA.RPKM[check==0, ]
 	}
 	
-	t.shared.TCGA.RPKM = t(shared.TCGA.RPKM)
-	RPKM.mat = rbind(RPKM.mat[, cur.genes], t.shared.TCGA.RPKM[, cur.genes] ) ### cat by samples, columns are mad.genes
-	cancer.type.list[[cancer]] = colnames(shared.TCGA.RPKM)
-	cat(cancer, "\t", ncol(shared.TCGA.RPKM), " ", ncol(RPKM.mat), " ", nrow(RPKM.mat), "\n", sep="")
+	### scale to z, per cancer
+	scaled.TCGA.RPKM = t(apply(shared.TCGA.RPKM, 1, function(u)u/max(u, na.rm=T) )) ## by gene
+	dimnames(scaled.TCGA.RPKM) = dimnames(shared.TCGA.RPKM)
+	
+	if(k==1){
+		cur.genes = rownames(scaled.TCGA.RPKM)
+	} else {
+		cur.genes = intersect(cur.genes, rownames(scaled.TCGA.RPKM) )
+	}
+	
+	t.scaled.TCGA.RPKM = t(scaled.TCGA.RPKM)
+	
+	RPKM.mat = rbind(RPKM.mat[, cur.genes], t.scaled.TCGA.RPKM[, cur.genes] ) ### cat by samples, columns are mad.genes
+	cancer.type.list[[cancer]] = colnames(scaled.TCGA.RPKM)
+	cat(cancer, "\t", ncol(scaled.TCGA.RPKM), " ", ncol(RPKM.mat), " ", nrow(RPKM.mat), "\n", sep="")
 }
 
-#ACC     79 6203 79
-#BLCA    426 6203 505
-#BRCA    1218 6203 1723
-#CESC    308 6203 2031
-#CHOL    45 6203 2076
-#COAD    329 6203 2405
-#DLBC    48 6203 2453
-#ESCA    196 6203 2649
-#GBM     172 6203 2821
-#HNSC    566 6203 3387
-#KICH    91 6203 3478
-#KIRC    606 6203 4084
-#KIRP    323 6203 4407
-#LAML    173 6203 4580
-#LGG     530 6203 5110
-#LIHC    423 6203 5533
-#LUAD    576 6203 6109
-#LUSC    553 6203 6662
-#MESO    87 6203 6749
-#OV      308 6203 7057
-#PAAD    183 6203 7240
-#PCPG    187 6203 7427
-#PRAD    550 6203 7977
-#READ    105 6203 8082
-#SARC    265 6203 8347
-#SKCM    474 6203 8821
-#STAD    450 6203 9271
-#TGCT    156 6203 9427
-#THCA    572 6203 9999
-#THYM    122 6203 10121
-#UCEC    201 6203 10322
-#UCS     57 6203 10379
-#UVM     80 6203 10459
+#ACC     79 6197 79
+#BLCA    426 6197 505
+#BRCA    1218 6197 1723
+#CESC    308 6197 2031
+#CHOL    45 6193 2076
+#COAD    329 6193 2405
+#DLBC    48 6188 2453
+#ESCA    196 6188 2649
+#GBM     172 6187 2821
+#HNSC    566 6187 3387
+#KICH    91 6187 3478
+#KIRC    606 6187 4084
+#KIRP    323 6187 4407
+#LAML    173 6171 4580
+#LGG     530 6171 5110
+#LIHC    423 6171 5533
+#LUAD    576 6171 6109
+#LUSC    553 6171 6662
+#MESO    87 6170 6749
+#OV      308 6170 7057
+#PAAD    183 6170 7240
+#PCPG    187 6170 7427
+#PRAD    550 6170 7977
+#READ    105 6170 8082
+#SARC    265 6170 8347
+#SKCM    474 6170 8821
+#STAD    450 6170 9271
+#TGCT    156 6170 9427
+#THCA    572 6170 9999
+#THYM    122 6169 10121
+#UCEC    201 6169 10322
+#UCS     57 6167 10379
+#UVM     80 6163 10459
+
+
+#> print(dim(RPKM.mat))
+#[1] 10459  6163
 
 ##########################################################################
 genes2 = intersect(mad.genes, colnames(RPKM.mat))
 
-ccle.train.mat = mad5000.ccle.gene.mat[genes2,]
+ccle.train.mat = t(zeroone.ccle.gene.mat[genes2,])
 print(dim(ccle.train.mat))
-scaled.ccle.train.mat = t(apply(ccle.train.mat, 2, scale))
-dimnames(scaled.ccle.train.mat) = dimnames(t(ccle.train.mat))
 
 #> length(genes2)
 #[1] 6163
@@ -150,13 +167,7 @@ dimnames(scaled.ccle.train.mat) = dimnames(t(ccle.train.mat))
 #[1] 1100 6163
 
 ##########################################################################
-
-scaled.RPKM.mat = t(apply(RPKM.mat, 1, scale))
-dimnames(scaled.RPKM.mat) = dimnames(RPKM.mat)
-
-##########################################################################
 ### dataset for NOPEER.NO01.Sigmoid
-write.table(scaled.ccle.train.mat, file=paste("V15.CCLE.4VAE.ZS.tsv", sep=""), row.names=T, quote=F, sep="\t")
-write.table(scaled.RPKM.mat, file=paste("V15.TCGA.4VAE.ZS.tsv", sep=""), row.names=T, quote=F, sep="\t")
+write.table(ccle.train.mat, file=paste("V15.CCLE.4VAE.SHRINK.tsv", sep=""), row.names=T, quote=F, sep="\t")
+write.table(RPKM.mat, file=paste("V15.TCGA.4VAE.SHRINK.tsv", sep=""), row.names=T, quote=F, sep="\t")
 ##########################################################################
-print('finish')
