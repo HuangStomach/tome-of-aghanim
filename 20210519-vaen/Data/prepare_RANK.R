@@ -1,5 +1,4 @@
-# setwd("/path/to/VAEN/main")
-### Z-score normalization of all genes for each sample
+### transcriptome data
 
 ccle = read.table("./CCLE/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct", skip=2, sep="\t", header=T, as.is=T)
 any.TCGA.RPKM = read.delim("./TCGA/ACC/HiSeqV2", as.is=T)
@@ -65,6 +64,7 @@ dim(mad5000.ccle.gene.mat)
 #> dim(mad5000.ccle.gene.mat)
 #[1] 6203 1100
 
+##########################################################################
 ##########################################################################
 ##########################################################################
 
@@ -141,22 +141,36 @@ genes2 = intersect(mad.genes, colnames(RPKM.mat))
 
 ccle.train.mat = mad5000.ccle.gene.mat[genes2,]
 print(dim(ccle.train.mat))
-scaled.ccle.train.mat = t(apply(ccle.train.mat, 2, scale))
-dimnames(scaled.ccle.train.mat) = dimnames(t(ccle.train.mat))
+
+### rank, per-sample
+rank.ccle.gene.mat = apply(ccle.train.mat, 2, function(u)rank(u)/length(u))
+rank.ccle.gene.mat = apply(rank.ccle.gene.mat, 1, function(u){
+	u[which(u==1)] = 6162.5/6163
+	u
+})
+
+### p to z
+scaled.ccle.gene.mat = apply(rank.ccle.gene.mat, 2, function(u){qnorm(u)} )
+print(dim(scaled.ccle.gene.mat))
 
 #> length(genes2)
 #[1] 6163
-#> print(dim(ccle.train.mat))
+#> print(dim(scaled.ccle.gene.mat))
 #[1] 1100 6163
 
 ##########################################################################
+rank.RPKM.mat = apply(RPKM.mat, 1, function(u)rank(u)/length(u))
+rank.RPKM.mat = apply(rank.RPKM.mat, 1, function(u){
+	u[which(u==1)] = 6162.5/6163
+	u
+})
 
-scaled.RPKM.mat = t(apply(RPKM.mat, 1, scale))
+scaled.RPKM.mat = apply(rank.RPKM.mat, 2, function(u)qnorm(u) )
+
 dimnames(scaled.RPKM.mat) = dimnames(RPKM.mat)
 
 ##########################################################################
 ### dataset for NOPEER.NO01.Sigmoid
-write.table(scaled.ccle.train.mat, file=paste("V15.CCLE.4VAE.ZS.tsv", sep=""), row.names=T, quote=F, sep="\t")
-write.table(scaled.RPKM.mat, file=paste("V15.TCGA.4VAE.ZS.tsv", sep=""), row.names=T, quote=F, sep="\t")
+write.table(scaled.ccle.gene.mat, file=paste("V15.CCLE.4VAE.RANK.tsv", sep=""), row.names=T, quote=F, sep="\t")
+write.table(scaled.RPKM.mat, file=paste("V15.TCGA.4VAE.RANK.tsv", sep=""), row.names=T, quote=F, sep="\t")
 ##########################################################################
-print('finish')
