@@ -1,7 +1,3 @@
-'''
-rectified linear units (ReLU)
-线性整流函数
-'''
 import os
 import random
 import numpy as np
@@ -10,6 +6,7 @@ from scipy.sparse.construct import rand
 
 import tensorflow as tf
 from tensorflow.keras import backend as K
+from tensorflow.python.keras import activations
 
 # session_conf = tf.compat.v1.ConfigProto(
 #     intra_op_parallelism_threads=1,
@@ -24,10 +21,11 @@ from tensorflow.keras import Model
 from tensorflow.keras.callbacks import Callback
 #from keras_tqdm import TQDMNotebookCallback
 tf.compat.v1.disable_eager_execution()
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
-output_dir = './Output/'
-train_file_path = './Data/V15.CCLE.4VAE.ZS.tsv'
-val_file_1_path = './Data/V15.TCGA.4VAE.ZS.tsv'
+output_dir = './Output/0/'
+train_file_path = './Data/V15.CCLE.4VAE.RANK.tsv'
+val_file_1_path = './Data/V15.TCGA.4VAE.RANK.tsv'
 train_latent_file = 'CCLE_latent.tsv'
 train_weight_file = 'CCLE_weight.tsv'
 
@@ -71,10 +69,7 @@ class WarmUpCallback(Callback):
             K.set_value(self.beta, K.get_value(self.beta) + self.kappa)
 
 rnaseq_df = pd.read_table(train_file_path, index_col = 0)
-print(rnaseq_df.head(2))
-
 val_df_1 = pd.read_table(val_file_1_path, index_col = 0)
-print(val_df_1.head(2))
 
 test_set_percent = 0.1
 rnaseq_test_df = rnaseq_df.sample(frac=test_set_percent, random_state=1) # 使用10%作为测试样本
@@ -95,17 +90,17 @@ rnaseq_input = Input(shape=(original_dim, )) # 作为神经网络入口的输入
 
 z_mean_dense_linear = Dense(units, kernel_initializer='glorot_uniform')(rnaseq_input) # 有规律的密集连接的NN层
 z_mean_dense_batchnorm = BatchNormalization()(z_mean_dense_linear)
-z_mean_encoded = Activation('relu')(z_mean_dense_batchnorm) # 激活函数
+z_mean_encoded = Activation('sigmoid')(z_mean_dense_batchnorm) # 激活函数
 
 z_log_var_dense_linear = Dense(units, kernel_initializer='glorot_uniform')(rnaseq_input) # 有规律的密集连接的NN层
 z_log_var_dense_batchnorm = BatchNormalization()(z_log_var_dense_linear)
-z_log_var_encoded = Activation('relu')(z_log_var_dense_batchnorm) # 激活函数
+z_log_var_encoded = Activation('sigmoid')(z_log_var_dense_batchnorm) # 激活函数
 
 
 z = Lambda(sampling, output_shape=(units, ))([z_mean_encoded, z_log_var_encoded])
 
 drop_layer = Dropout(rate = 0.2, noise_shape = None)(z) # 将Dropout应用于输入。
-decoder_to_reconstruct = Dense(original_dim, kernel_initializer='glorot_uniform', activation='relu')
+decoder_to_reconstruct = Dense(original_dim, kernel_initializer='glorot_uniform', activation='sigmoid')
 rnaseq_reconstruct = decoder_to_reconstruct(drop_layer)
 
 adam = optimizers.Adam(learning_rate=learning_rate)
