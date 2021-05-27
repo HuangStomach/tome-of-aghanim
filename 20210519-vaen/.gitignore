@@ -1,8 +1,8 @@
 *.gct
-HiSeqV2
 *.tsv
 *.csv
-*.txt
-*.hdf5
-nohup.out
 *.png
+HiSeqV2
+Output/*/*
+!Output/*/.gitkeep
+nohup.out

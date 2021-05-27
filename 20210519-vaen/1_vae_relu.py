@@ -1,8 +1,5 @@
 import os
-import random
-import numpy as np
 import pandas as pd
-from scipy.sparse.construct import rand
 
 import tensorflow as tf
 from tensorflow.keras import backend as K
@@ -20,7 +17,8 @@ from tensorflow.keras.layers import Dense, Lambda, Layer, Activation, Dropout, B
 from tensorflow.keras import Model
 from tensorflow.keras.callbacks import Callback
 
-tf.compat.v1.disable_eager_execution()
+import tensorflow.python.util.deprecation as deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False
 tf.get_logger().setLevel('ERROR')
 
 output_dir = './Output/1/'
@@ -80,11 +78,12 @@ epsilon_std = 1.0
 beta = K.variable(0)
 kappa = 1
 
-for _i in range(1, 3):
+def train(i):
     i = str(_i)
+    #tf.random.set_seed(_i)
+
     train_latent_file = i + '.CCLE_latent.tsv'
     train_weight_file = i + '.CCLE_weight.tsv'
-
     predict_file = i + '.TCGA_latent.tsv'
     encoder_file = i + '.CCLE_encoder_onehidden_vae.hdf5'
     decoder_file = i + '.CCLE_decoder_onehidden_vae.hdf5'
@@ -166,3 +165,6 @@ for _i in range(1, 3):
     encoded_val_df.to_csv(encoded_file, sep='\t')
     print(encoded_file)
     print(encoded_val_df.head(2))
+
+for _i in range(92, 101):
+    tf.function(train(_i))
