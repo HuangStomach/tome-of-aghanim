@@ -1,3 +1,7 @@
+'''
+rectified linear units (ReLU)
+线性整流函数
+'''
 import os
 import random
 import numpy as np
@@ -6,12 +10,6 @@ from scipy.sparse.construct import rand
 
 import tensorflow as tf
 from tensorflow.keras import backend as K
-
-# 固定种子，创造可复现结果
-os.environ['PYTHONHASHSEED'] = str(1)
-np.random.seed(1)
-random.seed(1)
-tf.random.set_seed(1)
 
 # session_conf = tf.compat.v1.ConfigProto(
 #     intra_op_parallelism_threads=1,
@@ -33,7 +31,7 @@ val_file_1_path = './Data/V15.TCGA.4VAE.ZS.tsv'
 train_latent_file = 'CCLE_latent.tsv'
 train_weight_file = 'CCLE_weight.tsv'
 
-predict_file = 'PANCAN_prediction.tsv'
+predict_file = 'TCGA_latent.tsv'
 encoder_file = 'CCLE_encoder_onehidden_vae.hdf5'
 decoder_file = 'CCLE_decoder_onehidden_vae.hdf5'
 print("output_dir: {}".format(output_dir))
@@ -73,11 +71,9 @@ class WarmUpCallback(Callback):
             K.set_value(self.beta, K.get_value(self.beta) + self.kappa)
 
 rnaseq_df = pd.read_table(train_file_path, index_col = 0)
-print(rnaseq_df.shape)
 print(rnaseq_df.head(2))
 
 val_df_1 = pd.read_table(val_file_1_path, index_col = 0)
-print(val_df_1.shape)
 print(val_df_1.head(2))
 
 test_set_percent = 0.1
