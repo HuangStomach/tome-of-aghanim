@@ -1,5 +1,7 @@
-Data/CCLE/*.gct
-Data/TCGA/*/HiSeqV2
-Data/*.tsv
+*.gct
+HiSeqV2
+*.tsv
+*.txt
+*.hdf5
 nohup.out
-Output/
+*.png
