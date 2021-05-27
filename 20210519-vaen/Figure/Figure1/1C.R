@@ -34,17 +34,13 @@ library("RColorBrewer")
 c(brewer.pal(n = 9, name = "Paired"), brewer.pal(n = 8, name = "BrBG"), brewer.pal(n = 9, name = "Set3"), brewer.pal(n = 8, name = "RdBu"), brewer.pal(n = 8, name = "RdGy"), brewer.pal(n = 8, name = "PiYG"), brewer.pal(n = 8, name = "PuBu")) -> cc
 
 ##### plot
-png("1C.CCLE-tSNE.png", width=16, height=9)
-split.screen(c(1,2))
-screen(1)
-plot(tpc[,1], tpc[,2], pch=20, cex=1.5, xlab="tSNE_1", ylab="tSNE_2", col="white")
+png("1C.CCLE-tSNE.png", width=1366, height=768, bg="white")
+plot(tpc[,1], tpc[,2], pch=20, cex=1.5, xlim=c(-80, 140), ylim=c(-80, 80), xlab="tSNE_1", ylab="tSNE_2", col="white")
+
 for (k in 1:length(tissues)) {
 	which(tt == tissues[k]) -> ii
 	points(tpc[ii,1], tpc[ii, 2], col=cc[k], pch=20, cex=1.5 )
 }
 
-screen(2)
-plot(1,1)
-legend("topright", fill=cc, legend=tissues, cex=.9)
-
+legend('topright', fill=cc, legend=tissues)
 dev.off()
