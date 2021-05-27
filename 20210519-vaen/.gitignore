@@ -1,6 +1,7 @@
 *.gct
 HiSeqV2
 *.tsv
+*.csv
 *.txt
 *.hdf5
 nohup.out
