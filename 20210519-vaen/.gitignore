@@ -3,6 +3,8 @@
 *.csv
 *.png
 HiSeqV2
+Data/GDSC
+!Data/*/.gitkeep
 Output/*/*
 !Output/*/.gitkeep
 nohup.out

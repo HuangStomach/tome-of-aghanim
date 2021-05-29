@@ -1,7 +1,7 @@
 library("tsne")
 # 进行tSNE降维可视化分析
 
-latent = read.table("../../Output/CCLE_latent.tsv", as.is=T, header=T)
+latent = read.table("../../Output/1/1.CCLE_latent.tsv", as.is=T, header=T)
 tsne(latent) -> tpc
 sapply(rownames(latent), function(x){
 	strsplit(x, split="\\.")[[1]][1] -> u
