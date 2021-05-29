@@ -35,16 +35,17 @@ def format_size(bytes):
             return "%.3fM" % (M)
     else:
         return "%.3fK" % (kb)
- 
-start_time = time.time()
-filename = './CCLE/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct'
-url = 'https://data.broadinstitute.org/ccle/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct'
-request.urlretrieve(url, filename, Schedule)
 
-start_time = time.time()
-filename = './CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv'
-url = 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv'
-request.urlretrieve(url, filename, Schedule)
+files = {
+    './CCLE/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct': 'https://data.broadinstitute.org/ccle/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct',
+    './CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv': 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv',
+    './GDSC/v17.3_fitted_dose_response.txt': 'https://bioinfo.uth.edu/VAEN/DATA/GDSC/v17.3_fitted_dose_response.txt',
+    './DepMap-2018q3-celllines.csv': 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/DepMap-2018q3-celllines.csv'
+}
+
+for filename, url in files.items():
+    start_time = time.time()
+    request.urlretrieve(url, filename, Schedule)
 
 tcga = ['BLCA', 'BRCA', 'CESC', 'CHOL', 'COAD', 'DLBC', 'ESCA', 'GBM', 'HNSC', 'KICH', 'KIRC', 'KIRP', 'LAML', 'LGG', 'LIHC', 'LUAD', 'LUSC', 'MESO', 'OV', 'PAAD', 'PCPG', 'PRAD', 'READ', 'SARC', 'SKCM', 'STAD', 'TGCT', 'THCA', 'THYM', 'UCEC', 'UCS', 'UVM']
 
