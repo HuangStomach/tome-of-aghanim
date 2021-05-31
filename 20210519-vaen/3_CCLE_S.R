@@ -27,11 +27,11 @@ for(ksigmoid in 1:100){
         Ys = Ys[ii, ]
         if(sd(Ys[,2]) == 0)next
         solid.mat = rbind(solid.mat, c(ksigmoid, res.list$model_summary, cor(Ys[,1], Ys[,2])) )
-        
+
         #### way 4, PCC
         recall    = cor(Ys[,1], Ys[,2])
         precision = as.numeric(res.list$model_summary[5])
-        
+
         solid.sample.size[ksigmoid, kdrug]      = nrow(Ys)
         solid.in_sample_R2.mat[ksigmoid, kdrug] = recall
         solid.avg_CV_R2.mat[ksigmoid, kdrug]    = precision

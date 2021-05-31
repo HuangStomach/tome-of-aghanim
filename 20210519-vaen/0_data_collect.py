@@ -36,6 +36,7 @@ def format_size(bytes):
     else:
         return "%.3fK" % (kb)
 
+'''
 files = {
     './CCLE/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct': 'https://data.broadinstitute.org/ccle/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct',
     './CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv': 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv',
@@ -55,4 +56,12 @@ for t in tcga:
     start_time = time.time()
     print("开始下载 {}".format(url))
     request.urlretrieve(url, filename, Schedule)
+    print('\n下载完毕')
+'''
+
+for i in range(1, 101):
+    start_time = time.time()
+    url = "https://bioinfo.uth.edu/VAEN/result.EN/dr.CCLE/01S/{}.CCLE.model.list.S.RData".format(i)
+    print("开始下载 {}".format(url))
+    request.urlretrieve(url, "./Output/2/{}.CCLE.model.list.S.RData".format(i), Schedule)
     print('\n下载完毕')
