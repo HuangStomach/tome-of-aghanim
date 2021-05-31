@@ -7,4 +7,6 @@ Data/GDSC
 !Data/*/.gitkeep
 Output/*/*
 !Output/*/.gitkeep
+Figure*/*/*.txt
+Figure*/*/*.pdf
 nohup.out
