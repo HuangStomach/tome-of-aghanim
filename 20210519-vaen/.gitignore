@@ -3,10 +3,13 @@
 *.csv
 *.png
 HiSeqV2
-Data/GDSC
-!Data/*/.gitkeep
+Data/**/*.txt
+!Data/TCGA/.gitkeep
+!Data/CCLE/.gitkeep
+!Data/GDSC/.gitkeep
 Output/*/*
 !Output/*/.gitkeep
-Figure*/*/*.txt
-Figure*/*/*.pdf
+Figure/**/*.txt
+Figure/**/*.pdf
+Figure/**/*.Rdata
 nohup.out

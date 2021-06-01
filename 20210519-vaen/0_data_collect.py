@@ -1,6 +1,9 @@
 import sys
+import os
 import time
 from urllib import request
+
+start_time = time.time()
 
 def Schedule(blocknum, blocksize, totalsize):
     speed = (blocknum * blocksize) / (time.time() - start_time)
@@ -36,32 +39,50 @@ def format_size(bytes):
     else:
         return "%.3fK" % (kb)
 
-'''
-files = {
-    './CCLE/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct': 'https://data.broadinstitute.org/ccle/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct',
-    './CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv': 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv',
-    './GDSC/v17.3_fitted_dose_response.txt': 'https://bioinfo.uth.edu/VAEN/DATA/GDSC/v17.3_fitted_dose_response.txt',
-    './DepMap-2018q3-celllines.csv': 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/DepMap-2018q3-celllines.csv'
-}
+def tcga():
+    tcga = ['ACC', 'BLCA', 'BRCA', 'CESC', 'CHOL', 'COAD', 'DLBC', 'ESCA', 'GBM', 'HNSC', 'KICH', 'KIRC', 'KIRP', 'LAML', 'LGG', 'LIHC', 'LUAD', 'LUSC', 'MESO', 'OV', 'PAAD', 'PCPG', 'PRAD', 'READ', 'SARC', 'SKCM', 'STAD', 'TGCT', 'THCA', 'THYM', 'UCEC', 'UCS', 'UVM']
 
-for filename, url in files.items():
-    start_time = time.time()
-    request.urlretrieve(url, filename, Schedule)
+    for t in tcga:
+        url = 'https://bioinfo.uth.edu/VAEN/DATA/TCGA/{}/HiSeqV2'.format(t)
+        filename = './TCGA/{}/HiSeqV2'.format(t)
+        global start_time
+        start_time = time.time()
+        print("开始下载 {}".format(url))
+        request.urlretrieve(url, filename, Schedule)
+        print('\n下载完毕')
 
-tcga = ['BLCA', 'BRCA', 'CESC', 'CHOL', 'COAD', 'DLBC', 'ESCA', 'GBM', 'HNSC', 'KICH', 'KIRC', 'KIRP', 'LAML', 'LGG', 'LIHC', 'LUAD', 'LUSC', 'MESO', 'OV', 'PAAD', 'PCPG', 'PRAD', 'READ', 'SARC', 'SKCM', 'STAD', 'TGCT', 'THCA', 'THYM', 'UCEC', 'UCS', 'UVM']
+files = [
+    ('./Data/CCLE/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct', 'https://data.broadinstitute.org/ccle/CCLE_DepMap_18q3_RNAseq_RPKM_20180718.gct'),
+    ('./Data/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv', 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv'),
+    ('./Data/CCLE/DepMap-2018q3-celllines.csv', 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/DepMap-2018q3-celllines.csv'),
+    ('./Data/GDSC/v17.3_fitted_dose_response.txt', 'https://bioinfo.uth.edu/VAEN/DATA/GDSC/v17.3_fitted_dose_response.txt'),
+    ('./Data/DepMap-2018q3-celllines.csv', 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/DepMap-2018q3-celllines.csv'),
+    ('./Data/TCGA/*/HiSeqV2', 'dir')
+]
 
-for t in tcga:
-    url = 'https://bioinfo.uth.edu/VAEN/DATA/TCGA/{}/HiSeqV2'.format(t)
-    filename = './TCGA/{}/HiSeqV2'.format(t)
-    start_time = time.time()
-    print("开始下载 {}".format(url))
-    request.urlretrieve(url, filename, Schedule)
-    print('\n下载完毕')
-'''
+str = ""
+while True:
+    print("需要准备的数据文件：")
+    for i, item in enumerate(files):
+        filename, url = item
+        sign = "✅" if os.path.exists(filename) else "{}]".format(i)
+        print("{} {}".format(sign, filename))
 
-for i in range(1, 101):
-    start_time = time.time()
-    url = "https://bioinfo.uth.edu/VAEN/result.EN/dr.CCLE/01S/{}.CCLE.model.list.S.RData".format(i)
-    print("开始下载 {}".format(url))
-    request.urlretrieve(url, "./Output/2/{}.CCLE.model.list.S.RData".format(i), Schedule)
-    print('\n下载完毕')
+    str = input("请选择需要下载的数据文件, a为全部下载, q则退出: ");
+
+    if str.lower() == "q":
+        break
+    elif str.lower() == 'a':
+        tcga()
+        for i, item in enumerate(files):
+            filename, url = item
+            start_time = time.time()
+            request.urlretrieve(url, filename, Schedule)
+    elif str.isdigit():
+        index = int(str)
+        if index < 0 or index >= len(files): continue
+        filename, url = files[index]
+        start_time = time.time()
+        request.urlretrieve(url, filename, Schedule)
+    else:
+        continue
