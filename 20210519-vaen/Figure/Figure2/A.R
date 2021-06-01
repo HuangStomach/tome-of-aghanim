@@ -37,7 +37,7 @@ colnames(y) <- c("Drug", "PCC")
 write.table(x, file = "./Figure2A.CCLE.txt")
 write.table(y, file = "./Figure2A.GDSC.txt")
 
-pdf("./2A.PCC.pdf", width = 8, height = 4)
+pdf("./A.PCC.pdf", width = 8, height = 4)
 match(drugs_match[, 1], x[, 1]) -> sx_ii
 match(drugs_match[, 3], y[, 1]) -> sy_ii
 
