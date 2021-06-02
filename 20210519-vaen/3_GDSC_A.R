@@ -132,7 +132,8 @@ for (k in 1:length(drugs)) {
     load(paste("./Output/2/", best.index, ".GDSC.model.list.RData", sep = ""))
     model.list[[drug]] -> res.list
 
-    GDSC.latent <- read.table(paste("./Output/1/", best.index, ".GDSC_latent.tsv", sep = ""), header = T, sep = "\t", as.is = T)
+    #TODO: 究竟是否使用GDSC.latent 使用的话如何训练 https://github.com/bsml320/VAEN/issues/4
+    GDSC.latent <- read.table(paste("./Output/1/", best.index, ".CCLE_latent.tsv", sep = ""), header = T, sep = "\t", as.is = T)
     GDSC.latent.data <- GDSC.latent[, -1]
     fit <- res.list$model
     GDSC.probabilities <- predict(fit, as.matrix(GDSC.latent.data), s = "lambda.min")
