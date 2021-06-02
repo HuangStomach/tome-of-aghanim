@@ -1,3 +1,5 @@
+source("../../Lib/multiplot.R")
+
 library(MASS)
 library(glmnet)
 library(ggplot2)
@@ -276,15 +278,15 @@ for (k1 in 1:nrow(one.drugs.match)) {
 ###############################################################################
 ### 2E
 
+library(reshape2)
 rownames(shared.drugs.mat) <- one.drugs.match[, 1]
 colnames(shared.drugs.mat) <- cancer.types
 log.shared.drugs.mat <- t(-log(shared.drugs.mat + 1e-16))
 new <- log.shared.drugs.mat[, order(apply(log.shared.drugs.mat, 2, mean))]
 
 write.table(shared.drugs.mat, file = "./Figure2E.txt", sep = "\t", quote = F)
-# library(reshape2)
-# log.shared.drugs.mat <- t(-log(shared.drugs.mat + 1e-16))
-# new <- log.shared.drugs.mat[, order(apply(log.shared.drugs.mat, 2, mean))]
+log.shared.drugs.mat <- t(-log(shared.drugs.mat + 1e-16))
+new <- log.shared.drugs.mat[, order(apply(log.shared.drugs.mat, 2, mean))]
 
 melt(new) -> dat
 pdf("./E.pdf", width = 4, height = 4)
