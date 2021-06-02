@@ -120,7 +120,7 @@ for (k in 1:nrow(two.drugs.match)) {
 }
 save(shared.drugs.ori.cor, data4plot.list, file = "A.best.shared.drugs.ori.RData")
 
-###########################################################################################################################
+######
 ccle <- read.table("../../Output/3/VAEN_CCLE.A.pred_TCGA.txt", header = T, as.is = T)
 gdsc <- read.table("../../Output/3/VAEN_GDSC.A.pred_TCGA.txt", header = T, as.is = T, sep = "\t")
 
@@ -147,7 +147,7 @@ dev.off()
 write.table(shared.drugs.pred.cor, file = "./Figure2B.txt", row.names = F, quote = F, sep = "\t")
 write.table(shared.drugs.ori.cor, file = "./Figure2C.txt", row.names = F, quote = F, sep = "\t")
 
-##########################################################################################################################
+#####
 
 pdf("./D.FigureS3.pdf", width = 10, height = 10)
 for (k in 1:nrow(two.drugs.match)) {
