@@ -1,4 +1,4 @@
-## 补充脚本 生成正确的 TCGA.ss.mat.RData
+## 补充脚本 生成正确的 tcga_ss_mat.RData
 cancer_types <- dir("./Data/TCGA/")
 sapply(cancer_types, nchar) -> ii
 cancer_types <- cancer_types[which(ii <= 4)]

@@ -29,7 +29,7 @@ parallel.main <- function(kk, train.data, Y, n_folds = 10, n_train_test_folds = 
 }
 
 #####
-load("./Data/TCGA.ss.mat.RData")
+load("./Output/1/tcga_ss_mat.RData")
 #####
 
 anno <- read.delim("./Data/GDSC/v17.3_fitted_dose_response.txt", as.is = T)
@@ -182,8 +182,8 @@ for (ksigmoid in start:end) {
     ########### match
     gsub("\\.", "-", TCGA.pred[, 1]) -> ss
     TCGA.pred[, 1] <- ss
-    match(TCGA.pred[, 1], TCGA.ss.mat[, 1]) -> ii
-    TCGA.drug.response.mat <- cbind(TCGA.pred[, 1], TCGA.ss.mat[ii, 2], TCGA.drug.response.mat)
+    match(TCGA.pred[, 1], tcga_ss_mat[, 1]) -> ii
+    TCGA.drug.response.mat <- cbind(TCGA.pred[, 1], tcga_ss_mat[ii, 2], TCGA.drug.response.mat)
     colnames(TCGA.drug.response.mat) <- c("TCGA", "Cancer", drugs)
     write.table(TCGA.drug.response.mat, file = paste("./Output/2/", ksigmoid, ".GDSC.pred_TCGA.txt", sep = ""), quote = F, sep = "\t", row.names = FALSE)
     write.table(self.prediction.mat, file = paste("./Output/2/", ksigmoid, ".pred_GDSC.txt", sep = ""), quote = F, sep = "\t", row.names = FALSE)
