@@ -4,12 +4,12 @@ library("glmnet")
 library("modEvA")
 library("vegan")
 
-#####    
-load("./DATA/TCGA.ss.mat.RData")
-#####    
+#####
+load("./Output/1/tcga_ss_mat.RData")
+#####
 anno = read.csv("./DATA/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv", as.is = T)
 drugs = sort(unique(anno$Compound))
-#####    
+#####
 
 solid.sample.size = solid.in_sample_R2.mat = solid.avg_CV_R2.mat = solid.F1_R2.mat = matrix(0, nrow=100, ncol=length(drugs))
 colnames(solid.sample.size) = colnames(solid.in_sample_R2.mat) = colnames(solid.avg_CV_R2.mat) = colnames(solid.F1_R2.mat) = drugs
@@ -85,8 +85,8 @@ for(k in 1:length(drugs)){
 TCGA.pred.mat = cbind(TCGA.pred[,1], "A", TCGA.pred.mat)
 gsub("\\.", "-", TCGA.pred.mat[,1]) -> ss
 TCGA.pred.mat[,1] = ss
-match(TCGA.pred.mat[,1], TCGA.ss.mat[,1]) -> ii
-TCGA.pred.mat[,2] = TCGA.ss.mat[ii, 2]
+match(TCGA.pred.mat[,1], tcga_ss_mat[, 1]) -> ii
+TCGA.pred.mat[,2] = tcga_ss_mat[ii, 2]
 colnames(TCGA.pred.mat) = c("Sample", "Cancer", drugs)
 write.table(TCGA.pred.mat, file="./Output/3/VAEN_CCLE.S.pred_TCGA.txt", quote=F, sep="\t", row.names=FALSE)
 

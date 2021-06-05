@@ -5,7 +5,7 @@ library("modEvA")
 library("vegan")
 
 ##
-load("./DATA/TCGA.ss.mat.RData")
+load("./Output/1/tcga_ss_mat.RData")
 ########
 anno <- read.csv("./DATA/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv", as.is = T)
 drugs <- sort(unique(anno$Compound))
@@ -83,8 +83,8 @@ for (k in 1:length(drugs)) {
 TCGA.pred_mat <- cbind(TCGA.pred[, 1], "A", TCGA.pred_mat)
 gsub("\\.", "-", TCGA.pred_mat[, 1]) -> ss
 TCGA.pred_mat[, 1] <- ss
-match(TCGA.pred_mat[, 1], TCGA.ss.mat[, 1]) -> ii
-TCGA.pred_mat[, 2] <- TCGA.ss.mat[ii, 2]
+match(TCGA.pred_mat[, 1], tcga_ss_mat[, 1]) -> ii
+TCGA.pred_mat[, 2] <- tcga_ss_mat[ii, 2]
 colnames(TCGA.pred_mat) <- c("Sample", "Cancer", drugs)
 write.table(TCGA.pred_mat, file="./Output/3/VAEN_CCLE.A.pred_TCGA.txt", quote = F, sep = "\t", row.names = FALSE)
 
