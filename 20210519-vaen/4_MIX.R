@@ -7,8 +7,6 @@ library("modEvA")
 library("vegan")
 
 #####
-load("./Data/TCGA.ss.mat.RData")
-#####
 anno <- read.csv("./Data/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv", as.is = T)
 drugs <- sort(unique(anno$Compound))
 #####
