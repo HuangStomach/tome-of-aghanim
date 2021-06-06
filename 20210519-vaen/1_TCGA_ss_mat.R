@@ -15,4 +15,6 @@ for (cancer in cancer_types) {
     }
 }
 
-save(tcga_ss_mat, file = "./Output/1/TCGA_ss_mat.RData")
+gsub("\\.", "-", tcga_ss_mat[, 1]) -> ss
+ss -> tcga_ss_mat[, 1]
+save(tcga_ss_mat, file = "./Output/1/tcga_ss_mat.RData")

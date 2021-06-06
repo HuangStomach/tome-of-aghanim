@@ -32,24 +32,23 @@ parallel.main = function(kk, train.data, Y, n_folds=10, n_train_test_folds=5, se
     res.list
 }
 
-#####################################################################################
+#####
 load("./Output/1/tcga_ss_mat.RData")
-#####################################################################################
-
+#####
 for (ksigmoid in start:end) {
     cat("ksigmoid = ", ksigmoid, "\n", sep="")
-    #############
+    #####
     model_summary_file <- paste("./Output/2/", ksigmoid, ".model_summary.txt", sep="")
     model_summary_cols <- c('Drug', 'alpha', 'n_snps_in_model', 'lambda_min_mse',
         'test_R2_avg', 'test_R2_sd', 'cv_R2_avg', 'cv_R2_sd', 'in_sample_R2',
         'nested_cv_fisher_pval', 'rho_avg', 'rho_se', 'rho_zscore', 'rho_avg_squared', 'zscore_pval',
         'cv_rho_avg', 'cv_rho_se', 'cv_rho_avg_squared', 'cv_zscore_est', 'cv_zscore_pval', 'cv_pval_est')
 
-    #####################################################################################
+    #####
     TCGA.pred = read.table(paste("./Output/1/", ksigmoid, ".TCGA_latent.tsv", sep=""), header=T, sep="\t", as.is=T)
     TCGA.test.data = TCGA.pred[,-1]
 
-    ########### Prediction
+    ##### Prediction
     PPs = read.table(paste("./Output/1/", ksigmoid, ".CCLE_latent.tsv", sep=""))
     original.ss.PP = rownames(PPs)
     sapply(original.ss.PP, function(x){
@@ -61,7 +60,7 @@ for (ksigmoid in start:end) {
     }) -> ss.PP
     names(ss.PP) = NULL
 
-    ########### original drug data
+    ##### original drug data
     anno = read.csv("./Data/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv", as.is=T)
     drugs = sort(unique(anno$Compound))
 
@@ -134,7 +133,7 @@ for (ksigmoid in start:end) {
         cat(drugs[k]," end \n", sep="")
     }
 
-    ########### match
+    ##### match
     gsub("\\.", "-", TCGA.pred[,1]) -> ss; TCGA.pred[,1] = ss
     match(TCGA.pred[,1], tcga_ss_mat[,1]) -> ii
     TCGA.drug.response.mat = cbind(TCGA.pred[,1], tcga_ss_mat[ii, 2], TCGA.drug.response.mat)
