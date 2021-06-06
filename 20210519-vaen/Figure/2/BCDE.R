@@ -146,12 +146,12 @@ text(x = shared.drugs.ori.cor[, 4], y = shared.drugs.pred.cor[, 4], labels = sha
 
 dev.off()
 
-write.table(shared.drugs.pred.cor, file = "./Figure2B.txt", row.names = F, quote = F, sep = "\t")
-write.table(shared.drugs.ori.cor, file = "./Figure2C.txt", row.names = F, quote = F, sep = "\t")
+write.table(shared.drugs.pred.cor, file = "./B.txt", row.names = F, quote = F, sep = "\t")
+write.table(shared.drugs.ori.cor, file = "./C.txt", row.names = F, quote = F, sep = "\t")
 
 #####
 
-pdf("./D.FigureS3.pdf", width = 10, height = 10)
+pdf("./D.pdf", width = 10, height = 10)
 for (k in 1:nrow(two.drugs.match)) {
     ############ 1. observed
     data4plot.list[[two.drugs.match[k, 1]]] -> cur.list
@@ -284,7 +284,7 @@ colnames(shared.drugs.mat) <- cancer.types
 log.shared.drugs.mat <- t(-log(shared.drugs.mat + 1e-16))
 new <- log.shared.drugs.mat[, order(apply(log.shared.drugs.mat, 2, mean))]
 
-write.table(shared.drugs.mat, file = "./Figure2E.txt", sep = "\t", quote = F)
+write.table(shared.drugs.mat, file = "./E.txt", sep = "\t", quote = F)
 log.shared.drugs.mat <- t(-log(shared.drugs.mat + 1e-16))
 new <- log.shared.drugs.mat[, order(apply(log.shared.drugs.mat, 2, mean))]
 

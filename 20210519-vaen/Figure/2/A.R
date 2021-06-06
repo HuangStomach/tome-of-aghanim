@@ -34,8 +34,8 @@ for (k in 1:length(drugs)) {
 }
 colnames(y) <- c("Drug", "PCC")
 
-write.table(x, file = "./Figure2A.CCLE.txt")
-write.table(y, file = "./Figure2A.GDSC.txt")
+write.table(x, file = "./A.CCLE.txt")
+write.table(y, file = "./A.GDSC.txt")
 
 pdf("./A.PCC.pdf", width = 8, height = 4)
 match(drugs_match[, 1], x[, 1]) -> sx_ii
