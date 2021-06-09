@@ -56,6 +56,9 @@ files = [
     ('./Data/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv', 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv'),
     ('./Data/CCLE/DepMap-2018q3-celllines.csv', 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/DepMap-2018q3-celllines.csv'),
     ('./Data/GDSC/v17.3_fitted_dose_response.txt', 'https://bioinfo.uth.edu/VAEN/DATA/GDSC/v17.3_fitted_dose_response.txt'),
+    ('./Data/GDSC/Screened_Compounds.txt', 'https://bioinfo.uth.edu/VAEN/DATA/GDSC/Screened_Compounds.txt'),
+    ('./Data/Match/drugs_match_2.txt', 'https://bioinfo.uth.edu/VAEN/DATA/drugs.match-2.txt'),
+    ('./Data/Match/drugs_match.txt', 'https://bioinfo.uth.edu/VAEN/DATA/drugs.match.txt'),
     ('./Data/DepMap-2018q3-celllines.csv', 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/DepMap-2018q3-celllines.csv'),
     ('./Data/TCGA/*/HiSeqV2', 'dir')
 ]
