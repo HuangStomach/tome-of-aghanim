@@ -5,8 +5,8 @@ library(glmnet)
 library(ggplot2)
 library(magrittr)
 
-one.drugs.match <- read.table("../../Data/Match/durgs_match.txt", as.is = T)
-two.drugs.match <- read.table("../../Data/Match/durgs_match_2.txt", as.is = T, sep = "\t")
+one.drugs.match <- read.table("../../Data/Match/drugs_match.txt", as.is = T)
+two.drugs.match <- read.table("../../Data/Match/drugs_match_2.txt", as.is = T, sep = "\t")
 
 ccle.anno <- read.csv("../../Data/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv", as.is = T)
 gdsc.anno <- read.delim("../../Data/GDSC/v17.3_fitted_dose_response.txt", as.is = T)

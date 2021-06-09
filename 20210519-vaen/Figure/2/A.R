@@ -1,6 +1,6 @@
 source("../../Lib/unfactor.R")
 
-drugs_match <- read.table("../../Data/Match/durgs_match_2.txt",
+drugs_match <- read.table("../../Data/Match/drugs_match_2.txt",
     as.is = T, sep = "\t")
 load("../../Output/4/dr.CCLE.A.models.RData")
 drugs <- names(dr_ccle_models)
