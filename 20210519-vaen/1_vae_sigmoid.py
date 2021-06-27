@@ -166,5 +166,5 @@ def train(i):
     print(encoded_file)
     print(encoded_val_df.head(2))
 
-for _i in range(92, 101):
+for _i in range(1, 101):
     tf.function(train(_i))
