@@ -59,7 +59,6 @@ files = [
     ('./Data/GDSC/Screened_Compounds.txt', 'https://bioinfo.uth.edu/VAEN/DATA/GDSC/Screened_Compounds.txt'),
     ('./Data/Match/drugs_match_2.txt', 'https://bioinfo.uth.edu/VAEN/DATA/drugs.match-2.txt'),
     ('./Data/Match/drugs_match.txt', 'https://bioinfo.uth.edu/VAEN/DATA/drugs.match.txt'),
-    ('./Data/DepMap-2018q3-celllines.csv', 'https://bioinfo.uth.edu/VAEN/DATA/CCLE/DepMap-2018q3-celllines.csv'),
     ('./Data/TCGA/*/HiSeqV2', 'dir')
 ]
 

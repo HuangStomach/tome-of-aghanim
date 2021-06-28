@@ -34,7 +34,7 @@ load("./Output/1/tcga_ss_mat.RData")
 
 anno <- read.delim("./Data/GDSC/v17.3_fitted_dose_response.txt", as.is = T)
 drugs <- sort(unique(anno$DRUG_NAME))
-cell.line.anno <- read.csv("./Data/DepMap-2018q3-celllines.csv", as.is = T)
+cell.line.anno <- read.csv("./Data/CCLE/DepMap-2018q3-celllines.csv", as.is = T)
 
 for (ksigmoid in start:end) {
     cat("ksigmoid = ", ksigmoid, "\n", sep = "")
