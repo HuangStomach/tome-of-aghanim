@@ -24,65 +24,59 @@ sapply(colnames(ccle_gene_mat), function(x) { # 癌细胞类型进行格式化�
 
 names(tt) <- NULL
 table(tt) -> t1 # 构建计算每个元素出现次数的table
-names(which(t1 >= 20)) -> tissues_int # 保留数据量多余20的组织信息
-which(tt %in% tissues_int) -> ii # 筛选出符合条件的索引
+names(which(t1 >= 20)) -> tissues_int # 保留数据量多余20的癌症组织信息
+which(tt %in% tissues_int) -> ii # 筛选出符合条件的癌症组织列索引
 ccle_gene_mat <- ccle_gene_mat[, ii]
 # > dim(ccle_gene_mat) [1] 12406  1100
 
-
-log2.ccle_gene_mat <- log2(ccle_gene_mat + 1) # 基因表达有较大的数据 使用log2-transform规范化
-
 # choose genes that are most variably expressed
-apply(log2.ccle_gene_mat, 1, var) -> rowVar
-names(which(rowVar > median(rowVar))) -> mad.genes
-length(mad.genes)
-mad5000.ccle_gene_mat <- log2.ccle_gene_mat[mad.genes, ] ### gene by sample
-dim(mad5000.ccle_gene_mat)
+ccle_gene_mat <- log2(ccle_gene_mat + 1) # 基因表达有较大的数据 使用log2-transform规范化
+apply(ccle_gene_mat, 1, var) -> row_var # 对每一行计算方差
+names(which(row_var > median(row_var))) -> mad_genes # 方差较大的基因
+mad5000_ccle_gene_mat <- ccle_gene_mat[mad_genes, ] # 筛选出方差较大的一部分数据
+# > length(mad_genes) [1] 6203
+# > dim(mad5000_ccle_gene_mat) [1] 6203 1100
 
-# > length(mad.genes)
-# [1] 6203
+cancer_types <- dir("./Data/TCGA/")
+sapply(cancer_types, nchar) -> ii
+cancer_types <- cancer_types[which(ii <= 4)]
+cancer_types <- setdiff(cancer_types, c("FPPP", "LUNG")) # 筛选特定类别的癌症
 
-# > dim(mad5000.ccle_gene_mat)
-# [1] 6203 1100
+rpkm_mat <- c()
+for (k in seq_len(length(cancer_types))) {
+    print
+    cancer <- cancer_types[k]
+    tcga_rpkm <- read.delim(
+        paste("./Data/TCGA/", cancer, "/HiSeqV2", sep = ""),
+        as.is = T
+    ) # 根据癌症类别读入tcga的基因表达数据
 
-##########################################################################
-##########################################################################
-##########################################################################
+    apply(tcga_rpkm[, -1], 1, sum) -> row_check # 对每一行的基因表达求和
+    # 排除基因表达求和为0或nan的行
+    non0_tcga_rpkm <- tcga_rpkm[which(row_check != 0 & !is.na(row_check)), ]
 
-cancer.types <- dir("./TCGA/")
-sapply(cancer.types, nchar) -> ii
-cancer.types <- cancer.types[which(ii <= 4)]
-cancer.types <- setdiff(cancer.types, c("FPPP", "LUNG"))
+    # 筛选出其中方差较大的基因数据，并且删除其第一列
+    shared_tcga_rpkm <- non0_tcga_rpkm[match(
+        mad_genes, non0_tcga_rpkm[, 1]
+    ), -1]
+    rownames(shared_tcga_rpkm) <- mad_genes # 并把mad_genes中的基因名称作为行名
 
+    # 如果是第一次 则把shared_tcga_rpkm的基因名称赋予cur_genes
+    # 否则选出当前shared_tcga_rpkm涉及的基因名称和上一轮基因名称的交集
+    if (k == 1) cur_genes <- rownames(shared_tcga_rpkm)
+    else cur_genes <- intersect(cur_genes, rownames(shared_tcga_rpkm))
 
-RPKM.mat <- c()
-cancer.type.list <- list()
-for (k in 1:length(cancer.types)) {
-    cancer <- cancer.types[k]
-    original.TCGA.RPKM <- read.delim(paste("./TCGA/", cancer, "/HiSeqV2", sep = ""), as.is = T)
-
-    ### exclude genes with rowSum == 0
-    apply(original.TCGA.RPKM[, -1], 1, sum) -> rowCheck
-    non0.TCGA.RPKM <- original.TCGA.RPKM[which(rowCheck != 0), ]
-
-    shared.TCGA.RPKM <- non0.TCGA.RPKM[match(mad.genes, non0.TCGA.RPKM[, 1]), -1]
-    rownames(shared.TCGA.RPKM) <- mad.genes
-
-    apply(shared.TCGA.RPKM, 1, sum) -> check
-    shared.TCGA.RPKM <- shared.TCGA.RPKM[!is.na(check), ]
-
-    if (k == 1) {
-        cur.genes <- rownames(shared.TCGA.RPKM)
-    } else {
-        cur.genes <- intersect(cur.genes, rownames(shared.TCGA.RPKM))
-    }
-
-    t.shared.TCGA.RPKM <- t(shared.TCGA.RPKM)
-    RPKM.mat <- rbind(RPKM.mat[, cur.genes], t.shared.TCGA.RPKM[, cur.genes]) ### cat by samples, columns are mad.genes
-    cancer.type.list[[cancer]] <- colnames(shared.TCGA.RPKM)
-    cat(cancer, "\t", ncol(shared.TCGA.RPKM), " ", ncol(RPKM.mat), " ", nrow(RPKM.mat), "\n", sep = "")
+    t_shared_tcga_rpkm <- t(shared_tcga_rpkm) # 转置 原本行是基因列是样本
+    # cat by samples, columns are mad_genes
+    # 进行数据的累加，将列置为基因，行置为样本
+    rpkm_mat <- rbind(rpkm_mat[, cur_genes], t_shared_tcga_rpkm[, cur_genes])
+    cat(cancer, "\t",
+        ncol(shared_tcga_rpkm), " ",
+        ncol(rpkm_mat), " ",
+        nrow(rpkm_mat), "\n",
+        sep = "")
 }
-
+# 最后一直筛选有交集的基因（也就是都有数据的基因）然后对所有的癌细胞类型进行数据合并
 # ACC     79 6203 79
 # BLCA    426 6203 505
 # BRCA    1218 6203 1723
@@ -117,43 +111,36 @@ for (k in 1:length(cancer.types)) {
 # UCS     57 6203 10379
 # UVM     80 6203 10459
 
-##########################################################################
-genes2 <- intersect(mad.genes, colnames(RPKM.mat))
+genes2 <- intersect(mad_genes, colnames(rpkm_mat)) # 将ccle中的基因和tcga中的取交集
+# > length(genes2) [1] 6163
 
-ccle.train.mat <- mad5000.ccle_gene_mat[genes2, ]
-print(dim(ccle.train.mat))
+ccle_train_mat <- mad5000_ccle_gene_mat[genes2, ]
+# 对每一种癌症样本做rank标准化
+rank_ccle_gene_mat <- apply(ccle_train_mat, 2, function(u) rank(u) / length(u))
+rank_ccle_gene_mat <- apply(rank_ccle_gene_mat, 1, function(u) {
+    u[which(u == 1)] <- 6162.5 / 6163
+    u
+}) # 没懂 可能是消除极端值
 
-### rank, per-sample
-rank.ccle_gene_mat <- apply(ccle.train.mat, 2, function(u) rank(u) / length(u))
-rank.ccle_gene_mat <- apply(rank.ccle_gene_mat, 1, function(u) {
+# 对样本数据做正态分布 转换为Z-scores
+scaled_ccle_gene_mat <- apply(rank_ccle_gene_mat, 2, function(u) qnorm(u))
+# > print(dim(scaled_ccle_gene_mat)) [1] 1100 6163
+
+rank_rpkm_mat <- apply(rpkm_mat, 1, function(u) rank(u) / length(u))
+rank_rpkm_mat <- apply(rank_rpkm_mat, 1, function(u) {
     u[which(u == 1)] <- 6162.5 / 6163
     u
 })
+scaled_rpkm_mat <- apply(rank_rpkm_mat, 2, function(u) qnorm(u))
 
-### p to z
-scaled.ccle_gene_mat <- apply(rank.ccle_gene_mat, 2, function(u) {
-    qnorm(u)
-})
-print(dim(scaled.ccle_gene_mat))
+dimnames(scaled_rpkm_mat) <- dimnames(rpkm_mat)
 
-# > length(genes2)
-# [1] 6163
-# > print(dim(scaled.ccle_gene_mat))
-# [1] 1100 6163
-
-##########################################################################
-rank.RPKM.mat <- apply(RPKM.mat, 1, function(u) rank(u) / length(u))
-rank.RPKM.mat <- apply(rank.RPKM.mat, 1, function(u) {
-    u[which(u == 1)] <- 6162.5 / 6163
-    u
-})
-
-scaled.RPKM.mat <- apply(rank.RPKM.mat, 2, function(u) qnorm(u))
-
-dimnames(scaled.RPKM.mat) <- dimnames(RPKM.mat)
-
-##########################################################################
-### dataset for NOPEER.NO01.Sigmoid
-write.table(scaled.ccle_gene_mat, file = paste("V15.CCLE.4VAE.RANK.tsv", sep = ""), row.names = T, quote = F, sep = "\t")
-write.table(scaled.RPKM.mat, file = paste("V15.TCGA.4VAE.RANK.tsv", sep = ""), row.names = T, quote = F, sep = "\t")
-##########################################################################
+# dataset for NOPEER.NO01.Sigmoid
+write.table(scaled_ccle_gene_mat,
+    file = paste("V15.CCLE.4VAE.RANK.tsv", sep = ""),
+    row.names = T, quote = F, sep = "\t"
+)
+write.table(scaled_rpkm_mat,
+    file = paste("V15.TCGA.4VAE.RANK.tsv", sep = ""),
+    row.names = T, quote = F, sep = "\t"
+)

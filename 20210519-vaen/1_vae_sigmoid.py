@@ -3,16 +3,7 @@ import pandas as pd
 
 import tensorflow as tf
 from tensorflow.keras import backend as K
-from tensorflow.python.keras import activations
-
-# session_conf = tf.compat.v1.ConfigProto(
-#     intra_op_parallelism_threads=1,
-#     inter_op_parallelism_threads=1
-# )
-# sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph() ,config=session_conf)
-# tf.compat.v1.keras.backend.set_session(session_conf)
-
-from tensorflow.keras import metrics, optimizers, Input
+from tensorflow.keras import metrics, Input
 from tensorflow.keras.layers import Dense, Lambda, Layer, Activation, Dropout, BatchNormalization
 from tensorflow.keras import Model
 from tensorflow.keras.callbacks import Callback
@@ -32,6 +23,7 @@ def sampling(args):
     z = z_mean + K.exp(z_log_var / 2) * epsilon
     return z
 
+"""
 # 自定义变分层
 class CustomVariationalLayer(Layer):
     def __init__(self, **kwargs):
@@ -51,6 +43,7 @@ class CustomVariationalLayer(Layer):
         loss = self.vae_loss(x, x_decoded)
         self.add_loss(loss, inputs=inputs)
         return x
+"""
 
 class WarmUpCallback(Callback):
     def __init__(self, beta, kappa):
@@ -94,18 +87,16 @@ def train(i):
     z_mean_dense_batchnorm = BatchNormalization()(z_mean_dense_linear)
     z_mean_encoded = Activation('sigmoid')(z_mean_dense_batchnorm) # 激活函数
 
+    decoder_to_reconstruct = Dense(original_dim, kernel_initializer='glorot_uniform', activation='sigmoid')
+    """ 
     z_log_var_dense_linear = Dense(units, kernel_initializer='glorot_uniform')(rnaseq_input) # 有规律的密集连接的NN层
     z_log_var_dense_batchnorm = BatchNormalization()(z_log_var_dense_linear)
     z_log_var_encoded = Activation('sigmoid')(z_log_var_dense_batchnorm) # 激活函数
 
-
     z = Lambda(sampling, output_shape=(units, ))([z_mean_encoded, z_log_var_encoded])
-
     drop_layer = Dropout(rate = 0.2, noise_shape = None)(z) # 将Dropout应用于输入。
-    decoder_to_reconstruct = Dense(original_dim, kernel_initializer='glorot_uniform', activation='sigmoid')
     rnaseq_reconstruct = decoder_to_reconstruct(drop_layer)
 
-    """ 
     # 训练VAE模型
     adam = optimizers.Adam(learning_rate=learning_rate)
     vae_layer = CustomVariationalLayer()([rnaseq_input, rnaseq_reconstruct])
@@ -126,7 +117,7 @@ def train(i):
     history_df.to_csv(loss_log_file, sep='\t') 
     """
 
-    encoder = Model(rnaseq_input, z_mean_encoded)
+    encoder = Model(inputs=rnaseq_input, outputs=z_mean_encoded)
     encoded_rnaseq_df = encoder.predict_on_batch(rnaseq_df)
     encoded_rnaseq_df = pd.DataFrame(encoded_rnaseq_df, index=rnaseq_df.index)
 
@@ -137,7 +128,7 @@ def train(i):
 
     decoder_input = Input(shape=(units, ))  # can generate from any sampled z vector
     _x_decoded_mean = decoder_to_reconstruct(decoder_input)
-    decoder = Model(decoder_input, _x_decoded_mean)
+    decoder = Model(inputs=decoder_input, outputs=_x_decoded_mean)
 
     encoder_model_file = os.path.join(output_dir, encoder_file)
     encoder.save(encoder_model_file)
@@ -155,7 +146,6 @@ def train(i):
     weight_file = os.path.join(output_dir, train_weight_file)
     weight_layer_df.to_csv(weight_file, sep='\t')
 
-    ###################################
     encoded_val_df = encoder.predict_on_batch(val_df_1)
     encoded_val_df = pd.DataFrame(encoded_val_df, index=val_df_1.index)
 
