@@ -27,10 +27,20 @@
 | ---- | ---- | ---- |
 | 基因ID | 基因名称 | ... |
 
+### CCLE_NP24.2009_Drug_data_2015.02.24.csv
+
+24种抗癌症药物对不同癌症的表现
+
+### v17.3_fitted_dose_response.txt
+
+Genomics of Drug Sensitivity in Cancer (GDSC) 肿瘤药物敏感性基因组学数据库 提供的癌症药物反应数据
+
 ## 具体步骤
 
 * 先对数据进行预处理，只采用CCLE和TCGA数据均有交集，样本数量足够大且活跃的数据。
 * 使用VAE（？）对数据进行去噪和降维
+* 再构建nested elastic net模型，使用CCLE和GDSC进行训练
+* 之后选择其中表现最好的模型对tcga进行预测分析
 
 ``` R
 # Z01

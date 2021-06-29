@@ -63,7 +63,7 @@ for (ksigmoid in start:end) {
     )
     tcga_test_data <- tcga_pred[, -1] #
 
-    ########### Prediction
+    # Prediction
     pps <- read.table(
         paste("./Output/1/", ksigmoid, ".CCLE_latent.tsv", sep = "")
     )
@@ -85,7 +85,7 @@ for (ksigmoid in start:end) {
     }) -> ss_ach
     names(ss_ach) <- NULL
 
-    ########### original drug data
+    # original drug data
     self_prediction_mat <- matrix(-9,
         nrow = length(unique(anno[, 4])),
         ncol = length(drugs) + 2
