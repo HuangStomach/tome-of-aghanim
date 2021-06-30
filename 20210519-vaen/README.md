@@ -37,10 +37,14 @@ Genomics of Drug Sensitivity in Cancer (GDSC) 肿瘤药物敏感性基因组学�
 
 ## 具体步骤
 
-* 先对数据进行预处理，只采用CCLE和TCGA数据均有交集，样本数量足够大且活跃的数据。
-* 使用VAE（？）对数据进行去噪和降维
-* 再构建nested elastic net模型，使用CCLE和GDSC进行训练
-* 之后选择其中表现最好的模型对tcga进行预测分析
+* 先对数据进行预处理，只采用CCLE和TCGA数据均有交集，样本数量足够大且活跃的数据，保存为 `V15.CCLE\TCGA.4VAE.*.tsv`。
+* 使用VAE（？）对数据进行去噪和降维，保存为 `CCLE\TCGA_latent.tsv`。
+* 再构建nested elastic net模型，使用CCLE和GDSC进行训练，保存为 `CCLE\GDSC.model.list.Rdata`。
+* 之后选择其中表现最好的模型对tcga数据进行预测分析，保存为 `VAEN_CCLE\GDSC.*.pred_TCGA.txt`。
+* 对ccle数据进行预测分析，保存为 `VAEN_CCLE\GDSC.A.pred_CCLE.full.txt`。
+* 将训练模型过程中对训练数据的预测保存为 `VAEN_CCLE\GDSC.A.pred_CCLE\GDSC.txt`。
+* 针对训练过的所有药物，将每个药物表现最好的模型存入 `dr.CCLE\GDSC.A.models.RData`
+* 再将CCLE全部数据和固体数据（？）进行整合，存入 `VAEN_CCLE.MIX.pred_CCLE\TCGA.*.txt`。
 
 ``` R
 # Z01
