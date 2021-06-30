@@ -1,146 +1,189 @@
-# 和A.R的不同就在于只是针对的文件不一样 不做优化
 library("MASS")
 library("magrittr")
 library("glmnet")
 library("modEvA")
 library("vegan")
 
-#####
 load("./Output/1/tcga_ss_mat.RData")
-#####
-anno <- read.csv("./DATA/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv", as.is = T)
+anno <- read.csv(
+    "./DATA/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv", as.is = T
+)
 drugs <- sort(unique(anno$Compound))
-#####
+matrix(0, nrow = 100, ncol = length(drugs)) ->
+solid_f1_r2_mat -> solid_avg_cv_r2_mat ->
+solid_in_sample_r2_mat -> solid_sample_size
 
-solid.sample.size <- solid.in_sample_R2.mat <- solid.avg_CV_R2.mat <- solid.F1_R2.mat <- matrix(0, nrow = 100, ncol = length(drugs))
-colnames(solid.sample.size) <- colnames(solid.in_sample_R2.mat) <- colnames(solid.avg_CV_R2.mat) <- colnames(solid.F1_R2.mat) <- drugs
+drugs -> colnames(solid_f1_r2_mat) -> colnames(solid_in_sample_r2_mat)
+colnames(solid_in_sample_r2_mat) -> colnames(solid_sample_size)
 
-solid.mat <- c()
+solid_mat <- c()
 for (ksigmoid in 1:100) {
     load(paste("./Output/2/", ksigmoid, ".CCLE.model.list.S.RData", sep = ""))
-    for (kdrug in 1:length(drugs)) {
-        drug <- drugs[kdrug]
-        model.list[[drugs[kdrug]]] -> res.list
-        if (length(res.list) == 0) next
-        fit <- res.list$model
-        Ys <- res.list$Ys
-        which(Ys[, 1] != -9) -> ii
-        Ys <- Ys[ii, ]
-        if (sd(Ys[, 2]) == 0) next
-        solid.mat <- rbind(solid.mat, c(ksigmoid, res.list$model_summary, cor(Ys[, 1], Ys[, 2])))
+    for (k in seq_len(length(drugs))) {
+        drug <- drugs[k]
+        model_list[[drug]] -> res_list
+        if (length(res_list) == 0) next
+        fit <- res_list$model
+        ys <- res_list$ys
+        which(ys[, 1] != -9) -> ii
+        ys <- ys[ii, ]
+        if (sd(ys[, 2]) == 0) next
+        solid_mat <- rbind(
+            solid_mat,
+            c(ksigmoid, res_list$model_summary, cor(ys[, 1], ys[, 2]))
+        )
 
         #### way 4, PCC
-        recall <- cor(Ys[, 1], Ys[, 2])
-        precision <- as.numeric(res.list$model_summary[5])
+        recall <- cor(ys[, 1], ys[, 2])
+        precision <- as.numeric(res_list$model_summary[5])
 
-        solid.sample.size[ksigmoid, kdrug] <- nrow(Ys)
-        solid.in_sample_R2.mat[ksigmoid, kdrug] <- recall
-        solid.avg_CV_R2.mat[ksigmoid, kdrug] <- precision
-        solid.F1_R2.mat[ksigmoid, kdrug] <- as.numeric(res.list$model_summary[7])
+        solid_sample_size[ksigmoid, k] <- nrow(ys)
+        solid_in_sample_r2_mat[ksigmoid, k] <- recall
+        solid_avg_cv_r2_mat[ksigmoid, k] <- precision
+        solid_f1_r2_mat[ksigmoid, k] <- as.numeric(res_list$model_summary[7])
     }
     cat(ksigmoid, ".", sep = "")
 }
-
-save(solid.mat, solid.sample.size, solid.in_sample_R2.mat, solid.avg_CV_R2.mat, solid.F1_R2.mat, file = "./Output/3/CCLE.S.info.RData")
-
-#####    #######
+save(solid_mat, solid_sample_size,
+    solid_in_sample_r2_mat, solid_avg_cv_r2_mat,
+    solid_f1_r2_mat,
+    file = "./Output/3/CCLE.S.info.RData"
+)
 
 pdf("./Output/3/CCLE.S.ROC.pdf", width = 5, height = 5)
-for (k in 1:length(drugs)) {
+for (k in seq_len(length(drugs))) {
     drug <- drugs[k]
-    plot(x = solid.in_sample_R2.mat[, k], y = solid.avg_CV_R2.mat[, k], main = drugs[k], xlab = "Self in_sample PCC", ylab = "avg PCC (in_sample)", col = rep("blue", 200), pch = 20, cex = .6)
-    tmp <- cbind(idx = c(1:100), solid.F1_R2.mat[, drug], solid.in_sample_R2.mat[, drug], solid.avg_CV_R2.mat[, drug])
+    plot(
+        x = solid_in_sample_r2_mat[, k],
+        y = solid_avg_cv_r2_mat[, k],
+        main = drugs[k],
+        xlab = "Self in_sample PCC",
+        ylab = "avg PCC (in_sample)",
+        col = rep("blue", 200), pch = 20, cex = .6
+    )
+    tmp <- cbind(
+        idx = c(1:100),
+        solid_f1_r2_mat[, drug],
+        solid_in_sample_r2_mat[, drug],
+        solid_avg_cv_r2_mat[, drug]
+    )
     tmp <- tmp[order(tmp[, 4], decreasing = T), ]
     idx <- tmp[1:10, 1]
-    points(solid.in_sample_R2.mat[idx, k], solid.avg_CV_R2.mat[idx, k], pch = 4, col = "red")
+    points(solid_in_sample_r2_mat[idx, k], solid_avg_cv_r2_mat[idx, k],
+        pch = 4, col = "red"
+    )
 }
 dev.off()
 
-#####    #######
-#####    #######
-
-TCGA.pred.mat <- c()
-solid.model_summary <- c()
-holdout.R2 <- c()
-for (k in 1:length(drugs)) {
+tcga_pred_mat <- c()
+solid_model_summary <- c()
+for (k in seq_len(length(drugs))) {
     drug <- drugs[k]
 
-    tmp <- cbind(idx = c(1:100), solid.F1_R2.mat[, drug], solid.in_sample_R2.mat[, drug], solid.avg_CV_R2.mat[, drug])
-    tmp <- tmp[order(tmp[, 4], decreasing = T), ] ### avg_CV_R2
-    holdout.R2 <- rbind(holdout.R2, c(drug, tmp[1, 4]))
+    tmp <- cbind(
+        idx = c(1:100),
+        solid_f1_r2_mat[, drug],
+        solid_in_sample_r2_mat[, drug],
+        solid_avg_cv_r2_mat[, drug]
+    )
+    tmp <- tmp[order(tmp[, 4], decreasing = T), ] ### avg_cv_r2
+    best_index <- tmp[1, 1]
 
-    best.index <- tmp[1, 1]
+    load(paste("./Output/2/", best_index, ".CCLE.model.list.S.RData", sep = ""))
+    model_list[[drug]] -> res_list
+    fit <- res_list$model
 
-    load(paste("./Output/2/", best.index, ".CCLE.model.list.S.RData", sep = ""))
-    model.list[[drug]] -> res.list
-    fit <- res.list$model
+    tcga_pred <- read.table(
+        paste("./Output/1/", best_index, ".TCGA_latent.tsv", sep = ""), 
+        header = T, sep = "\t", as.is = T
+    )
+    tcga_test_data <- tcga_pred[, -1]
+    tcga_probabilities <- predict(
+        fit, as.matrix(tcga_test_data), s = "lambda.min"
+    )
 
-    TCGA.pred <- read.table(paste("./Output/1/", best.index, ".TCGA_latent.tsv", sep = ""), header = T, sep = "\t", as.is = T)
-    TCGA.test.data <- TCGA.pred[, -1]
-    TCGA.probabilities <- predict(fit, as.matrix(TCGA.test.data), s = "lambda.min")
-
-    TCGA.pred.mat <- cbind(TCGA.pred.mat, TCGA.probabilities)
+    tcga_pred_mat <- cbind(tcga_pred_mat, tcga_probabilities)
     cat("...", drug, ".", sep = "")
 }
 
-TCGA.pred.mat <- cbind(TCGA.pred[, 1], "A", TCGA.pred.mat)
-gsub("\\.", "-", TCGA.pred.mat[, 1]) -> ss
-TCGA.pred.mat[, 1] <- ss
-match(TCGA.pred.mat[, 1], tcga_ss_mat[, 1]) -> ii
-TCGA.pred.mat[, 2] <- tcga_ss_mat[ii, 2]
-colnames(TCGA.pred.mat) <- c("Sample", "Cancer", drugs)
-write.table(TCGA.pred.mat, file = "./Output/3/VAEN_CCLE.S.pred_TCGA.txt", quote = F, sep = "\t", row.names = FALSE)
+tcga_pred_mat <- cbind(tcga_pred[, 1], "A", tcga_pred_mat)
+gsub("\\.", "-", tcga_pred_mat[, 1]) -> ss
+tcga_pred_mat[, 1] <- ss
+match(tcga_pred_mat[, 1], tcga_ss_mat[, 1]) -> ii
+tcga_pred_mat[, 2] <- tcga_ss_mat[ii, 2]
+colnames(tcga_pred_mat) <- c("Sample", "Cancer", drugs)
+write.table(tcga_pred_mat,
+    file = "./Output/3/VAEN_CCLE.S.pred_TCGA.txt",
+    quote = F, sep = "\t", row.names = FALSE
+)
 
-#####    #######
-
-CCLE.PCC <- c()
-for (kdrug in 1:length(drugs)) {
+for (kdrug in seq_len(length(drugs))) {
     drug <- drugs[kdrug]
     if (drug == "X17.AAG") drug <- "17-AAG"
     gsub("\\.", "-", drug) -> drug
 
-    tmp <- cbind(idx = c(1:100), solid.F1_R2.mat[, drug], solid.in_sample_R2.mat[, drug], solid.avg_CV_R2.mat[, drug])
+    tmp <- cbind(
+        idx = c(1:100),
+        solid_f1_r2_mat[, drug],
+        solid_in_sample_r2_mat[, drug],
+        solid_avg_cv_r2_mat[, drug]
+    )
     tmp <- tmp[order(tmp[, 4], decreasing = T), ]
 
-    pred.mat <- c()
-    best.index <- tmp[1, 1]
+    pred_mat <- c()
+    best_index <- tmp[1, 1]
 
-    load(paste("./Output/2/", best.index, ".CCLE.model.list.S.RData", sep = ""))
-    model.list[[drug]] -> res.list
-    Ys <- res.list$Ys
+    load(paste("./Output/2/", best_index, ".CCLE.model.list.S.RData", sep = ""))
+    model_list[[drug]] -> res_list
+    ys <- res_list$ys
 
     if (kdrug == 1) {
-        self.prediction.mat <- Ys
+        self_prediction_mat <- ys
     } else {
-        self.prediction.mat <- cbind(self.prediction.mat, Ys[, 2])
+        self_prediction_mat <- cbind(self_prediction_mat, ys[, 2])
     }
 }
 
-self.prediction.mat[, 1] <- rownames(Ys)
-colnames(self.prediction.mat) <- c("CELLLINE", drugs)
-write.table(self.prediction.mat, file = "./Output/3/VAEN_CCLE.S.pred_CCLE.txt", quote = F, sep = "\t", row.names = FALSE)
-#####    #######
+self_prediction_mat[, 1] <- rownames(ys)
+colnames(self_prediction_mat) <- c("CELLLINE", drugs)
+write.table(self_prediction_mat,
+    file = "./Output/3/VAEN_CCLE.S.pred_CCLE.txt",
+    quote = F, sep = "\t", row.names = FALSE
+)
 
-CCLE.pred.full.mat <- c()
-for (k in 1:length(drugs)) {
+ccle_pred_full_mat <- c()
+for (k in seq_len(length(drugs))) {
     drug <- drugs[k]
 
-    tmp <- cbind(idx = c(1:100), solid.F1_R2.mat[, drug], solid.in_sample_R2.mat[, drug], solid.avg_CV_R2.mat[, drug])
+    tmp <- cbind(
+        idx = c(1:100),
+        solid_f1_r2_mat[, drug],
+        solid_in_sample_r2_mat[, drug],
+        solid_avg_cv_r2_mat[, drug]
+    )
     tmp <- tmp[order(tmp[, 4], decreasing = T), ]
-    best.index <- tmp[1, 1]
+    best_index <- tmp[1, 1]
 
-    load(paste("./Output/2/", best.index, ".CCLE.model.list.S.RData", sep = ""))
-    model.list[[drug]] -> res.list
+    load(paste("./Output/2/", best_index, ".CCLE.model.list.S.RData", sep = ""))
+    model_list[[drug]] -> res_list
 
-    CCLE.latent <- read.table(paste("./Output/1/", best.index, ".CCLE_latent.tsv", sep = ""), header = T, sep = "\t", as.is = T)
-    CCLE.latent.data <- CCLE.latent[, -1]
-    fit <- res.list$model
-    CCLE.probabilities <- predict(fit, as.matrix(CCLE.latent.data), s = "lambda.min")
+    ccle_latent <- read.table(
+        paste("./Output/1/", best_index, ".CCLE_latent.tsv", sep = ""),
+        header = T, sep = "\t", as.is = T
+    )
+    ccle_latent_data <- ccle_latent[, -1]
+    fit <- res_list$model
+    ccle_probabilities <- predict(
+        fit, as.matrix(ccle_latent_data), s = "lambda.min"
+    )
 
-    CCLE.pred.full.mat <- cbind(CCLE.pred.full.mat, CCLE.probabilities)
+    ccle_pred_full_mat <- cbind(ccle_pred_full_mat, ccle_probabilities)
     cat(drug, ".", sep = "")
 }
 
-self.pred.mat <- cbind(CELLINE = CCLE.latent[, 1], CCLE.pred.full.mat)
-colnames(self.pred.mat) <- c("CELLINE", drugs)
-write.table(self.pred.mat, file = paste("./Output/3/VAEN_CCLE.S.pred_CCLE.full.txt", sep = ""), quote = F, sep = "\t", row.names = FALSE)
+self_pred_mat <- cbind(CELLINE = ccle_latent[, 1], ccle_pred_full_mat)
+colnames(self_pred_mat) <- c("CELLINE", drugs)
+write.table(self_pred_mat,
+    file = paste("./Output/3/VAEN_CCLE.S.pred_CCLE.full.txt", sep = ""),
+    quote = F, sep = "\t", row.names = FALSE
+)

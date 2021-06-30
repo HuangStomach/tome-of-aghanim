@@ -91,7 +91,7 @@ for (k in seq_len(length(drugs))) {
     tmp <- tmp[order(tmp[, 4], decreasing = T), ] # 排序 cv_R2_avg
     best_index <- tmp[1, 1] # 记录误差最小的索引
 
-    load(paste("./Output/2/", best_index, ".GDSC.model_list.RData", sep = ""))
+    load(paste("./Output/2/", best_index, ".GDSC.model.list.RData", sep = ""))
      # 根据表现最佳的索引获取对应药物的训练模型
     model_list[[drug]] -> res_list
     fit <- res_list$model
@@ -137,7 +137,7 @@ for (kdrug in seq_len(length(drugs))) {
     pred_mat <- c()
     best_index <- tmp[1, 1]
 
-    load(paste("./Output/2/", best_index, ".GDSC.model_list.RData", sep = ""))
+    load(paste("./Output/2/", best_index, ".GDSC.model.list.RData", sep = ""))
     model_list[[drug]] -> res_list
     ys <- res_list$ys
 
@@ -170,12 +170,13 @@ for (k in seq_len(length(drugs))) {
     pred_mat <- c()
     best_index <- tmp[1, 1]
 
-    load(paste("./Output/2/", best_index, ".GDSC.model_list.RData", sep = ""))
+    load(paste("./Output/2/", best_index, ".GDSC.model.list.RData", sep = ""))
     model_list[[drug]] -> res_list # 同样找到表现最好的模型
 
     ccle_latent <- read.table(
         paste("./Output/1/", best_index, ".CCLE_latent.tsv", sep = ""),
-    header = T, sep = "\t", as.is = T)
+        header = T, sep = "\t", as.is = T
+    )
     ccle_latent_data <- ccle_latent[, -1]
     fit <- res_list$model
     ccle_probabilities <- predict(fit,

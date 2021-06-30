@@ -1,10 +1,10 @@
 load("./Output/3/GDSC.A.info.RData")
 
 anno <- read.delim("./DATA/GDSC/v17.3_fitted_dose_response.txt", as.is = T)
-drugs <- sort(unique(anno$DRUG_NAME))
+drugs <- sort(unique(anno$DRUG_NAME)) # 只为了取药品名称
 
 dr_gdsc_models <- list()
-for (kdrug in 1:length(drugs)) {
+for (kdrug in seq_len(length(drugs))) {
     drug <- drugs[kdrug]
     tmp <- cbind(idx = c(1:100), all.F1_R2.mat[, drug],
         all.in_sample_R2.mat[, drug], all.avg_CV_R2.mat[, drug])
@@ -17,4 +17,5 @@ for (kdrug in 1:length(drugs)) {
     dr_gdsc_models[[drug]] <- res_list
 }
 
+# 将每种药品下表现最好的模型进行存储
 save(dr_gdsc_models, file = "./Output/4/dr.GDSC.A.models.RData")
