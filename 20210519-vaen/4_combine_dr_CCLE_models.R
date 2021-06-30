@@ -1,3 +1,4 @@
+end <- 1
 load("./Output/3/CCLE.A.info.RData")
 drugs <- colnames(all_f1_r2_mat)
 dr_ccle_models <- list()
@@ -7,14 +8,14 @@ for (kdrug in seq_len(length(drugs))) {
     gsub("\\.", "-", drug) -> drug
 
     tmp <- cbind(
-        idx = c(1:100), all_f1_r2_mat[, drug],
-        all.in_sample_R2.mat[, drug], all.avg_CV_R2.mat[, drug]
+        idx = c(1:end), all_f1_r2_mat[, drug],
+        all_in_sample_r2_mat[, drug], all_avg_cv_r2_mat[, drug]
     )
     tmp <- tmp[order(tmp[, 4], decreasing = T), ]
     best_index <- tmp[1, 1] # 再次选出每个药品表现最好的模型
 
     load(paste("./Output/2/", best_index, ".CCLE.model.list.RData", sep = ""))
-    model.list[[drug]] -> res_list
+    model_list[[drug]] -> res_list
     res_list[["best_index"]] <- best_index
     dr_ccle_models[[drug]] <- res_list
 }
@@ -28,14 +29,14 @@ for (kdrug in seq_len(length(drugs))) {
     if (drug == "X17.AAG") drug <- "17-AAG"
     gsub("\\.", "-", drug) -> drug
     tmp <- cbind(
-        idx = c(1:100), solid.F1_R2.mat[, drug],
-        solid.in_sample_R2.mat[, drug], solid.avg_CV_R2.mat[, drug]
+        idx = c(1:end), solid_f1_r2_mat[, drug],
+        solid_in_sample_r2_mat[, drug], solid_avg_cv_r2_mat[, drug]
     )
     tmp <- tmp[order(tmp[, 4], decreasing = T), ]
     best_index <- tmp[1, 1]
 
     load(paste("./Output/2/", best_index, ".CCLE.model.list.S.RData", sep = ""))
-    model.list[[drug]] -> res_list
+    model_list[[drug]] -> res_list
     res_list[["best_index"]] <- best_index
     dr_ccle_models[[drug]] <- res_list
 }

@@ -137,10 +137,10 @@ dimnames(scaled_rpkm_mat) <- dimnames(rpkm_mat)
 
 # dataset for NOPEER.NO01.Sigmoid
 write.table(scaled_ccle_gene_mat,
-    file = paste("V15.CCLE.4VAE.RANK.tsv", sep = ""),
+    file = paste("./Output/0/V15.CCLE.4VAE.RANK.tsv", sep = ""),
     row.names = T, quote = F, sep = "\t"
 )
 write.table(scaled_rpkm_mat,
-    file = paste("V15.TCGA.4VAE.RANK.tsv", sep = ""),
+    file = paste("./Output/0/V15.TCGA.4VAE.RANK.tsv", sep = ""),
     row.names = T, quote = F, sep = "\t"
 )

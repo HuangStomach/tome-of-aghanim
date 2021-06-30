@@ -253,6 +253,6 @@ for (ksigmoid in start:end) {
         quote = F, sep = "\t", row.names = FALSE
     )
     save(model_list, file = paste(
-        "./Output/2/", ksigmoid, ".GDSC.model_list.RData", sep = ""
+        "./Output/2/", ksigmoid, ".GDSC.model.list.RData", sep = ""
     ))
 }

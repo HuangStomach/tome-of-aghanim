@@ -9,6 +9,7 @@ Data/**/*.txt
 !Data/GDSC/.gitkeep
 Output/*/*
 !Output/*/.gitkeep
+Output_Bak/*/*
 Figure/**/*.txt
 Figure/**/*.pdf
 Figure/**/*.Rdata

@@ -1,9 +1,10 @@
 import os
 import pandas as pd
+import numpy as np
 
 import tensorflow as tf
 from tensorflow.keras import backend as K
-from tensorflow.keras import metrics, Input
+from tensorflow.keras import metrics, optimizers, Input
 from tensorflow.keras.layers import Dense, Lambda, Layer, Activation, Dropout, BatchNormalization
 from tensorflow.keras import Model
 from tensorflow.keras.callbacks import Callback
@@ -13,8 +14,8 @@ deprecation._PRINT_DEPRECATION_WARNINGS = False
 tf.get_logger().setLevel('ERROR')
 
 output_dir = './Output/1/'
-train_file_path = './Output/0/V15.CCLE.4VAE.RANK.tsv'
-val_file_1_path = './Output/0/V15.TCGA.4VAE.RANK.tsv'
+train_ccle_file_path = './Output/0/V15.CCLE.4VAE.RANK.tsv'
+train_tcga_file_path = './Output/0/V15.TCGA.4VAE.RANK.tsv'
 print("output_dir: {}".format(output_dir))
 
 def sampling(args):
@@ -53,14 +54,14 @@ class WarmUpCallback(Callback):
         if K.get_value(self.beta) <= 1:
             K.set_value(self.beta, K.get_value(self.beta) + self.kappa)
 
-rnaseq_df = pd.read_table(train_file_path, index_col = 0)
-val_df_1 = pd.read_table(val_file_1_path, index_col = 0)
+rnaseq_df_ccle = pd.read_table(train_ccle_file_path, index_col = 0)
+rnaseq_df_tcga = pd.read_table(train_tcga_file_path, index_col = 0)
 
 test_set_percent = 0.1
-rnaseq_test_df = rnaseq_df.sample(frac=test_set_percent) # 使用10%作为测试样本
-rnaseq_train_df = rnaseq_df.drop(rnaseq_test_df.index) # 使用90%作为训练样本
+rnaseq_test_df = rnaseq_df_ccle.sample(frac=test_set_percent) # 使用10%作为测试样本
+rnaseq_train_df = rnaseq_df_ccle.drop(rnaseq_test_df.index) # 使用90%作为训练样本
 
-original_dim = rnaseq_df.shape[1] # 原始癌症种类
+original_dim = rnaseq_df_ccle.shape[1] # 原始癌症种类
 units = 100 # 隐藏层单元数量
 
 batch_size = 100
@@ -75,9 +76,9 @@ def train(i):
     i = str(_i)
     #tf.random.set_seed(_i)
 
-    train_latent_file = i + '.CCLE_latent.tsv'
-    train_weight_file = i + '.CCLE_weight.tsv'
-    predict_file = i + '.TCGA_latent.tsv'
+    train_ccle_latent_file = i + '.CCLE_latent.tsv'
+    train_ccle_weight_file = i + '.CCLE_weight.tsv'
+    train_tcga_latent_file = i + '.TCGA_latent.tsv'
     encoder_file = i + '.CCLE_encoder_onehidden_vae.hdf5'
     decoder_file = i + '.CCLE_decoder_onehidden_vae.hdf5'
 
@@ -117,44 +118,47 @@ def train(i):
     history_df.to_csv(loss_log_file, sep='\t') 
     """
 
+    # 使用CCLE数据进行编码
     encoder = Model(inputs=rnaseq_input, outputs=z_mean_encoded)
-    encoded_rnaseq_df = encoder.predict_on_batch(rnaseq_df)
-    encoded_rnaseq_df = pd.DataFrame(encoded_rnaseq_df, index=rnaseq_df.index)
+    encoded_rnaseq_df_ccle = encoder.predict_on_batch(rnaseq_df_ccle)
+    encoded_rnaseq_df_ccle = pd.DataFrame(encoded_rnaseq_df_ccle, index=rnaseq_df_ccle.index)
 
-    encoded_rnaseq_df.columns.name = 'sample_id'
-    encoded_rnaseq_df.columns = encoded_rnaseq_df.columns + 1
-    encoded_file = os.path.join(output_dir, train_latent_file)
-    encoded_rnaseq_df.to_csv(encoded_file, sep='\t')
+    encoded_rnaseq_df_ccle.columns.name = 'sample_id'
+    encoded_rnaseq_df_ccle.columns = encoded_rnaseq_df_ccle.columns + 1
+    encoded_file = os.path.join(output_dir, train_ccle_latent_file)
+    encoded_rnaseq_df_ccle.to_csv(encoded_file, sep='\t')
 
     decoder_input = Input(shape=(units, ))  # can generate from any sampled z vector
     _x_decoded_mean = decoder_to_reconstruct(decoder_input)
     decoder = Model(inputs=decoder_input, outputs=_x_decoded_mean)
 
+    # 保存模型，供以后数据验证使用
     encoder_model_file = os.path.join(output_dir, encoder_file)
     encoder.save(encoder_model_file)
     decoder_model_file = os.path.join(output_dir, decoder_file)
     decoder.save(decoder_model_file)
-    # sum_node_activity = encoded_rnaseq_df.sum(axis=0).sort_values(ascending=False)
+    # sum_node_activity = encoded_rnaseq_df_ccle.sum(axis=0).sort_values(ascending=False)
 
     weights = []
     for layer in decoder.layers:
         weights.append(layer.get_weights())
 
-    weight_layer_df = pd.DataFrame(weights[1][0], columns=rnaseq_df.columns, index=range(1, 101))
+    weight_layer_df = pd.DataFrame(weights[1][0], columns=rnaseq_df_ccle.columns, index=range(1, 101))
     weight_layer_df.index.name = 'encodings'
 
-    weight_file = os.path.join(output_dir, train_weight_file)
+    weight_file = os.path.join(output_dir, train_ccle_weight_file)
     weight_layer_df.to_csv(weight_file, sep='\t')
 
-    encoded_val_df = encoder.predict_on_batch(val_df_1)
-    encoded_val_df = pd.DataFrame(encoded_val_df, index=val_df_1.index)
+    encoded_rnaseq_df_tcga = encoder.predict_on_batch(rnaseq_df_tcga)
+    encoded_rnaseq_df_tcga = pd.DataFrame(encoded_rnaseq_df_tcga, index=rnaseq_df_tcga.index)
 
-    encoded_val_df.columns.name = 'sample_id'
-    encoded_val_df.columns = encoded_val_df.columns + 1
-    encoded_file = os.path.join(output_dir, predict_file)
-    encoded_val_df.to_csv(encoded_file, sep='\t')
+    encoded_rnaseq_df_tcga.columns.name = 'sample_id'
+    encoded_rnaseq_df_tcga.columns = encoded_rnaseq_df_tcga.columns + 1
+    encoded_file = os.path.join(output_dir, train_tcga_latent_file)
+    encoded_rnaseq_df_tcga.to_csv(encoded_file, sep='\t')
+
     print(encoded_file)
-    print(encoded_val_df.head(2))
+    print(encoded_rnaseq_df_tcga.head(2))
 
 for _i in range(1, 101):
     tf.function(train(_i))

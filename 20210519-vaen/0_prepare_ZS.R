@@ -160,7 +160,7 @@ dimnames(scaled.RPKM.mat) <- dimnames(RPKM.mat)
 
 ##########################################################################
 ### dataset for NOPEER.NO01.Sigmoid
-write.table(scaled.ccle.train.mat, file = paste("V15.CCLE.4VAE.ZS.tsv", sep = ""), row.names = T, quote = F, sep = "\t")
-write.table(scaled.RPKM.mat, file = paste("V15.TCGA.4VAE.ZS.tsv", sep = ""), row.names = T, quote = F, sep = "\t")
+write.table(scaled.ccle.train.mat, file = paste("./Output/0/V15.CCLE.4VAE.ZS.tsv", sep = ""), row.names = T, quote = F, sep = "\t")
+write.table(scaled.RPKM.mat, file = paste("./Output/0/V15.TCGA.4VAE.ZS.tsv", sep = ""), row.names = T, quote = F, sep = "\t")
 ##########################################################################
 print("finish")

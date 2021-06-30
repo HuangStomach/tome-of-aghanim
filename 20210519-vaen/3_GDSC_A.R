@@ -7,16 +7,17 @@ library("vegan")
 load("./Output/1/tcga_ss_mat.RData")
 anno <- read.delim("./Data/GDSC/v17.3_fitted_dose_response.txt", as.is = T)
 drugs <- sort(unique(anno$DRUG_NAME))
+end <- 2
 
 # 初始化矩阵
-matrix(0, nrow = 100, ncol = length(drugs)) -> all_f1_r2_mat
+matrix(0, nrow = end, ncol = length(drugs)) -> all_f1_r2_mat
 all_f1_r2_mat -> all_avg_cv_r2_mat -> all_in_sample_r2_mat -> all_sample_size
 
 drugs -> colnames(all_f1_r2_mat) -> colnames(all_sample_size) ->
 colnames(all_in_sample_r2_mat) -> colnames(all_avg_cv_r2_mat)
 
 all_mat <- c()
-for (ksigmoid in 1:100) {
+for (ksigmoid in 1:end) {
     load(paste("./Output/2/", ksigmoid, ".GDSC.model.list.RData", sep = ""))
     for (k in seq_len(length(drugs))) {
         drug <- drugs[k]
@@ -51,30 +52,30 @@ save(all_mat, all_sample_size,
     file = "./Output/3/GDSC.A.info.RData"
 )
 
-pdf("./Output/3/GDSC.A.ROC.pdf", width = 5, height = 5)
-for (k in seq_len(length(drugs))) {
-    drug <- drugs[k]
-    plot(
-        x = all_in_sample_r2_mat[, k],
-        y = all_avg_cv_r2_mat[, k],
-        main = drug,
-        xlab = "Self in_sample PCC",
-        ylab = "avg PCC (in_sample)",
-        col = rep("blue", 200), pch = 20, cex = .6
-    )
-    tmp <- cbind(
-        idx = c(1:100),
-        all_f1_r2_mat[, drug],
-        all_in_sample_r2_mat[, drug],
-        all_avg_cv_r2_mat[, drug]
-    )
-    tmp <- tmp[order(tmp[, 4], decreasing = T), ]
-    idx <- tmp[1:10, 1]
-    points(all_in_sample_r2_mat[idx, k], all_avg_cv_r2_mat[idx, k],
-        pch = 4, col = "red"
-    )
-}
-dev.off()
+# png("./Output/3/GDSC.A.ROC.png", width = 1000, height = 1000)
+# for (k in seq_len(length(drugs))) {
+#     drug <- drugs[k]
+#     plot(
+#         x = all_in_sample_r2_mat[, k],
+#         y = all_avg_cv_r2_mat[, k],
+#         main = drug,
+#         xlab = "Self in_sample PCC",
+#         ylab = "avg PCC (in_sample)",
+#         col = rep("blue", 200), pch = 20, cex = .6
+#     )
+#     tmp <- cbind(
+#         idx = c(1:end),
+#         all_f1_r2_mat[, drug],
+#         all_in_sample_r2_mat[, drug],
+#         all_avg_cv_r2_mat[, drug]
+#     )
+#     tmp <- tmp[order(tmp[, 4], decreasing = T), ]
+#     idx <- tmp[1:10, 1]
+#     points(all_in_sample_r2_mat[idx, k], all_avg_cv_r2_mat[idx, k],
+#         pch = 4, col = "red"
+#     )
+# }
+# dev.off()
 
 # 选择误差最小的模型对TCGA进行预测记录
 tcga_pred_mat <- c()
@@ -83,7 +84,7 @@ for (k in seq_len(length(drugs))) {
     drug <- drugs[k]
 
     tmp <- cbind(
-        idx = c(1:100),
+        idx = c(1:end),
         all_f1_r2_mat[, drug], # cv_R2_avg
         all_in_sample_r2_mat[, drug], # 预测误差（协方差
         all_avg_cv_r2_mat[, drug] # R2_avg
@@ -127,7 +128,7 @@ for (kdrug in seq_len(length(drugs))) {
     gsub("\\.", "-", drug) -> drug
 
     tmp <- cbind(
-        idx = c(1:100),
+        idx = c(1:end),
         all_f1_r2_mat[, drug],
         all_in_sample_r2_mat[, drug],
         all_avg_cv_r2_mat[, drug]
@@ -160,7 +161,7 @@ ccle_pred_full_mat <- c()
 for (k in seq_len(length(drugs))) {
     drug <- drugs[k]
     tmp <- cbind(
-        idx = c(1:100),
+        idx = c(1:end),
         all_f1_r2_mat[, drug],
         all_in_sample_r2_mat[, drug],
         all_avg_cv_r2_mat[, drug]

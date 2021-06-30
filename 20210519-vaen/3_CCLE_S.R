@@ -9,15 +9,17 @@ anno <- read.csv(
     "./DATA/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv", as.is = T
 )
 drugs <- sort(unique(anno$Compound))
-matrix(0, nrow = 100, ncol = length(drugs)) ->
+end <- 2
+
+matrix(0, nrow = end, ncol = length(drugs)) ->
 solid_f1_r2_mat -> solid_avg_cv_r2_mat ->
 solid_in_sample_r2_mat -> solid_sample_size
 
-drugs -> colnames(solid_f1_r2_mat) -> colnames(solid_in_sample_r2_mat)
-colnames(solid_in_sample_r2_mat) -> colnames(solid_sample_size)
+drugs -> colnames(solid_f1_r2_mat) -> colnames(solid_in_sample_r2_mat) ->
+colnames(solid_avg_cv_r2_mat) -> colnames(solid_sample_size)
 
 solid_mat <- c()
-for (ksigmoid in 1:100) {
+for (ksigmoid in 1:end) {
     load(paste("./Output/2/", ksigmoid, ".CCLE.model.list.S.RData", sep = ""))
     for (k in seq_len(length(drugs))) {
         drug <- drugs[k]
@@ -50,30 +52,31 @@ save(solid_mat, solid_sample_size,
     file = "./Output/3/CCLE.S.info.RData"
 )
 
-pdf("./Output/3/CCLE.S.ROC.pdf", width = 5, height = 5)
-for (k in seq_len(length(drugs))) {
-    drug <- drugs[k]
-    plot(
-        x = solid_in_sample_r2_mat[, k],
-        y = solid_avg_cv_r2_mat[, k],
-        main = drugs[k],
-        xlab = "Self in_sample PCC",
-        ylab = "avg PCC (in_sample)",
-        col = rep("blue", 200), pch = 20, cex = .6
-    )
-    tmp <- cbind(
-        idx = c(1:100),
-        solid_f1_r2_mat[, drug],
-        solid_in_sample_r2_mat[, drug],
-        solid_avg_cv_r2_mat[, drug]
-    )
-    tmp <- tmp[order(tmp[, 4], decreasing = T), ]
-    idx <- tmp[1:10, 1]
-    points(solid_in_sample_r2_mat[idx, k], solid_avg_cv_r2_mat[idx, k],
-        pch = 4, col = "red"
-    )
-}
-dev.off()
+
+# png("./Output/3/CCLE.S.ROC.png", width = 1000, height = 1000)
+# for (k in seq_len(length(drugs))) {
+#     drug <- drugs[k]
+#     plot(
+#         x = solid_in_sample_r2_mat[, k],
+#         y = solid_avg_cv_r2_mat[, k],
+#         main = drugs[k],
+#         xlab = "Self in_sample PCC",
+#         ylab = "avg PCC (in_sample)",
+#         col = rep("blue", 200), pch = 20, cex = .6
+#     )
+#     tmp <- cbind(
+#         idx = c(1:end),
+#         solid_f1_r2_mat[, drug],
+#         solid_in_sample_r2_mat[, drug],
+#         solid_avg_cv_r2_mat[, drug]
+#     )
+#     tmp <- tmp[order(tmp[, 4], decreasing = T), ]
+#     idx <- tmp[1:10, 1]
+#     points(solid_in_sample_r2_mat[idx, k], solid_avg_cv_r2_mat[idx, k],
+#         pch = 4, col = "red"
+#     )
+# }
+# dev.off()
 
 tcga_pred_mat <- c()
 solid_model_summary <- c()
@@ -81,7 +84,7 @@ for (k in seq_len(length(drugs))) {
     drug <- drugs[k]
 
     tmp <- cbind(
-        idx = c(1:100),
+        idx = c(1:end),
         solid_f1_r2_mat[, drug],
         solid_in_sample_r2_mat[, drug],
         solid_avg_cv_r2_mat[, drug]
@@ -123,7 +126,7 @@ for (kdrug in seq_len(length(drugs))) {
     gsub("\\.", "-", drug) -> drug
 
     tmp <- cbind(
-        idx = c(1:100),
+        idx = c(1:end),
         solid_f1_r2_mat[, drug],
         solid_in_sample_r2_mat[, drug],
         solid_avg_cv_r2_mat[, drug]
@@ -156,7 +159,7 @@ for (k in seq_len(length(drugs))) {
     drug <- drugs[k]
 
     tmp <- cbind(
-        idx = c(1:100),
+        idx = c(1:end),
         solid_f1_r2_mat[, drug],
         solid_in_sample_r2_mat[, drug],
         solid_avg_cv_r2_mat[, drug]

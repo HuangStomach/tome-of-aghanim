@@ -22,6 +22,7 @@
 每个HiSeqV2文件所在的目录代表一种癌症类型，描述不同样本对不同基因的表达
 
 > 14-15位为2位数字，01-09表示肿瘤样本，10-16表示正常对照样本
+> [sample-type-codes](https://gdc.cancer.gov/resources-tcga-users/tcga-code-tables/sample-type-codes)
 
 |sample|TCGA-OR-A5LC-01| ... |
 | ---- | ---- | ---- |

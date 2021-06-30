@@ -173,7 +173,7 @@ for (ksigmoid in start:end) {
     # write.table(tcga_drug_response_mat, file=paste(ksigmoid,".pred_TCGA.txt", sep=""), quote=F, sep="\t", row.names=FALSE)
     # write.table(self_prediction_mat, file=paste(ksigmoid,".pred_CCLE.txt", sep=""), quote=F, sep="\t", row.names=FALSE)
     save(model_list, file = paste(
-        "./Output/2/", ksigmoid, ".CCLE.model_list.RData",
+        "./Output/2/", ksigmoid, ".CCLE.model.list.RData",
         sep = ""
     ))
 }
