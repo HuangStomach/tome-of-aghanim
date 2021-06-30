@@ -6,13 +6,13 @@ load("../../Output/4/dr.CCLE.A.models.RData")
 drugs <- names(dr_ccle_models)
 x <- c()
 
-for (k in 1:length(drugs)) {
+for (k in seq_len(length(drugs))) {
     drug <- drugs[k]
     res_list <- dr_ccle_models[[drug]]
-    Ys <- res_list$Ys
-    which(Ys[, 1] != -9) -> ii
-    Ys <- Ys[ii, ]
-    recall <- cor(Ys[, 1], Ys[, 2])
+    ys <- res_list$ys
+    which(ys[, 1] != -9) -> ii
+    ys <- ys[ii, ]
+    recall <- cor(ys[, 1], ys[, 2])
 
     x <- rbind(x, c(drug, recall))
 }
@@ -22,13 +22,13 @@ colnames(x) <- c("Drug", "PCC")
 load("../../Output/4/dr.GDSC.A.models.RData")
 drugs <- names(dr_gdsc_models)
 y <- c()
-for (k in 1:length(drugs)) {
+for (k in seq_len(length(drugs))) {
     drug <- drugs[k]
     res_list <- dr_gdsc_models[[drug]]
-    Ys <- res_list$Ys
-    which(Ys[, 1] != -9) -> ii
-    Ys <- Ys[ii, ]
-    recall <- cor(Ys[, 1], Ys[, 2])
+    ys <- res_list$ys
+    which(ys[, 1] != -9) -> ii
+    ys <- ys[ii, ]
+    recall <- cor(ys[, 1], ys[, 2])
 
     y <- rbind(y, c(drug, recall))
 }
