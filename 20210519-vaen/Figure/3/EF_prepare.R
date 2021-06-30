@@ -13,7 +13,7 @@ colnames(gdsc.obsd) <- names(gdsc.model.list)
 #####
 
 gdsc.pred <- read.table(file = "../../Output/3/VAEN_GDSC.A.pred_GDSC.txt", header = T, as.is = T, sep = "\t")
-gdsc.pred.full <- read.table(file = "../../Output/3/VAEN_GDSC.A.pred_GDSC.full.txt", header = T, as.is = T, sep = "\t")
+gdsc.pred.full <- read.table(file = "../../Output/3/VAEN_GDSC.A.pred_CCLE.full.txt", header = T, as.is = T, sep = "\t")
 
 colnames(gdsc.pred) <- c("Sample", colnames(gdsc.obsd))
 colnames(gdsc.pred.full) <- c("Sample", colnames(gdsc.obsd))
