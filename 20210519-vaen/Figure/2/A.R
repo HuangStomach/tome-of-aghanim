@@ -18,7 +18,6 @@ for (k in seq_len(length(drugs))) {
 }
 colnames(x) <- c("Drug", "PCC")
 
-
 load("../../Output/4/dr.GDSC.A.models.RData")
 drugs <- names(dr_gdsc_models)
 y <- c()
@@ -37,7 +36,7 @@ colnames(y) <- c("Drug", "PCC")
 write.table(x, file = "./A.CCLE.txt")
 write.table(y, file = "./A.GDSC.txt")
 
-pdf("./A.PCC.pdf", width = 8, height = 4)
+png("./A.PCC.png", width = 1200, height = 600)
 match(drugs_match[, 1], x[, 1]) -> sx_ii
 match(drugs_match[, 3], y[, 1]) -> sy_ii
 

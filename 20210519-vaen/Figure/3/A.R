@@ -1,41 +1,63 @@
 library(ggplot2)
-
 load("../../Output/4/dr.CCLE.A.models.RData")
 drugs <- names(dr_ccle_models)
 
-TCGA.pred <- read.table("../../Output/3/VAEN_CCLE.A.pred_TCGA.txt", header = T, as.is = T, sep = "\t")
+tcga_pred <- read.table(
+    "../../Output/3/VAEN_CCLE.A.pred_TCGA.txt",
+    header = T, as.is = T, sep = "\t"
+)
 
-#####################
-dr.ccle.mat <- c()
-for (kdrug in 1:length(drugs)) {
+dr_ccle_mat <- c()
+for (kdrug in seq_len(length(drugs))) {
     drug <- drugs[kdrug]
 
-    dr_ccle_models[[drug]] -> res.list
-    Ys <- res.list$Ys
+    dr_ccle_models[[drug]] -> res_list
+    ys <- res_list$ys
 
-    which(Ys[, 1] != -9) -> ii
-    Ys <- Ys[ii, ]
-    dr.ccle.mat <- rbind(dr.ccle.mat, cbind(drug = drug, sample = rownames(Ys), ActArea = Ys[, 1], grp = "CCLE Observed DR"))
-    dr.ccle.mat <- rbind(dr.ccle.mat, cbind(drug = drug, sample = rownames(Ys), ActArea = Ys[, 2], grp = "CCLE Predicted DR"))
+    which(ys[, 1] != -9) -> ii
+    ys <- ys[ii, ]
+    dr_ccle_mat <- rbind(dr_ccle_mat,
+        cbind(
+            drug = drug,
+            sample = rownames(ys),
+            ActArea = ys[, 1],
+            grp = "CCLE Observed DR"
+        )
+    )
 
-    TCGA.drug.name <- gsub("-", ".", drug)
-    if (drug == "17-AAG") TCGA.drug.name <- "X17.AAG"
-    cur.drug.TCGA.pred <- TCGA.pred[, TCGA.drug.name]
-    dr.ccle.mat <- rbind(dr.ccle.mat, cbind(drug = drug, sample = gsub("-", ".", TCGA.pred[, 1]), 
-        ActArea = cur.drug.TCGA.pred, grp = "TCGA Predicted DR"))
+    dr_ccle_mat <- rbind(dr_ccle_mat,
+        cbind(drug = drug,
+            sample = rownames(ys),
+            ActArea = ys[, 2],
+            grp = "CCLE Predicted DR"
+        )
+    )
+
+    tcga_drug_name <- gsub("-", ".", drug)
+    if (drug == "17-AAG") tcga_drug_name <- "X17.AAG"
+    cur_drug_tcga_pred <- tcga_pred[, tcga_drug_name]
+    dr_ccle_mat <- rbind(dr_ccle_mat,
+        cbind(
+            drug = drug,
+            sample = gsub("-", ".", tcga_pred[, 1]
+        ),
+        ActArea = cur_drug_tcga_pred,
+        grp = "TCGA Predicted DR")
+    )
 }
 
-#########################
+new_mat <- as.data.frame(dr_ccle_mat)
+rownames(new_mat) <- NULL
+new_mat[, 3] <- as.numeric(as.character(new_mat[, 3]))
+write.table(new_mat, file = "./A.txt", row.names = F, quote = F, sep = "\t")
 
-new.mat <- as.data.frame(dr.ccle.mat)
-rownames(new.mat) <- NULL
-new.mat[, 3] <- as.numeric(as.character(new.mat[, 3]))
-write.table(new.mat, file = "./A.txt", row.names = F, quote = F, sep = "\t")
-
-g <- ggplot(aes(y = ActArea, x = drug, fill = grp), data = new.mat) +
+g <- ggplot(aes(y = ActArea, x = drug, fill = grp), data = new_mat) +
     geom_boxplot() +
     theme(
         axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = c(0.9, 0.9)) + xlab("") + ylab("Drug response (ActArea)") + guides(fill = guide_legend(title = "")
+        legend.position = c(0.9, 0.9)) +
+            xlab("") +
+            ylab("Drug response (ActArea)") +
+            guides(fill = guide_legend(title = "")
     )
-ggsave(g, file = "./A.pdf", width = 10, height = 5)
+ggsave(g, file = "./A.png", width = 10, height = 5)

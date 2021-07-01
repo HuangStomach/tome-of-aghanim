@@ -147,6 +147,6 @@ p2 <- ggplot(dat4plot.gdsc, aes(x = X, y = Lapatinib, fill = X)) +
 
 
 source("../../Lib/multiplot.R")
-pdf("A.ERBB2.Lapatinib.pdf", height = 4, width = 5)
+png("A.ERBB2.Lapatinib.png", height = 800, width = 1000)
 multiplot(plotlist = list(p1, p2), layout = matrix(c(1, 2), nrow = 1))
 dev.off()
