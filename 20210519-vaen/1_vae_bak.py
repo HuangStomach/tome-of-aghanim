@@ -10,7 +10,6 @@ from tensorflow.keras import Model
 from tensorflow.keras.callbacks import Callback
 
 import tensorflow.python.util.deprecation as deprecation
-tf.compat.v1.disable_eager_execution()
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 tf.get_logger().setLevel('ERROR')
 
@@ -24,6 +23,28 @@ def sampling(args):
     epsilon = K.random_normal(shape = tf.shape(input = z_mean), mean = 0., stddev = epsilon_std)
     z = z_mean + K.exp(z_log_var / 2) * epsilon
     return z
+
+"""
+# 自定义变分层
+class CustomVariationalLayer(Layer):
+    def __init__(self, **kwargs):
+        self.is_placeholder = True
+        super(CustomVariationalLayer, self).__init__(**kwargs)
+
+    def vae_loss(self, x_input, x_decoded):
+        reconstruction_loss = original_dim * metrics.binary_crossentropy(x_input, x_decoded)
+        kl_loss = - 0.5 * K.sum(
+            1 + z_log_var_encoded - K.square(z_mean_encoded) - K.exp(z_log_var_encoded)
+            , axis=-1)
+        return K.mean(reconstruction_loss + (K.get_value(beta) * kl_loss))
+
+    def call(self, inputs):
+        x = inputs[0]
+        x_decoded = inputs[1]
+        loss = self.vae_loss(x, x_decoded)
+        self.add_loss(loss, inputs=inputs)
+        return x
+"""
 
 class WarmUpCallback(Callback):
     def __init__(self, beta, kappa):
@@ -68,7 +89,7 @@ def train(i):
     z_mean_encoded = Activation('sigmoid')(z_mean_dense_batchnorm) # 激活函数
 
     decoder_to_reconstruct = Dense(original_dim, kernel_initializer='glorot_uniform', activation='sigmoid')
-
+    """ 
     z_log_var_dense_linear = Dense(units, kernel_initializer='glorot_uniform')(rnaseq_input) # 有规律的密集连接的NN层
     z_log_var_dense_batchnorm = BatchNormalization()(z_log_var_dense_linear)
     z_log_var_encoded = Activation('sigmoid')(z_log_var_dense_batchnorm) # 激活函数
@@ -77,46 +98,25 @@ def train(i):
     drop_layer = Dropout(rate = 0.2, noise_shape = None)(z) # 将Dropout应用于输入。
     rnaseq_reconstruct = decoder_to_reconstruct(drop_layer)
 
-    # 自定义变分层
-    class CustomVariationalLayer(Layer):
-        def __init__(self, **kwargs):
-            self.is_placeholder = True
-            super(CustomVariationalLayer, self).__init__(**kwargs)
-
-        def vae_loss(self, x_input, x_decoded):
-            reconstruction_loss = original_dim * metrics.binary_crossentropy(x_input, x_decoded)
-            kl_loss = - 0.5 * K.sum(
-                1 + z_log_var_encoded - K.square(z_mean_encoded) - K.exp(z_log_var_encoded)
-                , axis=-1)
-            return K.mean(reconstruction_loss + (K.get_value(beta) * kl_loss))
-
-        def call(self, inputs):
-            x = inputs[0]
-            x_decoded = inputs[1]
-            loss = self.vae_loss(x, x_decoded)
-            self.add_loss(loss, inputs=inputs)
-            return x
-
     # 训练VAE模型
     adam = optimizers.Adam(learning_rate=learning_rate)
     vae_layer = CustomVariationalLayer()([rnaseq_input, rnaseq_reconstruct])
     vae = Model(rnaseq_input, vae_layer)
     vae.compile(optimizer=adam, loss=None, loss_weights=[beta])
 
-    hist = vae.fit(
-        np.array(rnaseq_train_df),
+    hist = vae.fit(np.array(rnaseq_train_df),
         shuffle=True,
         epochs=epochs,
         verbose=0,
         batch_size=batch_size,
         validation_data=(np.array(rnaseq_test_df), None),
-        callbacks=[WarmUpCallback(beta, kappa)]
+        callbacks=[WarmUpCallback(beta, kappa)])
         #TQDMNotebookCallback(leave_inner=True, leave_outer=True)])
-    )
 
     history_df = pd.DataFrame(hist.history)
     loss_log_file = os.path.join(output_dir + "sampling.K.loss.log.txt")
     history_df.to_csv(loss_log_file, sep='\t') 
+    """
 
     # 使用CCLE数据进行编码
     encoder = Model(inputs=rnaseq_input, outputs=z_mean_encoded)

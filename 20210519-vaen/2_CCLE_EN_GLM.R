@@ -74,13 +74,13 @@ for (ksigmoid in start:end) {
     }) -> ss_pp
     names(ss_pp) <- NULL # 对癌症类型简单处理留下主要信息
 
-    self_prediction_mat <- matrix(-9,
-        nrow = length(unique(anno[, 1])),
-        ncol = length(drugs) + 2
-    )
-    self_prediction_mat[, 1] <- unique(anno[, "Primary.Cell.Line.Name"])
-    self_prediction_mat[, 2] <- unique(anno[, "CCLE.Cell.Line.Name"])
-    colnames(self_prediction_mat) <- c("CELLLINE", "Type", drugs)
+    # self_prediction_mat <- matrix(-9,
+    #     nrow = length(unique(anno[, 1])),
+    #     ncol = length(drugs) + 2
+    # )
+    # self_prediction_mat[, 1] <- unique(anno[, "Primary.Cell.Line.Name"])
+    # self_prediction_mat[, 2] <- unique(anno[, "CCLE.Cell.Line.Name"])
+    # colnames(self_prediction_mat) <- c("CELLLINE", "Type", drugs)
     # 初始化预测矩阵 细胞系 类别 药物1 药物2...
 
     tcga_drug_response_mat <- c()
