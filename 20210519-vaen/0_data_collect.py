@@ -44,7 +44,20 @@ def tcga():
 
     for t in tcga:
         url = 'https://bioinfo.uth.edu/VAEN/DATA/TCGA/{}/HiSeqV2'.format(t)
-        filename = './TCGA/{}/HiSeqV2'.format(t)
+        filename = './Data/TCGA/{}/HiSeqV2'.format(t)
+        global start_time
+        start_time = time.time()
+        print("开始下载 {}".format(url))
+        request.urlretrieve(url, filename, Schedule)
+        print('\n下载完毕')
+
+
+def mc3():
+    tcga = ['ACC', 'BLCA', 'BRCA', 'CESC', 'CHOL', 'COAD', 'DLBC', 'ESCA', 'GBM', 'HNSC', 'KICH', 'KIRC', 'KIRP', 'LAML', 'LGG', 'LIHC', 'LUAD', 'LUSC', 'MESO', 'OV', 'PAAD', 'PCPG', 'PRAD', 'READ', 'SARC', 'SKCM', 'STAD', 'TGCT', 'THCA', 'THYM', 'UCEC', 'UCS', 'UVM']
+
+    for t in tcga:
+        url = 'https://bioinfo.uth.edu/VAEN/MC3/{}_mc3.txt'.format(t)
+        filename = './Data/MC3/{}_mc3.txt'.format(t)
         global start_time
         start_time = time.time()
         print("开始下载 {}".format(url))
@@ -59,10 +72,13 @@ files = [
     ('./Data/GDSC/Screened_Compounds.txt', 'https://bioinfo.uth.edu/VAEN/DATA/GDSC/Screened_Compounds.txt'),
     ('./Data/Match/drugs_match_2.txt', 'https://bioinfo.uth.edu/VAEN/DATA/drugs.match-2.txt'),
     ('./Data/Match/drugs_match.txt', 'https://bioinfo.uth.edu/VAEN/DATA/drugs.match.txt'),
-    ('./Data/TCGA/*/HiSeqV2', 'dir')
+    ('./Data/TCGA.color.txt', 'https://bioinfo.uth.edu/VAEN/DATA/TCGA.color.txt'),
+    ('./Data/Response/drug_response.txt', 'https://bioinfo.uth.edu/VAEN/DATA/response/drug_response.txt'),
+    ('./Data/TCGA/*/HiSeqV2', tcga),
+    ('./Data/MC3/*_mc3.txt', mc3)
 ]
 
-str = ""
+str_in = ""
 while True:
     print("需要准备的数据文件：")
     for i, item in enumerate(files):
@@ -70,20 +86,24 @@ while True:
         sign = "✅" if os.path.exists(filename) else "{}]".format(i)
         print("{} {}".format(sign, filename))
 
-    str = input("请选择需要下载的数据文件, a为全部下载, q则退出: ");
+    str_in = input("请选择需要下载的数据文件, a为全部下载, q则退出: ");
 
-    if str.lower() == "q":
+    if str_in.lower() == "q":
         break
-    elif str.lower() == 'a':
+    elif str_in.lower() == 'a':
         tcga()
+        mc3()
         for i, item in enumerate(files):
             filename, url = item
             start_time = time.time()
             request.urlretrieve(url, filename, Schedule)
-    elif str.isdigit():
-        index = int(str)
+    elif str_in.isdigit():
+        index = int(str_in)
         if index < 0 or index >= len(files): continue
         filename, url = files[index]
+        if isinstance(url, str) == False :
+            url()
+            continue
         start_time = time.time()
         request.urlretrieve(url, filename, Schedule)
     else:

@@ -36,47 +36,28 @@
 
 Genomics of Drug Sensitivity in Cancer (GDSC) 肿瘤药物敏感性基因组学数据库 提供的癌症药物反应数据
 
+### *.model.list.RData
+
+使用EN训练后的结果，包含训练模型以及许多训练结果和数据。
+
+``` R
+res_list <- list()
+res_list[["model_summary"]] <- model_summary # 包含超参数与损失的数据集合
+res_list[["weight.mat"]] <- weight.mat # 权重中的矩阵
+res_list[["model"]] <- fit # 训练模型 可用来直接预测
+# res_list[["original_Y"]] <- Y
+# res_list[["self_pred"]] <- adj_expr_pred
+res_list[['ys']] <- ["original_Y", "self_pred"] # 包含真值与预测值的list
+```
+
 ## 具体步骤
 
 * 先对数据进行预处理，只采用CCLE和TCGA数据均有交集，样本数量足够大且活跃的数据，保存为 `V15.CCLE\TCGA.4VAE.*.tsv`。
 * 使用VAE（？）对数据进行去噪和降维，保存为 `CCLE\TCGA_latent.tsv`。
-* 再构建nested elastic net模型，使用CCLE和GDSC进行训练，保存为 `CCLE\GDSC.model.list.Rdata`。
+* 再构建elastic net模型，使用CCLE和GDSC进行训练，保存为 `CCLE\GDSC.model.list.Rdata`。
+> 其中使用`glmnet`包，在`cv.glmnet`函数中设置`alpha`为0-1之间的数即可使用elastic net进行回归
 * 之后选择其中表现最好的模型对tcga数据进行预测分析，保存为 `VAEN_CCLE\GDSC.*.pred_TCGA.txt`。
 * 对ccle数据进行预测分析，保存为 `VAEN_CCLE\GDSC.A.pred_CCLE.full.txt`。
 * 将训练模型过程中对训练数据的预测保存为 `VAEN_CCLE\GDSC.A.pred_CCLE\GDSC.txt`。
 * 针对训练过的所有药物，将每个药物表现最好的模型存入 `dr.CCLE\GDSC.A.models.RData`
 * 再将CCLE全部数据和固体数据（？）进行整合，存入 `VAEN_CCLE.MIX.pred_CCLE\TCGA.*.txt`。
-
-``` R
-# Z01
-setwd("/path/to/work/Z01.ReLU/")
-
-system("cp /work/Z01/CCLE.4VAE.Z01.tsv /work/Z01.ReLU/")
-system("cp /work/Z01/TCGA.4VAE.Z01.tsv /work/Z01.ReLU/")
-dir.create("/work/Z01.ReLU/result")
-dir.create("/work/Z01.ReLU/result.EN/")
-dir.create("/work/Z01.ReLU/result.EN/dr.CCLE")
-dir.create("/work/Z01.ReLU/result.EN/dr.GDSC")
-
-for(b in 1:100) {
-	cmd = paste("python3 run.VAE_100_0005_100_100.ReLU.py ", b, 
-	" /work/Z01.ReLU/ CCLE.4VAE.Z01.tsv TCGA.4VAE.Z01.tsv CCLE.latent.tsv CCLE.weight.tsv TCGA.latent.tsv encoder.hdf5 decoder.hdf5", sep="" )
-	system(cmd)
-}
-
-# ZS
-setwd("/path/to/work/ZS.ReLU/")
-
-system("cp /work/ZS/CCLE.4VAE.ZS.tsv /work/ZS.ReLU/")
-system("cp /work/ZS/TCGA.4VAE.ZS.tsv /work/ZS.ReLU/")
-dir.create("/work/ZS.ReLU/result")
-dir.create("/work/ZS.ReLU/result.EN/")
-dir.create("/work/ZS.ReLU/result.EN/dr.CCLE")
-dir.create("/work/ZS.ReLU/result.EN/dr.GDSC")
-
-for(b in 1:100){
-	cmd = paste("python3 run.VAE_100_0005_100_100.ReLU.py ", b, 
-	" /work/ZS.ReLU/ CCLE.4VAE.ZS.tsv TCGA.4VAE.ZS.tsv CCLE.latent.tsv CCLE.weight.tsv TCGA.latent.tsv encoder.hdf5 decoder.hdf5", sep="" )
-	system(cmd)
-}
-```
