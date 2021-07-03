@@ -7,9 +7,8 @@ Data/**/*.txt
 !Data/TCGA/.gitkeep
 !Data/CCLE/.gitkeep
 !Data/GDSC/.gitkeep
-Output/*/*
+Output*
 !Output/*/.gitkeep
-Output_Bak/*/*
 Figure/**/*.txt
 Figure/**/*.pdf
 Figure/**/*.Rdata
