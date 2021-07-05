@@ -1,36 +1,38 @@
-#####
-# Prepare data for 3BCD
 load("../../Output/2/1.CCLE.model.list.RData")
 
-ccle.model.list <- model.list
-ccle.obsd <- c()
-for (k in 1:length(ccle.model.list)) {
-    res.list <- ccle.model.list[[k]]
-    drug <- names(ccle.model.list)[k]
-    Ys <- res.list$Ys
+ccle_model_list <- model_list
+ccle_obsd <- c()
+for (k in seq_len(length(ccle_model_list))) {
+    res_list <- ccle_model_list[[k]]
+    drug <- names(ccle_model_list)[k]
+    ys <- res_list$ys
 
-    ccle.obsd <- cbind(ccle.obsd, Ys[, 1])
+    ccle_obsd <- cbind(ccle_obsd, ys[, 1])
 }
-colnames(ccle.obsd) <- names(ccle.model.list)
+colnames(ccle_obsd) <- names(ccle_model_list)
 
-#####
+ccle_pred <- read.table(
+    file = "../../Output/3/VAEN_CCLE.A.pred_CCLE.txt",
+    header = T, as.is = T, sep = "\t"
+)
+ccle_pred_full <- read.table(
+    file = "../../Output/3/VAEN_CCLE.A.pred_CCLE.full.txt",
+    header = T, as.is = T, sep = "\t"
+)
 
-ccle.pred <- read.table(file = "../../Output/3/VAEN_CCLE.A.pred_CCLE.txt", header = T, as.is = T, sep = "\t")
-ccle.pred.full <- read.table(file = "../../Output/3/VAEN_CCLE.A.pred_CCLE.full.txt", header = T, as.is = T, sep = "\t")
-
-colnames(ccle.pred) -> ss
+colnames(ccle_pred) -> ss
 ss[which(ss == "X17.AAG")] <- "17-AAG"
 gsub("\\.", "-", ss) -> ss
-colnames(ccle.pred) <- ss
+colnames(ccle_pred) <- ss
 
-colnames(ccle.pred.full) -> ss
+colnames(ccle_pred_full) -> ss
 ss[which(ss == "X17.AAG")] <- "17-AAG"
 gsub("\\.", "-", ss) -> ss
-colnames(ccle.pred.full) <- ss
+colnames(ccle_pred_full) <- ss
 
-##### Prediction
-original.ss.PP <- rownames(ccle.obsd)
-sapply(original.ss.PP, function(x) {
+# Prediction
+original_ss_pp <- rownames(ccle_obsd)
+sapply(original_ss_pp, function(x) {
     strsplit(x, split = "\\.")[[1]][1] -> u
     strsplit(u, split = "_")[[1]] -> v
     v <- v[-1]
@@ -38,19 +40,32 @@ sapply(original.ss.PP, function(x) {
 }) -> tt
 names(tt) <- NULL
 
-#####
-anno <- read.csv("../../Data/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv", as.is = T)
+anno <- read.csv(
+    "../../Data/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv",
+    as.is = T
+)
 drugs <- sort(unique(anno$Compound))
 
-full.drug.by.tissue.mat <- pred.drug.by.tissue.mat <- obsd.drug.by.tissue.mat <- matrix(1, nrow = length(drugs), ncol = length(unique(tt)))
-rownames(obsd.drug.by.tissue.mat) <- rownames(pred.drug.by.tissue.mat) <- rownames(full.drug.by.tissue.mat) <- drugs
-colnames(obsd.drug.by.tissue.mat) <- colnames(pred.drug.by.tissue.mat) <- colnames(full.drug.by.tissue.mat) <- sort(unique(tt))
+matrix(1, nrow = length(drugs), ncol = length(unique(tt))) ->
+    obsd_drug_by_tissue_mat ->
+    pred_drug_by_tissue_mat ->
+    full_drug_by_tissue_mat
 
-for (kdrug in 1:length(drugs)) {
+drugs ->
+    rownames(full_drug_by_tissue_mat) ->
+    rownames(pred_drug_by_tissue_mat) ->
+    rownames(obsd_drug_by_tissue_mat)
+
+sort(unique(tt)) ->
+    colnames(full_drug_by_tissue_mat) ->
+    colnames(pred_drug_by_tissue_mat) ->
+    colnames(obsd_drug_by_tissue_mat)
+
+for (kdrug in seq_len(length(drugs))) {
     drug <- drugs[kdrug]
-    Ys <- cbind(ccle.obsd[, drug], ccle.pred[, drug], ccle.pred.full[, drug])
+    ys <- cbind(ccle_obsd[, drug], ccle_pred[, drug], ccle_pred_full[, drug])
 
-    sapply(rownames(Ys), function(x) {
+    sapply(rownames(ys), function(x) {
         strsplit(x, split = "\\.")[[1]][1] -> u
         strsplit(u, split = "_")[[1]] -> v
         v <- v[-1]
@@ -58,167 +73,204 @@ for (kdrug in 1:length(drugs)) {
     }) -> tt
     names(tt) <- NULL
 
-    for (kt in 1:ncol(obsd.drug.by.tissue.mat)) {
-        x.tissue <- colnames(obsd.drug.by.tissue.mat)[kt]
+    for (kt in seq_len(ncol(obsd_drug_by_tissue_mat))) {
+        x_tissue <- colnames(obsd_drug_by_tissue_mat)[kt]
 
-        X <- ifelse(tt %in% x.tissue, 1, 0)
+        x <- ifelse(tt %in% x_tissue, 1, 0)
 
-        which(Ys[, 1] != -9) -> ii
-        Y1 <- Ys[ii, 1]
-        X1 <- X[ii]
-        sum(X1 == 1) -> check
-        label <- ifelse(mean(Y1[which(X1 == 1)]) > mean(Y1[which(X1 == 0)]), 1, -1)
-        if (check > 5) obsd.drug.by.tissue.mat[kdrug, kt] <- label * t.test(Y1[which(X1 == 1)], Y1[which(X1 == 0)])$p.value
+        which(ys[, 1] != -9) -> ii
+        y1 <- ys[ii, 1]
+        x1 <- x[ii]
+        sum(x1 == 1) -> check
+        label <- ifelse(
+            mean(y1[which(x1 == 1)]) >
+            mean(y1[which(x1 == 0)]), 1, -1
+        )
+        if (check > 5) {
+            label * t.test(y1[which(x1 == 1)], y1[which(x1 == 0)])$p.value ->
+            obsd_drug_by_tissue_mat[kdrug, kt]
+        }
 
-        which(Ys[, 1] != -9) -> ii
-        Y2 <- Ys[ii, 2]
-        X2 <- X[ii]
-        sum(X2 == 1) -> check
-        label <- ifelse(mean(Y2[which(X2 == 1)]) > mean(Y2[which(X2 == 0)]), 1, -1)
-        if (check > 5) pred.drug.by.tissue.mat[kdrug, kt] <- label * t.test(Y2[which(X2 == 1)], Y2[which(X2 == 0)])$p.value
+        which(ys[, 1] != -9) -> ii
+        y2 <- ys[ii, 2]
+        x2 <- x[ii]
+        sum(x2 == 1) -> check
+        label <- ifelse(
+            mean(y2[which(x2 == 1)]) >
+            mean(y2[which(x2 == 0)]), 1, -1
+        )
+        if (check > 5) {
+            pred_drug_by_tissue_mat[kdrug, kt] <- label * t.test(
+                y2[which(x2 == 1)], y2[which(x2 == 0)]
+            )$p.value
+        }
 
-        Y3 <- Ys[, 3]
-        label <- ifelse(mean(Y3[which(X == 1)]) > mean(Y3[which(X == 0)]), 1, -1)
-        full.drug.by.tissue.mat[kdrug, kt] <- label * t.test(Y3[which(X == 1)], Y3[which(X == 0)])$p.value
+        y3 <- ys[, 3]
+        label <- ifelse(
+            mean(y3[which(x == 1)]) >
+            mean(y3[which(x == 0)]), 1, -1
+        )
+        full_drug_by_tissue_mat[kdrug, kt] <- label * t.test(
+            y3[which(x == 1)], y3[which(x == 0)]
+        )$p.value
     }
 }
 
+apply(obsd_drug_by_tissue_mat, 2, var) -> obsd_check
+apply(pred_drug_by_tissue_mat, 2, var) -> pred_check
 
-apply(obsd.drug.by.tissue.mat, 2, var) -> obsd.check
-apply(pred.drug.by.tissue.mat, 2, var) -> pred.check
+print(which(obsd_check == 0))
+print(which(pred_check == 0))
 
-print(which(obsd.check == 0))
-print(which(pred.check == 0))
+obsd_drug_by_tissue_mat <- obsd_drug_by_tissue_mat[, which(obsd_check != 0)]
+pred_drug_by_tissue_mat <- pred_drug_by_tissue_mat[, which(obsd_check != 0)]
+full_drug_by_tissue_mat <- full_drug_by_tissue_mat[, which(obsd_check != 0)]
 
-obsd.drug.by.tissue.mat <- obsd.drug.by.tissue.mat[, which(obsd.check != 0)]
-pred.drug.by.tissue.mat <- pred.drug.by.tissue.mat[, which(obsd.check != 0)]
-full.drug.by.tissue.mat <- full.drug.by.tissue.mat[, which(obsd.check != 0)]
+drug_ccle <- read.table(
+    file = "../../Output/3/VAEN_CCLE.A.pred_TCGA.txt",
+    header = T, as.is = T, sep = "\t"
+)
+colnames(drug_ccle)[3:ncol(drug_ccle)] -> drugs
+cancer_types <- unique(drug_ccle[, 2])
+sample_type <- substr(drug_ccle[, 1], 14, 15)
+ss <- gsub("\\.", "-", drug_ccle[, 1])
+drug_ccle[, 1] <- ss
 
-#####
-drug.ccle <- read.table(file = "../../Output/3/VAEN_CCLE.A.pred_TCGA.txt", header = T, as.is = T, sep = "\t")
-colnames(drug.ccle)[3:ncol(drug.ccle)] -> drugs
-cancer.types <- unique(drug.ccle[, 2])
-sample.type <- substr(drug.ccle[, 1], 14, 15)
-ss <- gsub("\\.", "-", drug.ccle[, 1])
-drug.ccle[, 1] <- ss
+cancer_drug_ccle <- c()
+for (ct in 1:length(cancer_types)) {
+    cancer <- cancer_types[ct]
 
-cancer.drug.ccle <- c()
-for (ct in 1:length(cancer.types)) {
-    cancer <- cancer.types[ct]
-
-    type.code <- "01"
+    type_code <- "01"
     if (cancer == "LAML") {
-        type.code <- "03"
+        type_code <- "03"
     }
     if (cancer == "SKCM") {
-        type.code <- "06"
+        type_code <- "06"
     }
 
-    blca.ccle <- drug.ccle[which(drug.ccle[, 2] == cancer & sample.type == type.code), ]
-    cancer.drug.ccle <- rbind(cancer.drug.ccle, blca.ccle)
+    blca_ccle <- drug_ccle[
+        which(drug_ccle[, 2] == cancer & sample_type == type_code),
+    ]
+    cancer_drug_ccle <- rbind(cancer_drug_ccle, blca_ccle)
 }
-drug.ccle <- cancer.drug.ccle
+drug_ccle <- cancer_drug_ccle
 
-#####
+tcga_drug_by_cancer_mat <- matrix(
+    1, nrow = length(drugs), ncol = length(cancer_types)
+)
+rownames(tcga_drug_by_cancer_mat) <- drugs
+colnames(tcga_drug_by_cancer_mat) <- sort(cancer_types)
 
-#####
-TCGA.drug.by.cancer.mat <- matrix(1, nrow = length(drugs), ncol = length(cancer.types))
-rownames(TCGA.drug.by.cancer.mat) <- drugs
-colnames(TCGA.drug.by.cancer.mat) <- sort(cancer.types)
+for (kdrug in seq_len(length(drugs))) {
+    y <- drug_ccle[, drugs[kdrug]]
 
-for (kdrug in 1:length(drugs)) {
-    Y <- drug.ccle[, drugs[kdrug]]
-
-    for (kt in 1:ncol(TCGA.drug.by.cancer.mat)) {
-        x.cancer <- colnames(TCGA.drug.by.cancer.mat)[kt]
-        X <- ifelse(drug.ccle[, 2] %in% x.cancer, 1, 0)
-        if (sum(X == 1) < 5) next
-        label <- ifelse(mean(Y[which(X == 1)]) > mean(Y[which(X == 0)]), 1, -1)
-        p <- t.test(Y[which(X == 1)], Y[which(X == 0)])$p.value
+    for (kt in seq_len(ncol(tcga_drug_by_cancer_mat))) {
+        x_cancer <- colnames(tcga_drug_by_cancer_mat)[kt]
+        x <- ifelse(drug_ccle[, 2] %in% x_cancer, 1, 0)
+        if (sum(x == 1) < 5) next
+        label <- ifelse(mean(y[which(x == 1)]) > mean(y[which(x == 0)]), 1, -1)
+        p <- t.test(y[which(x == 1)], y[which(x == 0)])$p.value
         if (p < 1e-100) p <- 1e-101
-        TCGA.drug.by.cancer.mat[kdrug, kt] <- label * p
+        tcga_drug_by_cancer_mat[kdrug, kt] <- label * p
     }
 }
 
-#####
-drug.ccle <- read.table(file = "../../Output/3/VAEN_CCLE.A.pred_TCGA.txt", header = T, as.is = T, sep = "\t")
-immune.cancer <- c("LAML", "DLBC", "THYM")
-which(drug.ccle[, 2] %in% immune.cancer) -> ii
-drug.ccle <- drug.ccle[-ii, ]
-colnames(drug.ccle)[3:ncol(drug.ccle)] -> drugs
-cancer.types <- unique(drug.ccle[, 2])
-sample.type <- substr(drug.ccle[, 1], 14, 15)
-ss <- gsub("\\.", "-", drug.ccle[, 1])
-drug.ccle[, 1] <- ss
+drug_ccle <- read.table(
+    file = "../../Output/3/VAEN_CCLE.A.pred_TCGA.txt",
+    header = T, as.is = T, sep = "\t"
+)
+immune_cancer <- c("LAML", "DLBC", "THYM")
+which(drug_ccle[, 2] %in% immune_cancer) -> ii
+drug_ccle <- drug_ccle[-ii, ]
+colnames(drug_ccle)[3:ncol(drug_ccle)] -> drugs
+cancer_types <- unique(drug_ccle[, 2])
+sample_type <- substr(drug_ccle[, 1], 14, 15)
+ss <- gsub("\\.", "-", drug_ccle[, 1])
+drug_ccle[, 1] <- ss
 
-cancer.drug.ccle <- c()
-for (ct in 1:length(cancer.types)) {
-    cancer <- cancer.types[ct]
+cancer_drug_ccle <- c()
+for (ct in 1:length(cancer_types)) {
+    cancer <- cancer_types[ct]
 
-    type.code <- "01"
+    type_code <- "01"
     if (cancer == "LAML") {
-        type.code <- "03"
+        type_code <- "03"
     }
     if (cancer == "SKCM") {
-        type.code <- "06"
+        type_code <- "06"
     }
 
-    blca.ccle <- drug.ccle[which(drug.ccle[, 2] == cancer & sample.type == type.code), ]
-    cancer.drug.ccle <- rbind(cancer.drug.ccle, blca.ccle)
+    blca_ccle <- drug_ccle[
+        which(drug_ccle[, 2] == cancer & sample_type == type_code),
+    ]
+    cancer_drug_ccle <- rbind(cancer_drug_ccle, blca_ccle)
 }
-drug.ccle <- cancer.drug.ccle
+drug_ccle <- cancer_drug_ccle
 
-#####
-TCGA.sensitive.mat <- matrix(1, nrow = length(drugs), ncol = length(cancer.types))
-rownames(TCGA.sensitive.mat) <- drugs
-colnames(TCGA.sensitive.mat) <- sort(cancer.types)
-sensitive.prop <- c()
+tcga_sensitive_mat <- matrix(
+    1, nrow = length(drugs), ncol = length(cancer_types)
+)
+rownames(tcga_sensitive_mat) <- drugs
+colnames(tcga_sensitive_mat) <- sort(cancer_types)
+sensitive_prop <- c()
 
 for (kdrug in 1:length(drugs)) {
-    Y <- drug.ccle[, drugs[kdrug]]
-    Y > quantile(Y, probs = .95) -> sensitive.ii
-    for (kt in 1:ncol(TCGA.sensitive.mat)) {
-        x.cancer <- colnames(TCGA.sensitive.mat)[kt]
-        X <- drug.ccle[, 2] %in% x.cancer
-        if (kdrug == 18) sensitive.prop <- c(sensitive.prop, sum(X & sensitive.ii) / sum(X))
+    y <- drug_ccle[, drugs[kdrug]]
+    y > quantile(y, probs = .95) -> sensitive_ii
+    for (kt in 1:ncol(tcga_sensitive_mat)) {
+        x_cancer <- colnames(tcga_sensitive_mat)[kt]
+        x <- drug_ccle[, 2] %in% x_cancer
+        if (kdrug == 18) {
+            sensitive_prop <- c(sensitive_prop, sum(x & sensitive_ii) / sum(x))
+        }
 
-        if (sum(X & sensitive.ii) < 5) next
+        if (sum(x & sensitive_ii) < 5) next
 
-        table(sensitive.ii, X) -> mm
-        mm[2:1, 2:1] -> new.mm
-        TCGA.sensitive.mat[kdrug, kt] <- fisher.test(new.mm)$p.value
+        table(sensitive_ii, x) -> mm
+        mm[2:1, 2:1] -> new_mm
+        tcga_sensitive_mat[kdrug, kt] <- fisher.test(new_mm)$p.value
     }
 }
-names(sensitive.prop) <- colnames(TCGA.sensitive.mat)
+names(sensitive_prop) <- colnames(tcga_sensitive_mat)
 
-#####
-TCGA.resistant.mat <- matrix(1, nrow = length(drugs), ncol = length(cancer.types))
-rownames(TCGA.resistant.mat) <- drugs
-colnames(TCGA.resistant.mat) <- sort(cancer.types)
-resistant.prop <- c()
+tcga_resistant_mat <- matrix(
+    1, nrow = length(drugs), ncol = length(cancer_types)
+)
+rownames(tcga_resistant_mat) <- drugs
+colnames(tcga_resistant_mat) <- sort(cancer_types)
+resistant_prop <- c()
 
-for (kdrug in 1:length(drugs)) {
-    Y <- drug.ccle[, drugs[kdrug]]
-    Y < quantile(Y, probs = .05) -> resistant.ii
-    for (kt in 1:ncol(TCGA.sensitive.mat)) {
-        x.cancer <- colnames(TCGA.sensitive.mat)[kt]
-        X <- drug.ccle[, 2] %in% x.cancer
-        if (kdrug == 18) resistant.prop <- c(resistant.prop, sum(X & resistant.ii) / sum(X))
-        if (sum(X & resistant.ii) < 5) next
+for (kdrug in seq_len(length(drugs))) {
+    y <- drug_ccle[, drugs[kdrug]]
+    y < quantile(y, probs = .05) -> resistant_ii
+    for (kt in 1:ncol(tcga_sensitive_mat)) {
+        x_cancer <- colnames(tcga_sensitive_mat)[kt]
+        x <- drug_ccle[, 2] %in% x_cancer
+        if (kdrug == 18) {
+            resistant_prop <- c(resistant_prop, sum(x & resistant_ii) / sum(x))
+        }
+        if (sum(x & resistant_ii) < 5) next
 
-        table(resistant.ii, X) -> mm
-        mm[2:1, 2:1] -> new.mm
-        TCGA.resistant.mat[kdrug, kt] <- fisher.test(new.mm)$p.value
+        table(resistant_ii, x) -> mm
+        mm[2:1, 2:1] -> new_mm
+        tcga_resistant_mat[kdrug, kt] <- fisher.test(new_mm)$p.value
     }
 }
-names(resistant.prop) <- colnames(TCGA.sensitive.mat)
+names(resistant_prop) <- colnames(tcga_sensitive_mat)
 
-PLX4720.pred.dr <- drug.ccle[, 18]
+plx4720_pred_dr <- drug_ccle[, 18]
 
-rownames(TCGA.sensitive.mat) <- rownames(pred.drug.by.tissue.mat)
-rownames(TCGA.resistant.mat) <- rownames(pred.drug.by.tissue.mat)
+rownames(tcga_sensitive_mat) <- rownames(pred_drug_by_tissue_mat)
+rownames(tcga_resistant_mat) <- rownames(pred_drug_by_tissue_mat)
 
-save(resistant.prop, sensitive.prop, PLX4720.pred.dr, obsd.drug.by.tissue.mat, pred.drug.by.tissue.mat, full.drug.by.tissue.mat, TCGA.drug.by.cancer.mat, TCGA.sensitive.mat, TCGA.resistant.mat, file = "./BCD.data.RData")
+save(
+    resistant_prop, sensitive_prop,
+    plx4720_pred_dr, obsd_drug_by_tissue_mat,
+    pred_drug_by_tissue_mat, full_drug_by_tissue_mat,
+    tcga_drug_by_cancer_mat, tcga_sensitive_mat,
+    tcga_resistant_mat,
+    file = "./BCD.data.RData"
+)
 
-write.table(TCGA.sensitive.mat, file = "./C.sensitive.txt", quote = F)
-write.table(TCGA.resistant.mat, file = "./C.resistant.txt", quote = F)
+write.table(tcga_sensitive_mat, file = "./C.sensitive.txt", quote = F)
+write.table(tcga_resistant_mat, file = "./C.resistant.txt", quote = F)

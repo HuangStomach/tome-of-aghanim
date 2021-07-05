@@ -105,8 +105,6 @@ for (ct in 1:length(cancer_types)) {
 }
 drug.gdsc <- cancer.drug.gdsc
 
-###################################################################################################
-
 ########## CLIN
 clin_data <- read.delim("BRCA_clinicalMatrix", header = T, sep = "\t")
 type <- substr(clin_data[, 1], 14, 15)
