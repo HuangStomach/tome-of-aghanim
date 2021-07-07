@@ -1,127 +1,144 @@
-drug.ccle <- read.table("../../Output/3/VAEN_CCLE.A.pred_TCGA.txt", header = T, as.is = T)
-colnames(drug.ccle)[3:ncol(drug.ccle)] -> drugs
-cancer.types <- unique(drug.ccle[, 2])
-sample.type <- substr(drug.ccle[, 1], 14, 15)
-ss <- gsub("\\.", "-", drug.ccle[, 1])
-drug.ccle[, 1] <- ss
+drug_ccle <- read.table(
+    "../../Output/3/VAEN_CCLE.A.pred_TCGA.txt",
+    header = T, as.is = T
+)
+colnames(drug_ccle)[3:ncol(drug_ccle)] -> drugs
+cancer_types <- unique(drug_ccle[, 2])
+sample_type <- substr(drug_ccle[, 1], 14, 15)
+ss <- gsub("\\.", "-", drug_ccle[, 1])
+drug_ccle[, 1] <- ss
 
 
-cancer.drug.ccle <- c()
-for (ct in 1:length(cancer.types)) {
-    cancer <- cancer.types[ct]
+cancer_drug_ccle <- c()
+for (ct in 1:length(cancer_types)) {
+    cancer <- cancer_types[ct]
 
-    type.code <- "01"
+    type_code <- "01"
     if (cancer == "LAML") {
-        type.code <- "03"
+        type_code <- "03"
     }
     if (cancer == "SKCM") {
-        type.code <- "06"
+        type_code <- "06"
     }
 
-    blca.ccle <- drug.ccle[which(drug.ccle[, 2] == cancer & sample.type == type.code), ]
-    cancer.drug.ccle <- rbind(cancer.drug.ccle, blca.ccle)
+    blca_ccle <- drug_ccle[which(
+        drug_ccle[, 2] == cancer & sample_type == type_code
+    ), ]
+    cancer_drug_ccle <- rbind(cancer_drug_ccle, blca_ccle)
 }
-drug.ccle <- cancer.drug.ccle
-###################################################################################################
+drug_ccle <- cancer_drug_ccle
 
 library("survival")
 library("survminer")
 
 response <- read.delim("../../Data/response/drug_response.txt", as.is = T)
-response <- response[which(response$drug.name == "Paclitaxel" & response$cancers == "BRCA"), ]
+response <- response[which(
+    response$drug.name == "Paclitaxel" & response$cancers == "BRCA"
+), ]
 
-match(response[, 2], substr(drug.ccle[, 1], 1, 12)) -> ii
-cbind(response, drug.ccle[ii, ]) -> new2
+match(response[, 2], substr(drug_ccle[, 1], 1, 12)) -> ii
+cbind(response, drug_ccle[ii, ]) -> new2
 new2 <- new2[!is.na(ii), ]
 dim(new2)
 
 
-brca.clin.data <- read.delim("BRCA_clinicalMatrix", as.is = T)
-match(new2[, 2], substr(brca.clin.data[, 1], 1, 12)) -> ii
-brca.clin.data <- brca.clin.data[ii, ]
+brca_clin_data <- read.delim("BRCA_clinicalMatrix", as.is = T)
+match(new2[, 2], substr(brca_clin_data[, 1], 1, 12)) -> ii
+brca_clin_data <- brca_clin_data[ii, ]
 
 drug <- "Paclitaxel"
 
-samples <- brca.clin.data[, 1]
-match(samples, drug.ccle[, 1]) -> ii
-drug.response <- drug.ccle[ii, drug]
+samples <- brca_clin_data[, 1]
+match(samples, drug_ccle[, 1]) -> ii
+drug_response <- drug_ccle[ii, drug]
 
-surv.data <- brca.clin.data[match(samples, brca.clin.data[, 1]), ]
+surv_data <- brca_clin_data[match(samples, brca_clin_data[, 1]), ]
 
-new3 <- cbind(drug.response, surv.data)
-Y1 <- Surv(new3[, "X_OS"], new3[, "X_OS_IND"])
+new3 <- cbind(drug_response, surv_data)
+y1 <- Surv(new3[, "X_OS"], new3[, "X_OS_IND"])
 
 xvector <- ifelse(new3[, 1] > median(new3[, 1]), "HR", "LR")
 table(xvector)
 
 dat <- data.frame(cbind(new3, xvector))
 fit <- survfit(Surv(X_OS, X_OS_IND) ~ xvector, data = dat)
-coxph(Y1 ~ xvector)
+coxph(y1 ~ xvector)
 
 
-#png("C.CCLE.Paclitaxel.BRCA.png", width = 500, height = 500)
-
-fit <- survfit(Surv(as.numeric(X_OS), as.numeric(X_OS_IND)) ~ xvector, data = dat)
-g1 <- ggsurvplot(fit, data = dat, risk.table = TRUE, pval = TRUE, ggtheme = theme_minimal())
+fit <- survfit(Surv(
+    as.numeric(X_OS), as.numeric(X_OS_IND)
+) ~ xvector, data = dat)
+g1 <- ggsurvplot(
+    fit, data = dat,
+    risk.table = TRUE, pval = TRUE,
+    ggtheme = theme_minimal()
+)
 ggsave("./C.CCLE.Paclitaxel.BRCA.png", plot = print(g1), width = 5, height = 5)
 
-###################################################################################################
+drug_ccle <- read.table(
+    file = "../../Output/3/VAEN_GDSC.A.pred_TCGA.txt",
+    header = T, as.is = T, sep = "\t"
+)
 
-drug.ccle <- read.table(file = "../../Output/3/VAEN_GDSC.A.pred_TCGA.txt", header = T, as.is = T, sep = "\t")
+cancer_types <- unique(drug_ccle[, 2])
+sample_type <- substr(drug_ccle[, 1], 14, 15)
+cancer_drug_ccle <- c()
+for (ct in seq_len(length(cancer_types))) {
+    cancer <- cancer_types[ct]
 
-cancer.types <- unique(drug.ccle[, 2])
-sample.type <- substr(drug.ccle[, 1], 14, 15)
-cancer.drug.ccle <- c()
-for (ct in 1:length(cancer.types)) {
-    cancer <- cancer.types[ct]
-
-    type.code <- "01"
+    type_code <- "01"
     if (cancer == "LAML") {
-        type.code <- "03"
+        type_code <- "03"
     }
     if (cancer == "SKCM") {
-        type.code <- "06"
+        type_code <- "06"
     }
 
-    blca.ccle <- drug.ccle[which(drug.ccle[, 2] == cancer & sample.type == type.code), ]
-    cancer.drug.ccle <- rbind(cancer.drug.ccle, blca.ccle)
+    blca_ccle <- drug_ccle[which(
+        drug_ccle[, 2] == cancer & sample_type == type_code
+    ), ]
+    cancer_drug_ccle <- rbind(cancer_drug_ccle, blca_ccle)
 }
-drug.ccle <- cancer.drug.ccle
+drug_ccle <- cancer_drug_ccle
 
 
 response <- read.delim("../../Data/response/drug_response.txt", as.is = T)
 response <- response[which(response$drug.name == "Fluorouracil"), ]
 
-match(response[, 2], substr(drug.ccle[, 1], 1, 12)) -> ii
-cbind(response, drug.ccle[ii, ]) -> new2
+match(response[, 2], substr(drug_ccle[, 1], 1, 12)) -> ii
+cbind(response, drug_ccle[ii, ]) -> new2
 new2 <- new2[!is.na(ii), ]
 dim(new2)
 
 new2 <- new2[which(new2[, 1] == "STAD"), ]
 
-brca.clin.data <- read.delim("STAD_clinicalMatrix", as.is = T)
-match(new2[, 2], substr(brca.clin.data[, 1], 1, 12)) -> ii
-stad.clin.data <- brca.clin.data[ii, ]
+brca_clin_data <- read.delim("STAD_clinicalMatrix", as.is = T)
+match(new2[, 2], substr(brca_clin_data[, 1], 1, 12)) -> ii
+stad_clin_data <- brca_clin_data[ii, ]
 
 library(survival)
 
 drug <- "X5.Fluorouracil"
 
-samples <- stad.clin.data[, 1]
-match(samples, drug.ccle[, 1]) -> ii
+samples <- stad_clin_data[, 1]
+match(samples, drug_ccle[, 1]) -> ii
 
-drug.response <- drug.ccle[ii, drug]
-surv.data <- stad.clin.data[match(samples, stad.clin.data[, 1]), ]
+drug_response <- drug_ccle[ii, drug]
+surv_data <- stad_clin_data[match(samples, stad_clin_data[, 1]), ]
 
-new3 <- cbind(drug.response, surv.data)
-Y1 <- Surv(new3[, "X_OS"], new3[, "X_OS_IND"])
+new3 <- cbind(drug_response, surv_data)
+y1 <- Surv(new3[, "X_OS"], new3[, "X_OS_IND"])
 
 xvector <- ifelse(new3[, 1] > median(new3[, 1]), "HR", "LR")
 table(xvector)
 
 dat <- data.frame(cbind(new3, xvector))
 fit <- survfit(Surv(X_OS, X_OS_IND) ~ xvector, data = dat)
-coxph(Y1 ~ xvector)
+coxph(y1 ~ xvector)
 
-g1 <- ggsurvplot(fit, data = dat, risk.table = TRUE, pval = TRUE, break.time.by = 500, ggtheme = theme_minimal())
+g1 <- ggsurvplot(
+    fit, data = dat,
+    risk.table = TRUE, pval = TRUE,
+    break.time.by = 500, ggtheme = theme_minimal()
+)
 ggsave("./B.png", plot = print(g1), width = 5, height = 5)
