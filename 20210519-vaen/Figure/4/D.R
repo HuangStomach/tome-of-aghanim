@@ -1,42 +1,44 @@
 library(ggplot2)
 
-give.n <- function(x) {
+give_n <- function(x) {
     return(c(y = max(x), label = length(x)))
 }
 
-###################################################################################################
-drug.ccle <- read.table("../../Output/3/VAEN_CCLE.A.pred_TCGA.txt", header = T, as.is = T)
-colnames(drug.ccle)[3:ncol(drug.ccle)] -> drugs
-cancer.types <- unique(drug.ccle[, 2])
-sample.type <- substr(drug.ccle[, 1], 14, 15)
-ss <- gsub("\\.", "-", drug.ccle[, 1])
-drug.ccle[, 1] <- ss
+drug_ccle <- read.table(
+    "../../Output/3/VAEN_CCLE.A.pred_TCGA.txt",
+    header = T, as.is = T
+)
+colnames(drug_ccle)[3:ncol(drug_ccle)] -> drugs
+cancer_types <- unique(drug_ccle[, 2])
+sample_type <- substr(drug_ccle[, 1], 14, 15)
+ss <- gsub("\\.", "-", drug_ccle[, 1])
+drug_ccle[, 1] <- ss
 
 
-cancer.drug.ccle <- c()
-for (ct in 1:length(cancer.types)) {
-    cancer <- cancer.types[ct]
+cancer_drug_ccle <- c()
+for (ct in seq_len(length(cancer_types))) {
+    cancer <- cancer_types[ct]
 
-    type.code <- "01"
+    type_code <- "01"
     if (cancer == "LAML") {
-        type.code <- "03"
+        type_code <- "03"
     }
     if (cancer == "SKCM") {
-        type.code <- "06"
+        type_code <- "06"
     }
 
-    blca.ccle <- drug.ccle[which(drug.ccle[, 2] == cancer & sample.type == type.code), ]
-    cancer.drug.ccle <- rbind(cancer.drug.ccle, blca.ccle)
+    blca_ccle <- drug_ccle[
+        which(drug_ccle[, 2] == cancer & sample_type == type_code),
+    ]
+    cancer_drug_ccle <- rbind(cancer_drug_ccle, blca_ccle)
 }
-drug.ccle <- cancer.drug.ccle
+drug_ccle <- cancer_drug_ccle
 
 response <- read.delim("../../Data/Response/drug_response.txt", as.is = T)
-
-#############################
 response <- response[which(response$drug.name == "Paclitaxel"), ]
 
-match(response[, 2], substr(drug.ccle[, 1], 1, 12)) -> ii
-cbind(response, drug.ccle[ii, ]) -> new2
+match(response[, 2], substr(drug_ccle[, 1], 1, 12)) -> ii
+cbind(response, drug_ccle[ii, ]) -> new2
 new2 <- new2[!is.na(ii), ]
 dim(new2)
 
@@ -48,9 +50,10 @@ p <- t.test(new2[ii, drug], new2[-ii, drug])$p.value
 
 dat4plot <- data.frame(new2[, c("Paclitaxel", "response")])
 dat4plot[, 1] <- as.numeric(as.character(dat4plot[, 1]))
-dat4plot[, 2] <- factor(dat4plot[, 2], levels = c("Clinical Progressive Disease", "Stable Disease", "Partial Response", "Complete Response"))
-
-#pdf("4D.Paclitaxel.response.pdf", height = 4, width = 2.5)
+dat4plot[, 2] <- factor(dat4plot[, 2], levels = c(
+    "Clinical Progressive Disease", "Stable Disease",
+    "Partial Response", "Complete Response"
+))
 
 p3 <- ggplot(dat4plot, aes(x = response, y = Paclitaxel, fill = response)) +
     geom_boxplot(outlier.shape = NA) +
@@ -74,7 +77,7 @@ p3 <- ggplot(dat4plot, aes(x = response, y = Paclitaxel, fill = response)) +
         plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 45, vjust = 0.7)
     ) +
-    stat_summary(fun.data = give.n, geom = "text") +
+    stat_summary(fun.data = give_n, geom = "text") +
     scale_x_discrete(
         labels = c(
             "Clinical Progressive Disease" = "Clinical\nProgressive\nDisease",
