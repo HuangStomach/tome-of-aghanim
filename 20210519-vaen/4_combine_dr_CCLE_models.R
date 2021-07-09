@@ -1,4 +1,4 @@
-end <- 1
+end <- 2
 load("./Output/3/CCLE.A.info.RData")
 drugs <- colnames(all_f1_r2_mat)
 dr_ccle_models <- list()

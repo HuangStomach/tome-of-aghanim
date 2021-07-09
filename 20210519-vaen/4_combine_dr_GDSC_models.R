@@ -1,4 +1,4 @@
-end <- 1
+end <- 2
 load("./Output/3/GDSC.A.info.RData")
 
 anno <- read.delim("./DATA/GDSC/v17.3_fitted_dose_response.txt", as.is = T)
