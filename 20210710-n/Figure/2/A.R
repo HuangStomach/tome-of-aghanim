@@ -59,10 +59,13 @@ plot(0, 0, xlim = c(-1, a1 + b1 + a2 + b2 + 10), ylim = c(0, 1.05),
 mtext("Compound index", 1, line = 2)
 mtext("In-sample PCC", 2, line = 2)
 
-rect(-1, 0, a1 + 0.5, 1, col = "lightyellow", border = F)
-rect(a1 + 0.5, 0, a1 + b1 + 0.5, 1, col = "lightcyan", border = F)
-rect(a1 + b1 + 0.5, 0, a1 + b1 + a2 + 0.5, 1, col = "lightgreen", border = F)
-rect(a1 + b1 + a2 + 0.5, 0, a1 + b1 + a2 + b2 + 1, 1, 
+rect(-1, 0, a1 + 0.5, 1,
+    col = "lightyellow", border = F)
+rect(a1 + 0.5, 0, a1 + b1 + 0.5, 1,
+    col = "lightcyan", border = F)
+rect(a1 + b1 + 0.5, 0, a1 + b1 + a2 + 0.5, 1,
+    col = "lightgreen", border = F)
+rect(a1 + b1 + a2 + 0.5, 0, a1 + b1 + a2 + b2 + 1, 1,
     col = "lightblue", border = F)
 
 points(dat_plot[, 2], pch = 19, col = "grey", cex = 1)

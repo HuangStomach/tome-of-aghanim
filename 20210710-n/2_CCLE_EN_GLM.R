@@ -33,9 +33,7 @@ parallel_main <- function(kk, train_data, y,
     res_list
 }
 
-#####
-load("./Output/1/tcga_ss_mat.RData")
-
+# load("./Output/1/tcga_ss_mat.RData")
 anno <- read.csv(
     "./Data/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv",
 as.is = T)
@@ -44,22 +42,22 @@ drugs <- sort(unique(anno$Compound)) # 提取其中所有的抗癌药物
 for (ksigmoid in start:end) {
     cat("ksigmoid = ", ksigmoid, "\n", sep = "")
 
-    model_summary_file <- paste(
-        "./Output/2/", ksigmoid,
-        ".model_summary.txt", sep = ""
-    )
-    model_summary_cols <- c(
-        "Drug", "alpha", "n_snps_in_model", "lambda_min_mse",
-        "test_R2_avg", "test_R2_sd", "cv_r2_avg", "cv_R2_sd", "in_sample_R2",
-        "nested_cv_fisher_pval", "rho_avg", "rho_se", "rho_zscore",
-        "rho_avg_squared", "zscore_pval", "cv_rho_avg", "cv_rho_se",
-        "cv_rho_avg_squared", "cv_zscore_est", "cv_zscore_pval", "cv_pval_est"
-    ) # 声明一些统计信息
+    # model_summary_file <- paste(
+    #     "./Output/2/", ksigmoid,
+    #     ".model_summary.txt", sep = ""
+    # )
+    # model_summary_cols <- c(
+    #     "Drug", "alpha", "n_snps_in_model", "lambda_min_mse",
+    #     "test_R2_avg", "test_R2_sd", "cv_r2_avg", "cv_R2_sd", "in_sample_R2",
+    #     "nested_cv_fisher_pval", "rho_avg", "rho_se", "rho_zscore",
+    #     "rho_avg_squared", "zscore_pval", "cv_rho_avg", "cv_rho_se",
+    #     "cv_rho_avg_squared", "cv_zscore_est", "cv_zscore_pval", "cv_pval_est"
+    # ) # 声明一些统计信息
 
-    tcga_pred <- read.table(
-        paste("./Output/1/", ksigmoid, ".TCGA_latent.tsv", sep = ""),
-    header = T, sep = "\t", as.is = T) # 读取经vae编码后的tcga数据
-    tcga_test_data <- tcga_pred[, -1] # 去除第一列（样本名称）
+    # tcga_pred <- read.table(
+    #     paste("./Output/1/", ksigmoid, ".TCGA_latent.tsv", sep = ""),
+    # header = T, sep = "\t", as.is = T) # 读取经vae编码后的tcga数据
+    # tcga_test_data <- tcga_pred[, -1] # 去除第一列（样本名称）
 
     pps <- read.table(
         paste("./Output/1/", ksigmoid, ".CCLE_latent.tsv", sep = "")
@@ -135,18 +133,18 @@ for (ksigmoid in start:end) {
         if (sum(is.na(cv_r2_avg)) == length(cv_r2_avg)) { # 如果全无效
             model_summary <- c(drug, 0.5, 0, NA, NA, NA,
                 NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA)
-            tcga_probabilities <- rep(0, nrow(tcga_test_data))
+            # tcga_probabilities <- rep(0, nrow(tcga_test_data))
         } else {
             res_list <- tmp_list[[idx]] # 取出 cv_r2_avg 最小的训练模型进行预测
             cat("selected ", idx, ", ", sep = "")
-            fit <- res_list$model
-            tcga_probabilities <- predict(
-                fit, as.matrix(tcga_test_data), s = "lambda.min"
-            )
+            # fit <- res_list$model
+            # tcga_probabilities <- predict(
+            #     fit, as.matrix(tcga_test_data), s = "lambda.min"
+            # )
         }
-        tcga_drug_response_mat <- cbind(
-            tcga_drug_response_mat, tcga_probabilities
-        ) # 将不同药物的预测进行合并
+        # tcga_drug_response_mat <- cbind(
+        #     tcga_drug_response_mat, tcga_probabilities
+        # ) # 将不同药物的预测进行合并
 
         ys <- matrix(-9, nrow = nrow(pps), ncol = 2)
         rownames(ys) <- rownames(pps)

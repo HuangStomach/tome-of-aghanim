@@ -33,8 +33,7 @@ parallel_main <- function(kk, train_data, y,
     res_list
 }
 
-load("./Output/1/tcga_ss_mat.RData")
-
+# load("./Output/1/tcga_ss_mat.RData")
 anno <- read.delim("./Data/GDSC/v17.3_fitted_dose_response.txt", as.is = T)
 drugs <- sort(unique(anno$DRUG_NAME))
 cell_line_anno <- read.csv("./Data/CCLE/DepMap-2018q3-celllines.csv", as.is = T)
@@ -42,26 +41,26 @@ cell_line_anno <- read.csv("./Data/CCLE/DepMap-2018q3-celllines.csv", as.is = T)
 for (ksigmoid in start:end) {
     cat("ksigmoid = ", ksigmoid, "\n", sep = "")
 
-    model_summary_file <- paste(
-        "./Output/2/", ksigmoid,
-        ".model_summary.txt",
-        sep = ""
-    )
-    model_summary_cols <- c(
-        "Drug", "alpha", "n_snps_in_model", "lambda_min_mse",
-        "test_R2_avg", "test_R2_sd", "cv_r2_avg", "cv_R2_sd", "in_sample_R2",
-        "nested_cv_fisher_pval", "rho_avg", "rho_se", "rho_zscore",
-        "rho_avg_squared", "zscore_pval", "cv_rho_avg", "cv_rho_se",
-        "cv_rho_avg_squared", "cv_zscore_est", "cv_zscore_pval", "cv_pval_est"
-    ) # 声明一些统计信息
+    # model_summary_file <- paste(
+    #     "./Output/2/", ksigmoid,
+    #     ".model_summary.txt",
+    #     sep = ""
+    # )
+    # model_summary_cols <- c(
+    #     "Drug", "alpha", "n_snps_in_model", "lambda_min_mse",
+    #     "test_R2_avg", "test_R2_sd", "cv_r2_avg", "cv_R2_sd", "in_sample_R2",
+    #     "nested_cv_fisher_pval", "rho_avg", "rho_se", "rho_zscore",
+    #     "rho_avg_squared", "zscore_pval", "cv_rho_avg", "cv_rho_se",
+    #     "cv_rho_avg_squared", "cv_zscore_est", "cv_zscore_pval", "cv_pval_est"
+    # ) # 声明一些统计信息
 
-    write(model_summary_cols, file = model_summary_file, ncol = 21, sep = "\t")
+    # write(model_summary_cols, file = model_summary_file, ncol = 21, sep = "\t")
 
-    tcga_pred <- read.table(
-        paste("./Output/1/", ksigmoid, ".TCGA_latent.tsv", sep = ""),
-        header = T, sep = "\t", as.is = T
-    )
-    tcga_test_data <- tcga_pred[, -1] #
+    # tcga_pred <- read.table(
+    #     paste("./Output/1/", ksigmoid, ".TCGA_latent.tsv", sep = ""),
+    #     header = T, sep = "\t", as.is = T
+    # )
+    # tcga_test_data <- tcga_pred[, -1]
 
     # Prediction
     pps <- read.table(
@@ -192,30 +191,30 @@ for (ksigmoid in start:end) {
             tmp_list[[kk]] <- res_list
         }
 
-        unlist(lapply(tmp_list,
-            function(u) as.numeric(u$model_summary[5]))) -> cv_r2_avg
-        which.max(cv_r2_avg) -> idx
+        # unlist(lapply(tmp_list,
+        #     function(u) as.numeric(u$model_summary[5]))) -> cv_r2_avg
+        # which.max(cv_r2_avg) -> idx
 
         if (sum(is.na(cv_r2_avg)) == length(cv_r2_avg)) {
             model_summary <- c(drug, 0.5, 0, NA, NA, NA, NA,
                 NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA)
-            write(model_summary, file = model_summary_file,
-                append = TRUE, ncol = 24, sep = "\t")
-            tcga_probabilities <- rep(0, nrow(tcga_test_data))
+            # write(model_summary, file = model_summary_file,
+            #     append = TRUE, ncol = 24, sep = "\t")
+            # tcga_probabilities <- rep(0, nrow(tcga_test_data))
         } else {
             res_list <- tmp_list[[idx]]
             cat("selected ", idx, ", ", sep = "")
-            write(res_list$model_summary, file = model_summary_file,
-                append = TRUE, ncol = 24, sep = "\t")
-            fit <- res_list$model
-            tcga_probabilities <- predict(
-                fit, as.matrix(tcga_test_data), s = "lambda.min"
-            )
+            # write(res_list$model_summary, file = model_summary_file,
+            #     append = TRUE, ncol = 24, sep = "\t")
+            # fit <- res_list$model
+            # tcga_probabilities <- predict(
+            #     fit, as.matrix(tcga_test_data), s = "lambda.min"
+            # )
         }
 
-        tcga_drug_response_mat <- cbind(
-            tcga_drug_response_mat, tcga_probabilities
-        ) # 将不同药物的预测进行合并
+        # tcga_drug_response_mat <- cbind(
+        #     tcga_drug_response_mat, tcga_probabilities
+        # ) # 将不同药物的预测进行合并
 
         ys <- matrix(-9, nrow = nrow(pps), ncol = 2)
         rownames(ys) <- rownames(pps)
@@ -235,23 +234,23 @@ for (ksigmoid in start:end) {
         cat(drugs[k], " end \n", sep = "")
     }
 
-    gsub("\\.", "-", tcga_pred[, 1]) -> ss
-    tcga_pred[, 1] <- ss
-    match(tcga_pred[, 1], tcga_ss_mat[, 1]) -> ii
-    tcga_drug_response_mat <- cbind(
-        tcga_pred[, 1],
-        tcga_ss_mat[ii, 2],
-        tcga_drug_response_mat
-    )
-    colnames(tcga_drug_response_mat) <- c("TCGA", "Cancer", drugs)
-    write.table(tcga_drug_response_mat,
-        file = paste("./Output/2/", ksigmoid, ".GDSC.pred_TCGA.txt", sep = ""),
-        quote = F, sep = "\t", row.names = FALSE
-    )
-    write.table(self_prediction_mat,
-        file = paste("./Output/2/", ksigmoid, ".pred_GDSC.txt", sep = ""),
-        quote = F, sep = "\t", row.names = FALSE
-    )
+    # gsub("\\.", "-", tcga_pred[, 1]) -> ss
+    # tcga_pred[, 1] <- ss
+    # match(tcga_pred[, 1], tcga_ss_mat[, 1]) -> ii
+    # tcga_drug_response_mat <- cbind(
+    #     tcga_pred[, 1],
+    #     tcga_ss_mat[ii, 2],
+    #     tcga_drug_response_mat
+    # )
+    # colnames(tcga_drug_response_mat) <- c("TCGA", "Cancer", drugs)
+    # write.table(tcga_drug_response_mat,
+    #     file = paste("./Output/2/", ksigmoid, ".GDSC.pred_TCGA.txt", sep = ""),
+    #     quote = F, sep = "\t", row.names = FALSE
+    # )
+    # write.table(self_prediction_mat,
+    #     file = paste("./Output/2/", ksigmoid, ".pred_GDSC.txt", sep = ""),
+    #     quote = F, sep = "\t", row.names = FALSE
+    # )
     save(model_list, file = paste(
         "./Output/2/", ksigmoid, ".GDSC.model.list.RData", sep = ""
     ))
