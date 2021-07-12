@@ -8,7 +8,6 @@ tcga_to_cancer = dict()
 
 for cancer in dirs:
     if cancer == '.gitkeep': continue
-    print(cancer)
     tcga = pd.read_table("./Data/TCGA/{}/HiSeqV2".format(cancer))
     tcga_rpkm = tcga.columns.to_numpy(dtype=str)
     for rpkm in tcga_rpkm[1:]:
@@ -25,4 +24,5 @@ for rowname in ccle_latent.index.values:
     tissue = tissue.split('_')[1:]
     ccle_to_tissue[rowname] = '_'.join(tissue)
 
+# print(unique(list(ccle_to_tissue.values())))
 np.save('./Output/1/ccle_to_tissue.npy', ccle_to_tissue)
