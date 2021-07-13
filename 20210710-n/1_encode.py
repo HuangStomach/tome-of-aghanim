@@ -157,5 +157,5 @@ def train(i):
     print(encoded_file)
     print(encoded_rnaseq_df_tcga.head(2))
 
-for _i in range(1, 101):
+for _i in range(1, 3):
     tf.function(train(_i))
