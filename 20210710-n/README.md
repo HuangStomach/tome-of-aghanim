@@ -54,6 +54,7 @@ res_list[['ys']] <- ["original_Y", "self_pred"] # 包含真值与预测值的lis
 * 先对数据进行预处理，只采用CCLE和TCGA数据均有交集，样本数量足够大且活跃的数据，保存为 `V15.CCLE\TCGA.4VAE.*.tsv`。
 * 使用VAE（？）对数据进行去噪和降维，保存为 `CCLE\TCGA_latent.tsv`。
 > （？）中问题，是否无须VAE，只使用神经网络对数据进行无监督学习降维？
+> 说是tsne降维看不出来，但是是使用组织进行降维而不是使用癌症类型，TCGA癌症类型降维效果明显
 * 再构建elastic net模型，使用CCLE和GDSC进行训练，保存为 `CCLE\GDSC.model.list.Rdata`。
 > 其中使用`glmnet`包，在`cv.glmnet`函数中设置`alpha`为0-1之间的数即可使用elastic net进行回归
 > 还有疑问，这里进行训练的时候没有区分癌症，而是对某种药物的药物反应数据全部进行训练，但是预测的时候又按照癌症进行了区分
