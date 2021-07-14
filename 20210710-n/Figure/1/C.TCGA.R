@@ -26,7 +26,7 @@ png("C.TCGA-tSNE.png", width = 1366, height = 768, bg = "white")
 plot(
     tpc[, 1], tpc[, 2],
     pch = 20, cex = 1.5,
-    xlim = c(-80, 140), ylim = c(-80, 80),
+    xlim = c(-100, 150), ylim = c(-100, 100),
     xlab = "tSNE_1", ylab = "tSNE_2",
     col = "white"
 )
