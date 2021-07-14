@@ -15,12 +15,11 @@ def normal_name(name):
         name = name[1:]
     return name
 rownames = np.array(list(map(normal_name, ccle_latent.index.values)))
-cell_names = rownames[np.char.find(rownames, 'HAEMATOPOIETIC') == -1] # 对细胞系名称进行格式化 去除造血细胞
 
 coach = pd.read_csv('./Data/CCLE/CCLE_NP24.2009_Drug_data_2015.02.24.csv')
 drugs = pd.unique(coach['Compound'])
 drugs.sort()
-intersect = np.intersect1d(cell_names, coach['CCLE Cell Line Name']) # 取细胞系交集
+intersect = np.intersect1d(rownames, coach['CCLE Cell Line Name']) # 取细胞系交集
 coach = coach.loc[coach['CCLE Cell Line Name'].isin(intersect)]
 
 end = 1
@@ -58,5 +57,5 @@ for step in range(1, end + 1):
             models[drug] = regr
             continue
 
-joblib.dump(models_info, './Output/2/ccle_s_models_info.joblib')  
-joblib.dump(models, './Output/2/ccle_s_models.joblib')  
+joblib.dump(models_info, './Output/2/ccle_models_info.joblib')  
+joblib.dump(models, './Output/2/ccle_models.joblib')  
