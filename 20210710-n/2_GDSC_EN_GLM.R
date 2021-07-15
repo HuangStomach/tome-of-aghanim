@@ -85,13 +85,13 @@ for (ksigmoid in start:end) {
     names(ss_ach) <- NULL
 
     # original drug data
-    self_prediction_mat <- matrix(-9,
-        nrow = length(unique(anno[, 4])),
-        ncol = length(drugs) + 2
-    )
-    self_prediction_mat[, 1] <- unique(anno[, "COSMIC_ID"])
-    self_prediction_mat[, 2] <- unique(anno[, "CELL_LINE_NAME"])
-    colnames(self_prediction_mat) <- c("CELLLINE", "Type", drugs)
+    # self_prediction_mat <- matrix(-9,
+    #     nrow = length(unique(anno[, 4])),
+    #     ncol = length(drugs) + 2
+    # )
+    # self_prediction_mat[, 1] <- unique(anno[, "COSMIC_ID"])
+    # self_prediction_mat[, 2] <- unique(anno[, "CELL_LINE_NAME"])
+    # colnames(self_prediction_mat) <- c("CELLLINE", "Type", drugs)
     # 初始化预测矩阵 细胞系 类别 药物1 药物2...
 
     tcga_drug_response_mat <- c()
@@ -102,19 +102,20 @@ for (ksigmoid in start:end) {
 
         anno_1 <- anno[which(anno$DRUG_NAME == drug), ] # 找到GDSC中符合drug的数据
         # 找到和CCLE的COSMIC_ID相符的数据索引
-        match(anno_1$COSMIC_ID, cell_line_anno$COSMIC_ID) -> idx
+        # match(anno_1$COSMIC_ID, cell_line_anno$COSMIC_ID) -> idx
         anno_1_match1 <- anno_1[
             which(anno_1$COSMIC_ID %in% cell_line_anno$COSMIC_ID),
         ]
+
         gdsc_anno_1_match2 <- anno_1[
             which(!anno_1$COSMIC_ID %in% cell_line_anno$COSMIC_ID),
         ]
 
         match(anno_1_match1$COSMIC_ID, cell_line_anno$COSMIC_ID) -> idx1
         match(cell_line_anno[idx1, 1], ss_ach) -> part1_ach_idx
-        anno_1_match1 <- anno_1_match1[which(!is.na(part1_ach_idx)), ]
-        match(anno_1_match1$COSMIC_ID, cell_line_anno$COSMIC_ID) -> idx1
-        match(cell_line_anno[idx1, 1], ss_ach) -> part1_ach_idx
+        part1_ach_idx <- part1_ach_idx[which(!is.na(part1_ach_idx))]
+        anno_1_match1 <- anno_1_match1[part1_ach_idx, ]
+
         y <- -anno_1_match1[, "LN_IC50"]
 
         sapply(gdsc_anno_1_match2$CELL_LINE_NAME, function(u) {
@@ -191,9 +192,9 @@ for (ksigmoid in start:end) {
             tmp_list[[kk]] <- res_list
         }
 
-        # unlist(lapply(tmp_list,
-        #     function(u) as.numeric(u$model_summary[5]))) -> cv_r2_avg
-        # which.max(cv_r2_avg) -> idx
+        unlist(lapply(tmp_list,
+            function(u) as.numeric(u$model_summary[5]))) -> cv_r2_avg
+        which.max(cv_r2_avg) -> idx
 
         if (sum(is.na(cv_r2_avg)) == length(cv_r2_avg)) {
             model_summary <- c(drug, 0.5, 0, NA, NA, NA, NA,
@@ -224,12 +225,12 @@ for (ksigmoid in start:end) {
 
         model_list[[drugs[k]]] <- res_list
 
-        match(anno_1_match1$COSMIC_ID, self_prediction_mat[, 1]) -> pii_1
-        match(
-            gdsc_anno_1_match2$CELL_LINE_NAME,
-            self_prediction_mat[, 2]
-        ) -> pii_2
-        self_prediction_mat[c(pii_1, pii_2), k + 2] <- res_list$self_pred
+        # match(anno_1_match1$COSMIC_ID, self_prediction_mat[, 1]) -> pii_1
+        # match(
+        #     gdsc_anno_1_match2$CELL_LINE_NAME,
+        #     self_prediction_mat[, 2]
+        # ) -> pii_2
+        # self_prediction_mat[c(pii_1, pii_2), k + 2] <- res_list$self_pred
 
         cat(drugs[k], " end \n", sep = "")
     }
