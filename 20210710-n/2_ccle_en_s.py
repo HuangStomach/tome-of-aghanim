@@ -44,11 +44,12 @@ for step in range(1, end + 1):
         ccle_latent_drug = ccle_latent.iloc[indexes].to_numpy(dtype=np.float)
         y = coach_drug['ActArea'].to_numpy(dtype=np.float)
 
-        regr = ElasticNetCV(cv=10, max_iter=10000, random_state=0)
+        regr = ElasticNetCV(cv=10, max_iter=100000, random_state=0)
         regr.fit(ccle_latent_drug, y)
         pred = regr.predict(ccle_latent_drug)
         score = regr.score(ccle_latent_drug, y)
-
+        print(drug, score)
+        
         if drug not in models_info.keys() or score > models_info[drug]['r2_score']:
             models_info[drug] = {
                 'size': len(y),
