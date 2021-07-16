@@ -65,6 +65,11 @@ res_list[['ys']] <- ["original_Y", "self_pred"] # 包含真值与预测值的lis
 * 针对训练过的所有药物，将每个药物表现最好的模型存入 `dr.CCLE\GDSC.A.models.RData`
 * 再将CCLE全部数据和固体数据（？）进行整合，存入 `VAEN_CCLE.MIX.pred_CCLE\TCGA.*.txt`。
 
+## 改进计划
+
+* 不使用vae，直接使用auto-encoder进行降维度。
+* 用tcga数据训练分类，之后匹配ccle数据再进行标注。
+
 ## TCGA癌症中英文对照
 
 |Cohort|英文名称|中文名称|

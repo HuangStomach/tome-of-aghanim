@@ -20,16 +20,10 @@ drugs = pd.unique(gdsc_anno['DRUG_NAME'])
 drugs.sort()
 
 ccle_cosmic_id = list(ccle_anno['COSMIC_ID'])
-gdsc_in = gdsc_anno.loc[gdsc_anno['COSMIC_ID'].isin(ccle_cosmic_id)]
-gdsc_in = gdsc_in.loc[gdsc_anno['DRUG_NAME'] == '(5Z)-7-Oxozeaenol']
-gdsc_not_in = gdsc_anno.loc[gdsc_anno['COSMIC_ID'].isin(ccle_cosmic_id) == False]
+ccle_aliases = np.array(list(ccle_anno['Aliases']))
 
-gdsc_cosmic_id = list(gdsc_in['COSMIC_ID'])
-index1 = [ccle_cosmic_id.index(x) if x in ccle_cosmic_id else None for x in gdsc_cosmic_id]
-ccle_achs = ccle_anno.iloc[index1, 0]
-index1 = [rownames.index(x) if x in rownames else None for x in ccle_achs]
-index1 = list(filter(None, index1))
-gdsc_in = gdsc_in.iloc[index1]
+gdsc_in = gdsc_anno.loc[gdsc_anno['COSMIC_ID'].isin(ccle_cosmic_id)]
+gdsc_not_in = gdsc_anno.loc[gdsc_anno['COSMIC_ID'].isin(ccle_cosmic_id) == False]
 
 end = 1
 
@@ -42,21 +36,59 @@ for step in range(1, end + 1):
     # ccle_latent.index = pd.Series(rownames)
 
     for drug in drugs:
-        # 选择不同药物下有交集的数据，使用np24的ccle数据做标注
-        coach_drug = gdsc_in.loc[gdsc_anno['DRUG_NAME'] == drug]
-        y = -coach_drug.loc[:, "LN_IC50"]
+        # 有交集的数据
+        coach_in = gdsc_in.loc[gdsc_in['DRUG_NAME'] == drug]
+        gdsc_cosmic_id = list(coach_in['COSMIC_ID'])
+        index1 = [ccle_cosmic_id.index(x) if x in ccle_cosmic_id else None for x in gdsc_cosmic_id]
+        ccle_achs = ccle_anno.iloc[index1, 0]
+        index1 = [rownames.index(x) if x in rownames else None for x in ccle_achs]
 
-        indexes = []
-        for cell_name in coach_drug['CCLE Cell Line Name'].to_numpy(dtype=str):
-            indexes.append(np.argwhere(rownames == cell_name)[0][0])
-        
-        ccle_latent_drug = ccle_latent.iloc[indexes].to_numpy(dtype=np.float)
-        y = coach_drug['ActArea'].to_numpy(dtype=np.float)
+        coach_in = coach_in.iloc[[i for i, value in enumerate(index1) if not value is None]]
+        index1 = [x for x in index1 if x is not None] # COSMIC_ID有交集的索引
+        y = -coach_in.loc[:, "LN_IC50"].to_numpy()
 
-        regr = ElasticNetCV(cv=10, max_iter=10000, random_state=0)
-        regr.fit(ccle_latent_drug, y)
-        pred = regr.predict(ccle_latent_drug)
-        score = regr.score(ccle_latent_drug, y)
+        # 无交集的数据
+        coach_not_in = gdsc_not_in.loc[gdsc_not_in['DRUG_NAME'] == '(5Z)-7-Oxozeaenol']
+        def normal_cell(name):
+            return name.replace('-', '')
+        cellnames = np.array(list(map(normal_cell, coach_not_in['CELL_LINE_NAME'])))
+        name_index = np.where(np.in1d(cellnames, ccle_aliases))[0]
+        name_index = pd.unique(np.concatenate((name_index, np.where(np.in1d(coach_not_in['CELL_LINE_NAME'], ccle_aliases))[0])))
+
+        coach_not_in = coach_not_in.iloc[name_index, ]
+        gdsc_cellnames = coach_not_in['CELL_LINE_NAME'].to_numpy()
+        cellnames = cellnames[name_index]
+
+        index2 = np.array([])
+        for k in range(len(cellnames)):
+            if gdsc_cellnames[k] in ccle_aliases:
+                indexes = np.argwhere(ccle_aliases == gdsc_cellnames[k])[0]
+            else:
+                indexes = np.argwhere(ccle_aliases == cellnames[k])[0]
+            index2 = np.append(index2, indexes)
+
+        index2 = [rownames.index(x) if x in rownames else None for x in ccle_anno.iloc[index2, 0]]
+        coach_not_in = coach_not_in.iloc[[i for i, value in enumerate(index2) if not value is None]]
+        gdsc_cellnames = coach_not_in['CELL_LINE_NAME'].to_numpy()
+
+        index2 = np.array([])
+        for k in range(len(gdsc_cellnames)):
+            if gdsc_cellnames[k] in ccle_aliases:
+                indexes = np.argwhere(ccle_aliases == gdsc_cellnames[k])
+            else:
+                indexes = np.argwhere(ccle_aliases == gdsc_cellnames[k].replace('-', ''))
+            index2 = np.append(index2, indexes)
+
+        index2 = [rownames.index(x) if x in rownames else None for x in ccle_anno.iloc[index2, 0]]
+        y = np.append(y, -coach_not_in.loc[:, "LN_IC50"].to_numpy())
+        indexes = np.append(index1, index2)
+        x = ccle_latent.iloc[indexes]
+
+        regr = ElasticNetCV(cv=10, max_iter=100000, random_state=0)
+        regr.fit(x, y)
+        pred = regr.predict(x)
+        score = regr.score(x, y)
+        print(drug, score)
 
         if drug not in models_info.keys() or score > models_info[drug]['r2_score']:
             models_info[drug] = {
@@ -67,5 +99,5 @@ for step in range(1, end + 1):
             models[drug] = regr
             continue
 
-joblib.dump(models_info, './Output/2/ccle_models_info.joblib')  
-joblib.dump(models, './Output/2/ccle_models.joblib')  
+joblib.dump(models_info, './Output/2/gdsc_models_info.joblib')  
+joblib.dump(models, './Output/2/gdsc_models.joblib')  
