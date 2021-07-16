@@ -20,7 +20,7 @@ rnaseq_df_ccle = pd.read_table(train_ccle_file_path, index_col = 0)
 rnaseq_df_tcga = pd.read_table(train_tcga_file_path, index_col = 0)
 
 original_dim = rnaseq_df_ccle.shape[1] # 原始癌症种类 6203
-learning_rate = 0.00001
+learning_rate = 0.01
 units = 100 # 目标维度
 batch_size = 100
 epochs = 100
@@ -29,7 +29,6 @@ def train(i):
     i = str(_i)
 
     train_ccle_latent_file = i + '.ccle_latent.tsv'
-    # train_ccle_weight_file = i + '.CCLE_weight.tsv'
     train_tcga_latent_file = i + '.tcga_latent.tsv'
     # encoder_file = i + '.CCLE_encoder_onehidden_vae.hdf5'
     # decoder_file = i + '.CCLE_decoder_onehidden_vae.hdf5'
@@ -42,7 +41,7 @@ def train(i):
     
     autoencoder = Model(input_layer, decoded)
     adam = optimizers.Adam(learning_rate=learning_rate)
-    autoencoder.compile(optimizer=adam, loss='binary_crossentropy')
+    autoencoder.compile(optimizer=adam, loss='mse')
     autoencoder.fit(
         rnaseq_df_ccle, rnaseq_df_ccle,
         epochs=epochs,

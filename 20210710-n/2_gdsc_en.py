@@ -92,6 +92,7 @@ for step in range(1, end + 1):
 
         if drug not in models_info.keys() or score > models_info[drug]['r2_score']:
             models_info[drug] = {
+                'step': step,
                 'size': len(y),
                 'pcc': st.pearsonr(y, pred),
                 'r2_score': score,
