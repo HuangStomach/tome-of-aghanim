@@ -193,7 +193,7 @@ for (k1 in seq_len(nrow(two_drugs_match))) {
     )
 }
 
-png("./BC.shared.drugs.png", width = 400, height = 200)
+png("./BC.shared.drugs.png", width = 800, height = 400)
 par(mfrow = c(1, 2), mar = c(4, 4, 2, 1))
 
 plot(
@@ -238,8 +238,9 @@ write.table(
 )
 
 png("./D.png", width = 600, height = 600)
-for (k in seq_len(nrow(two_drugs_match))) {
+#for (k in seq_len(nrow(two_drugs_match))) {
     # 1. observed
+    k <- 1
     data4plot_list[[two_drugs_match[k, 1]]] -> cur_list
     dat_df <- as.data.frame(cbind(
         x = cur_list$shared_ccle_y,
@@ -370,7 +371,7 @@ for (k in seq_len(nrow(two_drugs_match))) {
         layout = matrix(c(1:4), nrow = 2)
     )
     cat(two_drugs_match[k, 1], ",", sep = "")
-}
+#}
 dev.off()
 
 #

@@ -1,6 +1,6 @@
 library("tsne")
 # 进行tSNE降维可视化分析
-
+print(date())
 latent <- read.table("../../Output/1/1.TCGA_latent.tsv", as.is = T, header = T)
 tsne(latent) -> tpc
 
@@ -42,3 +42,4 @@ for (k in seq_len(length(cancer_types))) {
 
 legend("topright", fill = cc, legend = cancer_types)
 dev.off()
+print(date())
