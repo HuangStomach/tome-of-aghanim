@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 import joblib
-models = joblib.load('./Output/2/ccle_models.joblib')
-models_info = joblib.load('./Output/2/ccle_models_info.joblib')
+models = joblib.load('./Output/2/ccle_s_models.joblib')
+models_info = joblib.load('./Output/2/ccle_s_models_info.joblib')
 tcga_to_cancer = joblib.load('./Output/1/tcga_to_cancer.joblib') 
 
 # ccle模型预测tcga
@@ -29,7 +29,7 @@ tcga_pred = np.vstack((cancers, tcga_pred))
 tcga_pred = np.vstack((rownames, tcga_pred))
 
 tcga_pred_df = pd.DataFrame(tcga_pred.T, columns=columnnames)
-tcga_pred_df.to_csv('./Output/3/ccle_a_pred_tcga.csv', index=False)
+tcga_pred_df.to_csv('./Output/3/ccle_s_pred_tcga.csv', index=False)
 
 # ccle模型自我预测
 ccle_latent = pd.read_table('./Output/1/1.CCLE_latent.tsv', index_col = 0)
@@ -41,4 +41,4 @@ for drug, model_info in models_info.items():
 
 ccle_pred = np.vstack((rownames, ccle_pred))
 ccle_pred_df = pd.DataFrame(ccle_pred.T, columns=columnnames)
-ccle_pred_df.to_csv('./Output/3/ccle_a_pred_ccle.csv', index=False)
+ccle_pred_df.to_csv('./Output/3/ccle_s_pred_ccle.csv', index=False)
