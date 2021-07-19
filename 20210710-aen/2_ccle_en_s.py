@@ -53,14 +53,8 @@ for step in range(1, end + 1):
         if drug not in models_info.keys() or score > models_info[drug]['r2_score']:
             full_y = np.full(ccle_latent.shape[0], -9, dtype=float)
             full_pred = np.full(ccle_latent.shape[0], -9, dtype=float)
-            j = 0
-            
-            for i in range(len(full_y)):
-                if i not in indexes: continue
-
-                full_y[i] = y[j]
-                full_pred[i] = pred[j]
-                j += 1
+            full_y[indexes] = y
+            full_pred[indexes] = pred
 
             models_info[drug] = {
                 'y': full_y,

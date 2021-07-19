@@ -59,9 +59,8 @@ res_list[['ys']] <- ["original_Y", "self_pred"] # 包含真值与预测值的lis
 > 其中使用`glmnet`包，在`cv.glmnet`函数中设置`alpha`为0-1之间的数即可使用elastic net进行回归
 > 还有疑问，这里进行训练的时候没有区分癌症，而是对某种药物的药物反应数据全部进行训练，但是预测的时候又按照癌症进行了区分
 * 之后选择其中表现最好的模型对tcga数据进行预测分析，保存为 `VAEN_CCLE\GDSC.*.pred_TCGA.txt`。
-* 对ccle数据进行预测分析，保存为 `VAEN_CCLE\GDSC.A.pred_CCLE.full.txt`。
+* 对所有（不限于该模型的药物类别）ccle数据进行预测分析，保存为 `VAEN_CCLE\GDSC.A.pred_CCLE.full.txt`。
 * 将训练模型过程中对训练数据的自我预测保存为 `VAEN_CCLE\GDSC.A.pred_CCLE\GDSC.txt`。
-> 这里有疑问，实际上训练过程使用的就是CCLE_latent，也就是pred_CCLE是训练latent时的自我预测，然后pred_CCLE.full是用这个模型单独对训练数据又预测一遍，需要再研究。
 * 针对训练过的所有药物，将每个药物表现最好的模型存入 `dr.CCLE\GDSC.A.models.RData`
 * 再将CCLE全部数据和固体数据（？）进行整合，存入 `VAEN_CCLE.MIX.pred_CCLE\TCGA.*.txt`。
 
