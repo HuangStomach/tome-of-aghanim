@@ -23,7 +23,7 @@ drugs.sort()
 intersect = np.intersect1d(cell_names, coach['CCLE Cell Line Name']) # 取细胞系交集
 coach = coach.loc[coach['CCLE Cell Line Name'].isin(intersect)]
 
-end = 1
+end = 2
 
 models_info = dict()
 models = dict()
@@ -51,9 +51,20 @@ for step in range(1, end + 1):
         print(drug, score)
         
         if drug not in models_info.keys() or score > models_info[drug]['r2_score']:
+            full_y = np.full(ccle_latent.shape[0], -9, dtype=float)
+            full_pred = np.full(ccle_latent.shape[0], -9, dtype=float)
+            j = 0
+            
+            for i in range(len(full_y)):
+                if i not in indexes: continue
+
+                full_y[i] = y[j]
+                full_pred[i] = pred[j]
+                j += 1
+
             models_info[drug] = {
-                'y': y,
-                'pred': pred,
+                'y': full_y,
+                'pred': full_pred,
                 'step': step,
                 'size': len(y),
                 'pcc': st.pearsonr(y, pred),

@@ -39,6 +39,8 @@ ccle_pred = np.array([])
 columnnames = np.array(['Cellline'])
 for drug, model_info in models_info.items():
     ccle_pred = np.vstack((ccle_pred, model_info['pred'])) if ccle_pred.shape[0] > 1 else model_info['pred']
+    columnnames = np.append(columnnames, drug)
+    print('ccle:', drug)
 
 ccle_pred = np.vstack((rownames, ccle_pred))
 ccle_pred_df = pd.DataFrame(ccle_pred.T, columns=columnnames)

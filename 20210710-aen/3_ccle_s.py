@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import joblib
+
 models = joblib.load('./Output/2/ccle_s_models.joblib')
 models_info = joblib.load('./Output/2/ccle_s_models_info.joblib')
 tcga_to_cancer = joblib.load('./Output/1/tcga_to_cancer.joblib') 
@@ -38,6 +39,8 @@ ccle_pred = np.array([])
 columnnames = np.array(['Cellline'])
 for drug, model_info in models_info.items():
     ccle_pred = np.vstack((ccle_pred, model_info['pred'])) if ccle_pred.shape[0] > 1 else model_info['pred']
+    columnnames = np.append(columnnames, drug)
+    print('ccle:', drug)
 
 ccle_pred = np.vstack((rownames, ccle_pred))
 ccle_pred_df = pd.DataFrame(ccle_pred.T, columns=columnnames)
