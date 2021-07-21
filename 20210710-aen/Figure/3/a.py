@@ -40,4 +40,4 @@ ax.plot([], c='blue', label='TCGA Predicted DR')
 ax.legend()
 ax.set_ylabel('Drug response (ActArea)')
 
-plt.show()
+plt.savefig('a.png', bbox_inches='tight')

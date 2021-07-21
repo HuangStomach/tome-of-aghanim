@@ -8,7 +8,7 @@ tcga_to_cancer = joblib.load('./Output/1/tcga_to_cancer.joblib')
 
 # gdsc模型预测tcga
 tcga_pred = np.array([])
-columnnames = np.array(['Cancer', 'Sample'])
+columnnames = np.array(['Sample', 'Cancer'])
 for drug, model in models.items():
     tcga_latent = pd.read_table('./Output/1/{}.TCGA_latent.tsv'.format(models_info[drug]['step']), 
         index_col = 0, float_precision='high')

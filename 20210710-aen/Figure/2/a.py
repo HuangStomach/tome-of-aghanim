@@ -69,4 +69,4 @@ for i, val in enumerate(y):
     if val >= 0.5 or x4[i][2] == '1': continue
     ax.text(i, val, x4[i][0])
 
-plt.savefig('a.png')
+plt.savefig('a.png', bbox_inches='tight')
