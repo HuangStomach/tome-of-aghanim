@@ -42,9 +42,9 @@ for (kdrug in 1:length(drugs)) {
 
 
         if (cancer == "LAML") {
-            fn <- paste("../../MC3/LAML_wustl", sep = "")
+            fn <- paste("../../Data/MC3/LAML_wustl", sep = "")
         } else {
-            fn <- paste("../../MC3/", cancer, "_mc3.txt", sep = "")
+            fn <- paste("../../Data/MC3/", cancer, "_mc3.txt", sep = "")
         }
         mut.mat <- read.delim(fn, as.is = T)
 
@@ -54,6 +54,7 @@ for (kdrug in 1:length(drugs)) {
         }
 
         tapply(mut.mat[, 1], mut.mat[, 1], length) -> sample2gene.length
+
         sample2gene.length <- sample2gene.length[fixed.ss]
         sample2gene.length[which(is.na(sample2gene.length))] <- 0
         names(sample2gene.length) <- fixed.ss
@@ -64,6 +65,9 @@ for (kdrug in 1:length(drugs)) {
         sample2gene.length.log <- log(sample2gene.length)
 
         which(new.ccle[, kdrug] > quantile(new.ccle[, kdrug], probs = .75)) -> ii
+        print(sample2gene.length.log)
+        print(ii)
+        quit()
         dat4plot <- rbind(dat4plot, cbind(cancer, drug = colnames(new.ccle)[kdrug], group = 0, value = sample2gene.length.log[ii]))
         dat4plot <- rbind(dat4plot, cbind(cancer, drug = colnames(new.ccle)[kdrug], group = 1, value = sample2gene.length.log[-ii]))
     }
