@@ -22,14 +22,13 @@ rnaseq_df_tcga = pd.read_table(train_tcga_file_path, index_col = 0)
 original_dim = rnaseq_df_ccle.shape[1] # 原始癌症种类 6203
 learning_rate = 0.01
 units = 100 # 目标维度
-batch_size = 100
 epochs = 100
 
 def train(i):
     i = str(_i)
 
-    train_ccle_latent_file = i + '.ccle_latent.tsv'
-    train_tcga_latent_file = i + '.tcga_latent.tsv'
+    train_ccle_latent_file = i + '.ccle_dl_latent.tsv'
+    train_tcga_latent_file = i + '.tcga_dl_latent.tsv'
     # encoder_file = i + '.CCLE_encoder_onehidden_vae.hdf5'
     # decoder_file = i + '.CCLE_decoder_onehidden_vae.hdf5'
 
@@ -49,31 +48,30 @@ def train(i):
     autoencoder.fit(
         rnaseq_df_ccle, rnaseq_df_ccle,
         epochs=epochs,
-        #batch_size=batch_size,
         shuffle=True,
         validation_split=.1,
         verbose=2
     )
     
-    # encoder_model = Model(autoencoder.input, autoencoder.get_layer(name='bottleneck').output)
+    encoder_model = Model(autoencoder.input, autoencoder.get_layer(name='bottleneck').output)
 
-    # encoded_rnaseq_df_ccle = encoder_model.predict_on_batch(rnaseq_df_ccle)
-    # encoded_rnaseq_df_ccle = pd.DataFrame(encoded_rnaseq_df_ccle, index=rnaseq_df_ccle.index)
+    encoded_rnaseq_df_ccle = encoder_model.predict_on_batch(rnaseq_df_ccle)
+    encoded_rnaseq_df_ccle = pd.DataFrame(encoded_rnaseq_df_ccle, index=rnaseq_df_ccle.index)
 
-    # encoded_rnaseq_df_ccle.columns.name = 'sample_id'
-    # encoded_rnaseq_df_ccle.columns = encoded_rnaseq_df_ccle.columns + 1
-    # encoded_file = os.path.join(output_dir, train_ccle_latent_file)
-    # encoded_rnaseq_df_ccle.to_csv(encoded_file, sep='\t')
+    encoded_rnaseq_df_ccle.columns.name = 'sample_id'
+    encoded_rnaseq_df_ccle.columns = encoded_rnaseq_df_ccle.columns + 1
+    encoded_file = os.path.join(output_dir, train_ccle_latent_file)
+    encoded_rnaseq_df_ccle.to_csv(encoded_file, sep='\t')
 
-    # encoded_rnaseq_df_tcga = encoder_model.predict_on_batch(rnaseq_df_tcga)
-    # encoded_rnaseq_df_tcga = pd.DataFrame(encoded_rnaseq_df_tcga, index=rnaseq_df_tcga.index)
+    encoded_rnaseq_df_tcga = encoder_model.predict_on_batch(rnaseq_df_tcga)
+    encoded_rnaseq_df_tcga = pd.DataFrame(encoded_rnaseq_df_tcga, index=rnaseq_df_tcga.index)
 
-    # encoded_rnaseq_df_tcga.columns.name = 'sample_id'
-    # encoded_rnaseq_df_tcga.columns = encoded_rnaseq_df_tcga.columns + 1
-    # encoded_file = os.path.join(output_dir, train_tcga_latent_file)
-    # encoded_rnaseq_df_tcga.to_csv(encoded_file, sep='\t')
+    encoded_rnaseq_df_tcga.columns.name = 'sample_id'
+    encoded_rnaseq_df_tcga.columns = encoded_rnaseq_df_tcga.columns + 1
+    encoded_file = os.path.join(output_dir, train_tcga_latent_file)
+    encoded_rnaseq_df_tcga.to_csv(encoded_file, sep='\t')
 
-    # print(encoded_rnaseq_df_ccle.head(2))
+    print(encoded_rnaseq_df_ccle.head(2))
 
 for _i in range(1, 3):
     tf.function(train(_i))
