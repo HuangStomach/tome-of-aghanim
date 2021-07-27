@@ -16,7 +16,7 @@ drugs_label = []
 drugs_pos = []
 i = 0
 for drug, model_info in models_info.items():
-
+    
     ccle_y = model_info['y'][model_info['y'] != -9]
     ccle_pred = model_info['pred'][model_info['pred'] != -9]
     tcga_pred = tcga_pred_pd.loc[:, drug]
@@ -29,7 +29,7 @@ for drug, model_info in models_info.items():
 
     i += 3
     drugs_pos.append(i)
-    drugs_label.append(drug)
+    drugs_label.append('{} ({})'.format(drug, len(ccle_y)))
 
 ax.set_ylim(-5, 9)
 ax.set_xticks(range(1, len(drugs_label) * 3, 3))
