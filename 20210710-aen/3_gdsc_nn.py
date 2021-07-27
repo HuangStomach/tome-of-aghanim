@@ -1,0 +1,57 @@
+import tensorflow.keras as K
+import pandas as pd
+import numpy as np
+import joblib
+
+models_info = joblib.load('./Output/2/gdsc_nn_models_info.joblib')
+tcga_to_cancer = joblib.load('./Output/1/tcga_to_cancer.joblib')
+
+def r2(y_true, y_pred):
+    a = K.square(y_pred - y_true)
+    b = K.sum(a)
+    c = K.mean(y_true)
+    d = K.square(y_true - c)
+    e = K.sum(d)
+    f = 1 - b/e
+    return f
+
+# gdsc模型预测tcga
+tcga_pred = np.array([])
+columnnames = np.array(['Sample', 'Cancer'])
+for drug in models_info.keys():
+    tcga_latent = pd.read_table('./Output/1/{}.TCGA_latent.tsv'.format(models_info[drug]['step']), 
+        index_col = 0, float_precision='high')
+    model = K.models.load_model('./Output/2/gdsc_models/{}.h5'.format(drug), custom_objects={'r2': r2})
+    result = model.predict(tcga_latent)[:, 0]
+    
+    tcga_pred = np.vstack((tcga_pred, result)) if tcga_pred.shape[0] > 1 else result
+    columnnames = np.append(columnnames, drug)
+    print('tcga:', drug)
+
+def normal_name(name):
+    return name.replace('.', '-')
+rownames = np.array(list(map(normal_name, tcga_latent.index.values)))
+
+def normal_cancer(name):
+    return tcga_to_cancer[name]
+cancers = np.array(list(map(normal_cancer, tcga_latent.index.values)))
+
+tcga_pred = np.vstack((cancers, tcga_pred))
+tcga_pred = np.vstack((rownames, tcga_pred))
+
+tcga_pred_df = pd.DataFrame(tcga_pred.T, columns=columnnames)
+tcga_pred_df.to_csv('./Output/3/gdsc_nn_pred_tcga.csv', index=False)
+
+# gdsc模型自我预测
+ccle_latent = pd.read_table('./Output/1/1.CCLE_latent.tsv', index_col = 0)
+rownames = ccle_latent.index.values
+gdsc_pred = np.array([])
+columnnames = np.array(['Cellline'])
+for drug, model_info in models_info.items():
+    gdsc_pred = np.vstack((gdsc_pred, model_info['pred'])) if gdsc_pred.shape[0] > 1 else model_info['pred']
+    columnnames = np.append(columnnames, drug)
+    print('ccle:', drug)
+
+gdsc_pred = np.vstack((rownames, gdsc_pred))
+gdsc_pred_df = pd.DataFrame(gdsc_pred.T, columns=columnnames)
+gdsc_pred_df.to_csv('./Output/3/gdsc_nn_pred_ccle.csv', index=False)

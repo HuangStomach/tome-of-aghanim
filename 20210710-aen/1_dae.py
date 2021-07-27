@@ -27,8 +27,8 @@ epochs = 100
 def train(i):
     i = str(_i)
 
-    train_ccle_latent_file = i + '.ccle_dl_latent.tsv'
-    train_tcga_latent_file = i + '.tcga_dl_latent.tsv'
+    train_ccle_latent_file = i + '.ccle_nn_latent.tsv'
+    train_tcga_latent_file = i + '.tcga_nn_latent.tsv'
     # encoder_file = i + '.CCLE_encoder_onehidden_vae.hdf5'
     # decoder_file = i + '.CCLE_decoder_onehidden_vae.hdf5'
 

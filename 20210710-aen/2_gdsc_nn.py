@@ -109,10 +109,19 @@ for step in range(1, end + 1):
         print(drug, score)
 
         if drug not in models_info.keys() or score > models_info[drug]['r2_score']:
+            full_y = np.full(ccle_latent.shape[0], -9, dtype=float)
+            full_pred = np.full(ccle_latent.shape[0], -9, dtype=float)
+            full_y[indexes] = y
+            full_pred[indexes] = pred
+
             models_info[drug] = {
+                'y': full_y,
+                'pred': full_pred,
+                'step': step,
+                'size': len(y),
                 'pcc': st.pearsonr(y, pred),
                 'r2_score': score,
             }
+            model.save('./Output/2/gdsc_models/{}.h5'.format(drug))
 
-joblib.dump(models_info, './Output/2/gdsc_nn_models_info.joblib')  
-#joblib.dump(models, './Output/2/gdsc_models.joblib')  
+joblib.dump(models_info, './Output/2/gdsc_nn_models_info.joblib')
