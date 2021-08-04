@@ -2,13 +2,15 @@
 *.tsv
 *.csv
 *.png
+*.hdf5
+*.h5
+*.joblib
 HiSeqV2
 Data/**/*.txt
 !Data/TCGA/.gitkeep
 !Data/CCLE/.gitkeep
 !Data/GDSC/.gitkeep
-Output*
-!Output/*/.gitkeep
+!Output/0/.gitkeep
 Figure/**/*.txt
 Figure/**/*.pdf
 Figure/**/*.Rdata
