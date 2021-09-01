@@ -55,7 +55,7 @@ colors = ['red', 'green', 'blue']
 for i, box in enumerate(bplot['boxes']):
     box.set_facecolor(colors[i])
     y = dataset[i]
-    x = np.random.normal(i+1, .1, size=len(y))
+    x = np.random.normal(i + 1, .1, size=len(y))
     ax0.plot(x, y, '.k', markersize=2, zorder=2)
     ax0.text(i + .95, 1.5, len(y))
 

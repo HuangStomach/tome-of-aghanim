@@ -41,7 +41,6 @@ cbind(response, drug_ccle[ii, ]) -> new2
 new2 <- new2[!is.na(ii), ]
 dim(new2)
 
-
 brca_clin_data <- read.delim("BRCA_clinicalMatrix", as.is = T)
 match(new2[, 2], substr(brca_clin_data[, 1], 1, 12)) -> ii
 brca_clin_data <- brca_clin_data[ii, ]
@@ -61,6 +60,8 @@ xvector <- ifelse(new3[, 1] > median(new3[, 1]), "HR", "LR")
 table(xvector)
 
 dat <- data.frame(cbind(new3, xvector))
+print(y1)
+quit()
 fit <- survfit(Surv(X_OS, X_OS_IND) ~ xvector, data = dat)
 coxph(y1 ~ xvector)
 

@@ -42,7 +42,7 @@ cbind(response, drug_ccle[ii, ]) -> new2
 new2 <- new2[!is.na(ii), ]
 dim(new2)
 
-tapply(new2$Paclitaxel, new2$response, mean)
+# tapply(new2$Paclitaxel, new2$response, mean)
 grep("Disease", new2$response) -> ii
 drug <- "Paclitaxel"
 p <- t.test(new2[ii, drug], new2[-ii, drug])$p.value
