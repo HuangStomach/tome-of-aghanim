@@ -66,7 +66,7 @@ res_list[['ys']] <- ["original_Y", "self_pred"] # 包含真值与预测值的lis
 
 ## 改进计划
 
-* 不使用vae，直接使用auto-encoder进行降维度。
+* 不使用vae，直接使用auto-encoder进行降维度。✅
 * 用tcga数据训练分类，之后匹配ccle数据再进行标注。(单纯分类，或者domain-adversarial training)
 
 ## TCGA癌症中英文对照
