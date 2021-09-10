@@ -1,3 +1,7 @@
 __pycache__
 Data/*
 !Data/.gitkeep
+Output/*
+!Output/.gitkeep
+Lib/*
+!Lib/.gitkeep
