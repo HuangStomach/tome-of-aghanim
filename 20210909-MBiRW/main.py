@@ -5,10 +5,7 @@ from scipy.io import loadmat
 import lib
 
 drugs_sim = pd.read_table('./Data/DrugSimMat', sep=' ', header=None).to_numpy() # 药物相似程度矩阵
-drugs_name = pd.read_table('./Data/DrugsName', sep=' ', header=None, squeeze=True).to_numpy()
-
 diseases_sim = pd.read_table('./Data/DiseaseSimMat', sep=' ', header=None).to_numpy() # 疾病相似程度矩阵
-diseases_name = pd.read_table('./Data/DiseasesName', sep=' ', header=None, squeeze=True).to_numpy()
 
 dd_association = pd.read_table('./Data/DiDrAMat', sep='\t', header=None).to_numpy() # 药物疾病关联矩阵
 dd_association =  np.delete(dd_association, -1, axis=1) # 行疾病列药物
@@ -28,4 +25,29 @@ c_disease = lib.set_par_fun(dd_association, diseases_sim)
 drugs_sim = 1  / (1 + np.exp(c_drug * drugs_sim + d))
 diseases_sim = 1  / (1 + np.exp(c_disease * diseases_sim + d))
 
-(a, b) = lib.cluster(drugs_sim, diseases_sim, drugs_share, diseases_share, drugs_name, diseases_name)
+(drugs_cohesv, diseases_cohesv) = lib.cluster(drugs_sim, diseases_sim, drugs_share, diseases_share)
+
+drugs_cohesv = lib.norm_fun(drugs_cohesv)
+diseases_cohesv = lib.norm_fun(diseases_cohesv)
+
+# 随机游走 MBiRW
+R0 = dd_association_t / np.concatenate(dd_association_t).sum()
+Rt = R0.copy()
+
+for t in range(max(l, r)):
+    ftl = 0
+    ftr = 0
+
+    if t <= l:
+        # m x m * m x n = m x n
+        nRtleft = alpha * np.dot(drugs_cohesv, Rt) + (1 - alpha) * R0;
+        ftl = 1
+    if t <= r:
+        # m x n * n * n = m x n
+        nRtright = alpha * np.dot(Rt, diseases_cohesv) + (1 - alpha) * R0;
+        ftr = 1;
+
+    Rt = (ftl * nRtleft + ftr * nRtright) / (ftl + ftr);
+
+df = pd.DataFrame(Rt)
+df.to_csv('./Output/MBiRW.csv', index=False, header=False)
