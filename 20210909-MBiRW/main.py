@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from scipy.io import loadmat 
 import lib
+np.set_printoptions(suppress = True)
 
 drugs_sim = pd.read_table('./Data/DrugSimMat', sep=' ', header=None).to_numpy() # 药物相似程度矩阵
 diseases_sim = pd.read_table('./Data/DiseaseSimMat', sep=' ', header=None).to_numpy() # 疾病相似程度矩阵
@@ -40,14 +41,14 @@ for t in range(max(l, r)):
 
     if t <= l:
         # m x m * m x n = m x n
-        nRtleft = alpha * np.dot(drugs_cohesv, Rt) + (1 - alpha) * R0;
+        nRtleft = alpha * np.dot(drugs_cohesv, Rt) + (1 - alpha) * R0
         ftl = 1
     if t <= r:
         # m x n * n * n = m x n
-        nRtright = alpha * np.dot(Rt, diseases_cohesv) + (1 - alpha) * R0;
-        ftr = 1;
+        nRtright = alpha * np.dot(Rt, diseases_cohesv) + (1 - alpha) * R0
+        ftr = 1
 
-    Rt = (ftl * nRtleft + ftr * nRtright) / (ftl + ftr);
+    Rt = (ftl * nRtleft + ftr * nRtright) / (ftl + ftr)
 
 df = pd.DataFrame(Rt)
 df.to_csv('./Output/MBiRW.csv', index=False, header=False)
