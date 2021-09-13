@@ -2,6 +2,6 @@ __pycache__
 Data/*
 !Data/.gitkeep
 Output/*
-!Output/.gitkeep
+!Output/Wrd_result.mat
 Lib/*
 !Lib/.gitkeep
