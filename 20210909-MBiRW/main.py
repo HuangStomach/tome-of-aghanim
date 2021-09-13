@@ -50,5 +50,7 @@ for t in range(max(l, r)):
 
     Rt = (ftl * nRtleft + ftr * nRtright) / (ftl + ftr)
 
-df = pd.DataFrame(Rt)
-df.to_csv('./Output/MBiRW.csv', index=False, header=False)
+drugs_name = pd.read_table('./Data/DrugsName', sep=' ', header=None, squeeze=True).to_numpy()
+diseases_name = pd.read_table('./Data/DiseasesName', sep=' ', header=None, squeeze=True).to_numpy()
+df = pd.DataFrame(Rt, columns=diseases_name, index=drugs_name)
+df.to_csv('./Output/MBiRW.csv')
