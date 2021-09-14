@@ -22,7 +22,7 @@ def set_par_fun(ass_mat, sim_mat_s):
         for j in range(i):
             k += 1
             value = int(sim_mat[i][j] * 10)
-            sharedValue = np.dot(ass_mat[i], ass_mat[j])
+            sharedValue = ass_mat[i].dot(ass_mat[j])
             if value > 9: value = 9
 
             s[value] += 1
@@ -60,7 +60,7 @@ def set_par_fun(ass_mat, sim_mat_s):
         for i in range(1, num):
             for j in range(i):
                 value = int(sim_mat[i][j] * 10)
-                sharedValue = np.dot(ass_mat[i], ass_mat[j])
+                sharedValue = ass_mat[i].dot(ass_mat[j])
                 if value > 9: value = 9
 
                 s[value] += 1

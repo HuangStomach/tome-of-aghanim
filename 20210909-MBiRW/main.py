@@ -41,11 +41,11 @@ for t in range(max(l, r)):
 
     if t <= l:
         # m x m * m x n = m x n
-        nRtleft = alpha * np.dot(drugs_cohesv, Rt) + (1 - alpha) * R0
+        nRtleft = alpha * drugs_cohesv.dot(Rt) + (1 - alpha) * R0
         ftl = 1
     if t <= r:
         # m x n * n * n = m x n
-        nRtright = alpha * np.dot(Rt, diseases_cohesv) + (1 - alpha) * R0
+        nRtright = alpha * Rt.dot(diseases_cohesv) + (1 - alpha) * R0
         ftr = 1
 
     Rt = (ftl * nRtleft + ftr * nRtright) / (ftl + ftr)
