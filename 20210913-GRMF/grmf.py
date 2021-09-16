@@ -128,6 +128,7 @@ class GRMF:
             A_diff = A_old - A
             B_diff = B_old - B
             
+            # TODO: 求和平方开方做判敛
             diff = max(
                 np.concatenate(np.maximum(A_diff, -A_diff)).sum(), 
                 np.concatenate(np.maximum(B_diff, -B_diff)).sum()
