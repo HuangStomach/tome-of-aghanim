@@ -1,8 +1,5 @@
-mkdir DB01118_1GQ4
-cd DB01118_1GQ4
-
-pythonsh ../Utilities24/prepare_receptor4.py -r ./5J03.pdb -A hydrogens -U waters
-pythonsh ./Utilities24/prepare_ligand4.py -l ../DB01118.pdb -A hydrogens -U waters
+pythonsh ../../Utilities24/prepare_receptor4.py -r ./5Z15.pdb -A hydrogens -U waters
+pythonsh ../../Utilities24/prepare_ligand4.py -l ./DB01611.pdb -A hydrogens -U waters
 
 # pythonsh ../Utilities24/prepare_dpf4.py -l DB01118.pdbqt -r 1GQ4.pdbqt
 # pythonsh ../Utilities24/prepare_gpf4.py -l DB01118.pdbqt -r 1GQ4.pdbqt

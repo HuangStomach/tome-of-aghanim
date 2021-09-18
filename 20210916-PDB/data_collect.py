@@ -86,7 +86,7 @@ for file in files:
     [drug, protein, identifier] = file
     start_time = time.time()
     print(drug_url.format(drug))
-    download(drug_url.format(drug), './Data/{}.pdb'.format(drug), drug)
+    # download(drug_url.format(drug), './Data/{}.pdb'.format(drug), drug)
     for item in identifier:
         start_time = time.time()
         print(protein_url.format(item))
