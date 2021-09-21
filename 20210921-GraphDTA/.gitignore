@@ -1,5 +1,5 @@
 __pycache__
-Data/*
-!Data/.gitkeep
-Output/*
-!Output/.gitkeep
+data/**/*.txt
+data/**/*.csv
+data/*/Y
+!data/balance/.gitkeep

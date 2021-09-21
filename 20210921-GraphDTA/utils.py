@@ -7,13 +7,13 @@ from torch_geometric import data as DATA
 import torch
 
 class TestbedDataset(InMemoryDataset):
-    def __init__(self, root='/tmp', dataset='davis', 
+    def __init__(self, root='/tmp', dataset='balance', 
                  xd=None, xt=None, y=None, transform=None,
                  pre_transform=None,smile_graph=None):
 
         #root is required for save preprocessed data, default is '/tmp'
         super(TestbedDataset, self).__init__(root, transform, pre_transform)
-        # benchmark dataset, default = 'davis'
+        # benchmark dataset, default = 'balance'
         self.dataset = dataset
         if os.path.isfile(self.processed_paths[0]):
             print('Pre-processed data found: {}, loading ...'.format(self.processed_paths[0]))
