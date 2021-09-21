@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
 import json
+import pickle
 
-protein = pd.read_csv('./data/my/protein_sequence.csv', index_col=None, header=None).to_numpy()
-smiles = pd.read_csv('./data/my/smiles.csv', index_col=None, header=None).to_numpy()
-mat = pd.read_table('./data/my/mat_drug_protein.txt', sep=' ', index_col=None, header=None).to_numpy()
+protein = pd.read_csv('./data/balance/protein_sequence.csv', index_col=None, header=None).to_numpy()
+smiles = pd.read_csv('./data/balance/smiles.csv', index_col=None, header=None).to_numpy()
+mat = pd.read_table('./data/balance/mat_drug_protein.txt', sep=' ', index_col=None, header=None).to_numpy()
 
 protein_dict = {}
 need_del = []
@@ -16,12 +17,16 @@ for i, item in enumerate(protein):
     
     protein_dict[key] = value
 
-with open('./data/my/proteins.txt', 'w') as f:
+with open('./data/balance/proteins.txt', 'w') as f:
+    json.dump(protein_dict, f)
+with open('./data/unbalance/proteins.txt', 'w') as f:
     json.dump(protein_dict, f)
 
 mat = np.delete(mat, need_del, axis=1)
-df = pd.DataFrame(mat, columns=None, index=None)
-df.to_pickle('./data/my/Y')
+with open('./data/balance/Y', 'wb') as file:
+    pickle.dump(mat, file)
+with open('./data/unbalance/Y', 'wb') as file:
+    pickle.dump(mat, file)
 
 smiles_dict = {}
 need_del = []
@@ -33,6 +38,11 @@ for i, item in enumerate(smiles):
     
     smiles_dict[key] = value
 
-with open('./data/my/ligands_can.txt', 'w') as f:
+with open('./data/balance/ligands_can.txt', 'w') as f:
     json.dump(smiles_dict, f)
+with open('./data/unbalance/ligands_can.txt', 'w') as f:
+    json.dump(smiles_dict, f)
+
+
+
 
