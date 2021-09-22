@@ -8,11 +8,12 @@ smiles = pd.read_csv('./source/smiles.csv', index_col=None, header=None).to_nump
 mat = pd.read_table('./source/mat_drug_protein.txt', sep=' ', index_col=None, header=None).to_numpy()
 
 protein_dict = {}
-need_del = []
+need_del_col = []
 for i, item in enumerate(protein):
     [key, value] = item
+    
     if key in protein_dict.keys():
-        need_del.append(i)
+        need_del_col.append(i)
         continue
     
     protein_dict[key] = value
@@ -22,21 +23,23 @@ with open('./data/balance/proteins.txt', 'w') as f:
 with open('./data/unbalance/proteins.txt', 'w') as f:
     json.dump(protein_dict, f)
 
-mat = np.delete(mat, need_del, axis=1)
+mat = np.delete(mat, need_del_col, axis=1)
+
+ignore = ['DB01356', 'DB01378']
+smiles_dict = {}
+need_del_row = []
+for i, item in enumerate(smiles):
+    [key, value] = item
+    if key in ignore or key in smiles_dict.keys():
+        need_del_row.append(i)
+        continue
+    
+    smiles_dict[key] = value
+mat = np.delete(mat, need_del_row, axis=0)
 with open('./data/balance/Y', 'wb') as file:
     pickle.dump(mat, file)
 with open('./data/unbalance/Y', 'wb') as file:
     pickle.dump(mat, file)
-
-smiles_dict = {}
-need_del = []
-for i, item in enumerate(smiles):
-    [key, value] = item
-    if key in smiles_dict.keys():
-        need_del.append(i)
-        continue
-    
-    smiles_dict[key] = value
 
 with open('./data/balance/ligands_can.txt', 'w') as f:
     json.dump(smiles_dict, f)

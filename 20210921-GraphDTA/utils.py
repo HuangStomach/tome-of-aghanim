@@ -6,27 +6,30 @@ from torch_geometric.data import InMemoryDataset, DataLoader
 from torch_geometric import data as DATA
 import torch
 
-class TestbedDataset(InMemoryDataset):
-    def __init__(self, root='/tmp', dataset='balance', 
-                 xd=None, xt=None, y=None, transform=None,
-                 pre_transform=None,smile_graph=None):
 
-        #root is required for save preprocessed data, default is '/tmp'
+class TestbedDataset(InMemoryDataset):
+    def __init__(self, root='/tmp', dataset='balance',
+                 xd=None, xt=None, y=None, transform=None,
+                 pre_transform=None, smile_graph=None):
+
+        # root is required for save preprocessed data, default is '/tmp'
         super(TestbedDataset, self).__init__(root, transform, pre_transform)
         # benchmark dataset, default = 'balance'
         self.dataset = dataset
         if os.path.isfile(self.processed_paths[0]):
-            print('Pre-processed data found: {}, loading ...'.format(self.processed_paths[0]))
+            print(
+                'Pre-processed data found: {}, loading ...'.format(self.processed_paths[0]))
             self.data, self.slices = torch.load(self.processed_paths[0])
         else:
-            print('Pre-processed data {} not found, doing pre-processing...'.format(self.processed_paths[0]))
-            self.process(xd, xt, y,smile_graph)
+            print(
+                'Pre-processed data {} not found, doing pre-processing...'.format(self.processed_paths[0]))
+            self.process(xd, xt, y, smile_graph)
             self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property
     def raw_file_names(self):
         pass
-        #return ['some_file_1', 'some_file_2', ...]
+        # return ['some_file_1', 'some_file_2', ...]
 
     @property
     def processed_file_names(self):
@@ -48,8 +51,9 @@ class TestbedDataset(InMemoryDataset):
     # XD - list of SMILES, XT: list of encoded target (categorical or one-hot),
     # Y: list of labels (i.e. affinity)
     # Return: PyTorch-Geometric format processed data
-    def process(self, xd, xt, y,smile_graph):
-        assert (len(xd) == len(xt) and len(xt) == len(y)), "The three lists must be the same length!"
+    def process(self, xd, xt, y, smile_graph):
+        assert (len(xd) == len(xt) and len(xt) == len(
+            y)), "The three lists must be the same length!"
         data_list = []
         data_len = len(xd)
         for i in range(data_len):
@@ -78,19 +82,28 @@ class TestbedDataset(InMemoryDataset):
         # save preprocessed data:
         torch.save((data, slices), self.processed_paths[0])
 
-def rmse(y,f):
+
+def rmse(y, f):
     rmse = sqrt(((y - f)**2).mean(axis=0))
     return rmse
-def mse(y,f):
+
+
+def mse(y, f):
     mse = ((y - f)**2).mean(axis=0)
     return mse
-def pearson(y,f):
-    rp = np.corrcoef(y, f)[0,1]
+
+
+def pearson(y, f):
+    rp = np.corrcoef(y, f)[0, 1]
     return rp
-def spearman(y,f):
+
+
+def spearman(y, f):
     rs = stats.spearmanr(y, f)[0]
     return rs
-def ci(y,f):
+
+
+def ci(y, f):
     ind = np.argsort(y)
     y = y[ind]
     f = f[ind]
