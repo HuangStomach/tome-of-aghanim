@@ -86,7 +86,8 @@ for dataset in datasets:
         model_file_name = 'model_' + model_st + '_' + dataset +  '.model'
         result_file_name = 'result_' + model_st + '_' + dataset +  '.csv'
         for epoch in range(NUM_EPOCHS):
-            if epoch % 100 == 0:
+            train(model, device, train_loader, optimizer, epoch+1)
+            if (epoch + 1) % 100 == 0:
                 torch.save(model.cpu(), './data/{}/model_GIN_epoch_{}.pkl'.format(dataset, str(epoch)))
             model = model.cuda()
             # train(model, device, train_loader, optimizer, epoch+1)
