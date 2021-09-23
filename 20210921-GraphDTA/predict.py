@@ -32,4 +32,4 @@ for i, dataset in enumerate(datasets):
     model = modeling.to(device)
     G, P = predicting(model, test_loader)
     np.savetxt('./data/{}/label.out'.format(dataset), G)
-    np.savetxt('./data/{}/predict.out'.format(dataset), G)
+    np.savetxt('./data/{}/predict.out'.format(dataset), P)
