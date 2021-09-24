@@ -88,7 +88,7 @@ for dataset in datasets:
         for epoch in range(NUM_EPOCHS):
             train(model, device, train_loader, optimizer, epoch+1)
             if (epoch + 1) % 100 == 0:
-                torch.save(model.cpu(), './data/{}/model_GIN_epoch_{}.pkl'.format(dataset, str(epoch)))
+                torch.save(model.cpu(), './data/{}/model_GIN_epoch_{}.pkl'.format(dataset, epoch + 1))
             model = model.cuda()
             # train(model, device, train_loader, optimizer, epoch+1)
             # G,P = predicting(model, device, test_loader)
