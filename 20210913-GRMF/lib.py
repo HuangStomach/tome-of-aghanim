@@ -1,12 +1,11 @@
 import numpy as np
 from typing import TypeVar
 
-P = TypeVar('P', bound='KNKN')
 class KNKN:
     def __init__(self, k) -> None:
         self._k = k
 
-    def fit(self, _X) -> P:
+    def fit(self, _X):
         self.X = _X.copy()
         return self
     

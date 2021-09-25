@@ -2,11 +2,9 @@ import numpy as np
 import pandas as pd
 from sklearn.decomposition import TruncatedSVD
 from lib import KNKN
-from typing import TypeVar
 np.set_printoptions(suppress = True)
 np.set_printoptions(threshold = np.inf)
 
-P = TypeVar('P', bound='GRMF')
 class GRMF:
     K = 5
     p = 5
@@ -27,7 +25,7 @@ class GRMF:
         self.lambda_d = lambda_d
         self.lambda_t = lambda_t
     
-    def _preprocess(self, K, miu=0.7) -> P:
+    def _preprocess(self, K, miu=0.7):
         '''
         ### Args:
             K: 目标的近邻个数

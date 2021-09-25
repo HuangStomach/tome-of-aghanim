@@ -62,8 +62,7 @@ def seq_cat(prot):
 
 # from DeepDTA data
 all_prots = []
-datasets = ['balance']
-#datasets = ['balance', 'unbalance']
+datasets = ['balance', 'unbalance']
 for dataset in datasets:
     print('convert data from DeepDTA for ', dataset)
     fpath = 'data/' + dataset + '/'

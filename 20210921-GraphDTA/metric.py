@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import metrics
 
-datasets = ['balance']#, 'unbalance']
+datasets = ['balance', 'unbalance']
 for dataset in datasets:
     label = np.loadtxt('./data/{}/label.out'.format(dataset))
     predict = np.loadtxt('./data/{}/predict.out'.format(dataset))
