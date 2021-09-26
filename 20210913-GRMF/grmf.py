@@ -86,7 +86,7 @@ class GRMF:
         L_hat = D_power @ L @ D_power
         return L_hat
     
-    def fit(self, adj_mat, drug_mat, target_mat, preprocess=True, K=5, miu=.7) -> P:
+    def fit(self, adj_mat, drug_mat, target_mat, preprocess=True, K=5, miu=.7):
         '''
         ### Args:
             adj_mat: 相互作用矩阵
@@ -134,7 +134,7 @@ class GRMF:
             if diff < self.eta: break
 
         self.Y_hat = A @ B.transpose()
-        return P
+        return self
 
     def predict(self, i, j) -> float:
         '''
