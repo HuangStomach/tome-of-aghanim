@@ -48,6 +48,7 @@ class GRMF:
         Knkn.fit(self.target_mat)
         for t in range(self.m):
             (indexes, values) = Knkn.neighbors(t)
+            z = np.sum(values)
             for i in range(self.K):
                 weights[i] = (miu ** i) * values[i]
                 Yt[:, t] += weights[i] * self.Y[:, indexes[i]] / z
