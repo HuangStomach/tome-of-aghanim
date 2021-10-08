@@ -1,7 +1,7 @@
 ## 启动命令
 
 ```bash
-docker run -itd -v <ORIGINAL PATH>:/data <IMAGE ID>
+docker run --gpus -itd -v <ORIGINAL PATH>:/data <IMAGE ID>
 ```
 
 ## 进入容器

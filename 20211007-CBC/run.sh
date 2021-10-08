@@ -1,0 +1,1 @@
+python 2_submit2_self_addid.py $1 $2
