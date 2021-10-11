@@ -4,9 +4,7 @@ import os
 import json
 import pickle
 from collections import OrderedDict
-# import rdkit
 from rdkit import Chem
-# MolFromSmilesfrom rdkit.Chem import MolFromSmiles
 import networkx as nx
 from utils import *
 
