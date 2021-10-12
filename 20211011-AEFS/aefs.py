@@ -60,19 +60,62 @@ class AEFSLoss(nn.Module):
 
     def forward(self, e, th, sr, sp, a):  # 定义前向的函数运算即可
         '''
-        e: y
-        th: batch_h
+        e: coded_data
+        th: y
         '''
-        l2_1 = torch.mm(e, e.T)
-        l2_2 = torch.mm(torch.sqrt_(torch.sum(e.mul(e), dim=1).view(torch.sum(e.mul(e), dim=1).shape[0], 1)), torch.sqrt_(torch.sum(e.mul(e), dim=1).view(1, torch.sum(e.mul(e), dim=1).shape[0])))
-        l2_3 = torch.div(l2_1, l2_2) - sr
-        l2 = torch.sum(l2_3.mul(l2_3)) / (e.shape[0] * e.shape[0])
+        l2_1 = torch.mm(e, e.T) # 矩阵乘法
+        l2_2 = torch.mm(
+            torch.sqrt_(
+                # .mul 对应位相乘
+                torch.sum(e.mul(e), dim=1)\
+                    .view(
+                        torch.sum(e.mul(e), dim=1).shape[0], 1 # 将矩阵对应位想乘之后的结果resize成行列向量
+                    )
+            ), 
+            torch.sqrt_(
+                torch.sum(e.mul(e), dim=1)\
+                    .view(
+                        1, torch.sum(e.mul(e), dim=1).shape[0]
+                    )
+            ) # 重新resize方便做矩阵mm
+        )
+        l2_3 = torch.div(l2_1, l2_2) - sr 
+        l2 = torch.sum(l2_3.mul(l2_3)) / (e.shape[0] * e.shape[0]) # 1式结果未加参数
+
+        # 如下同理
         l3_1 = torch.mm(e.T, e)
         l3_2 = torch.mm(torch.sqrt_(torch.sum(e.T.mul(e.T), dim=1).view(torch.sum(e.T.mul(e.T), dim=1).shape[0], 1)), torch.sqrt_(torch.sum(e.T.mul(e.T), dim=1).view(1, torch.sum(e.T.mul(e.T), dim=1).shape[0])))
         l3_3 = l3_1 / l3_2 - sp
         l3 = torch.sum(l3_3.mul(l3_3)) / (e.shape[1] * e.shape[1])
         return a * l2 + a * l3
 
+# same order neighbours
+class SONLoss(nn.Module):
+    def __init__(self, Sr):
+        super(SONLoss, self).__init__()
+        self.Sr = Sr
+    
+    def forward(self, S, k, a):
+        '''
+        Sr: 药物相似性矩阵
+        S: 蛋白或疾病分数矩阵
+        k: 邻居数
+        a: 约束参数
+        '''
+        S_sum = S.pow(2).sum(dim=1)
+        S1 = S_sum.unsqueeze(1)
+        S2 = S_sum.unsqueeze(0)
+        S_dist = torch.sqrt(S1 + S2 - 2 * S.mm(S.T)) # 与其他样本的距离
+
+        S_val, S_idx = S_dist.topk(k + 1, largest=False)
+        Sr_val, Sr_idx, Sr_val = self.Sr.topk(k + 1)
+        S_val, S_idx, Sr_val, Sr_idx = S_val[:, 1:], S_idx[:, 1:], Sr_val[:, 1:], Sr_idx[:, 1:]
+
+        diff_idx = S_idx.bitwise_xor(Sr_idx)
+        punish = diff_idx.abs().sum(1) # 对位近邻的索引之差视为惩罚项
+        cal_flag = diff_idx.div(diff_idx).nan_to_num(0) # 索引相同为1 不同为0
+        
+        return S_val.sub(Sr_val).pow(2).mul(cal_flag).sum(1).sqrt().mul(punish).sum()
 
 if __name__ == '__main__':
     print("读取数据")
@@ -100,7 +143,7 @@ if __name__ == '__main__':
     train_loader = DataLoader(dataset=train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=6)
     AE = AutoEncoder(drug_feature, indication_num)
     optimizer = torch.optim.Adam(AE.parameters(), lr=LR)
-    aefs_loss = AEFSLoss()
+    aefs_loss = AEFSLoss(SR)
     mse_loss = nn.MSELoss()
     print("cuda加速")
     AE = AE.to(device)
