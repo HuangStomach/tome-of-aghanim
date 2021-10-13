@@ -91,11 +91,12 @@ class AEFSLoss(nn.Module):
 
 # same order neighbours
 class SONLoss(nn.Module):
-    def __init__(self, Sr):
+    def __init__(self, Sr, k):
         super(SONLoss, self).__init__()
         self.Sr = Sr
+        self.k = k
     
-    def forward(self, S, k, a):
+    def forward(self, S, a):
         '''
         Sr: 药物相似性矩阵
         S: 蛋白或疾病分数矩阵
@@ -107,15 +108,15 @@ class SONLoss(nn.Module):
         S2 = S_sum.unsqueeze(0)
         S_dist = torch.sqrt(S1 + S2 - 2 * S.mm(S.T)) # 与其他样本的距离
 
-        S_val, S_idx = S_dist.topk(k + 1, largest=False)
-        Sr_val, Sr_idx, Sr_val = self.Sr.topk(k + 1)
+        S_val, S_idx = S_dist.topk(self.k + 1, largest=False)
+        Sr_val, Sr_idx, Sr_val = self.Sr.topk(self.k + 1)
         S_val, S_idx, Sr_val, Sr_idx = S_val[:, 1:], S_idx[:, 1:], Sr_val[:, 1:], Sr_idx[:, 1:]
 
         diff_idx = S_idx.bitwise_xor(Sr_idx)
         punish = diff_idx.abs().sum(1) # 对位近邻的索引之差视为惩罚项
         cal_flag = diff_idx.div(diff_idx).nan_to_num(0) # 索引相同为1 不同为0
         
-        return S_val.sub(Sr_val).pow(2).mul(cal_flag).sum(1).sqrt().mul(punish).sum()
+        return a * S_val.sub(Sr_val).pow(2).mul(cal_flag).sum(1).sqrt().mul(punish).sum()
 
 if __name__ == '__main__':
     print("读取数据")
@@ -143,7 +144,7 @@ if __name__ == '__main__':
     train_loader = DataLoader(dataset=train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=6)
     AE = AutoEncoder(drug_feature, indication_num)
     optimizer = torch.optim.Adam(AE.parameters(), lr=LR)
-    aefs_loss = AEFSLoss(SR)
+    aefs_loss = SONLoss(SR, 10)
     mse_loss = nn.MSELoss()
     print("cuda加速")
     AE = AE.to(device)
@@ -163,8 +164,8 @@ if __name__ == '__main__':
             batch_y = batch_y.to(device)
 
             encoded, decoded = AE(batch_x) # h3:encoded h6:decoded
-            loss1 = mse_loss(encoded, batch_h) + aefs_loss(encoded, batch_h, batch_SR, SP, a1)
-            loss2 = mse_loss(decoded, batch_y) + aefs_loss(decoded, batch_y, batch_SR, SD, a2)
+            loss1 = mse_loss(encoded, batch_h) + aefs_loss(encoded, a1)
+            loss2 = mse_loss(decoded, batch_y) + aefs_loss(decoded, a2)
             loss = loss1 + loss2
             optimizer.zero_grad()
             loss.backward()
