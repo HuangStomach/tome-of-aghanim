@@ -16,5 +16,5 @@
 
 > 把整个autoencoder里面的算法使用GCN GAT GIN
 > 另外其实只是叫autoencoder 里面放了两个模型而已 无需把decoder模型反过来和输入做约束
-> 蛋白的处理就是embeding
 > 相同类别的特征使用同一个模型，不同的特征之间可以不同，交叉进行计算
+> 先使用blosun62 把每个蛋白都化成矩阵 然后通过LSTM来化为特征
