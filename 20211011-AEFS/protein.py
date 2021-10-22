@@ -8,10 +8,9 @@ np.set_printoptions(suppress=True, linewidth=np.nan)
 
 hidden_size = 128
 num_layers = 2
-batch_size = 10
 
 def transform():
-    train_prots = np.loadtxt("./datasets/DTINet/protein_sequence.csv", dtype=str, delimiter=',')[:10, 1]
+    train_prots = np.loadtxt("./datasets/DTINet/protein_sequence.csv", dtype=str, delimiter=',')[:, 1]
     blosum62 = pd.read_table("./datasets/DTINet/blosum62.txt", header=0, index_col=0, sep=' ', dtype=str)
 
     proteins = []
@@ -41,9 +40,10 @@ def transform():
 
     embeds = []
     for o, length in zip(out, seq_lens):
-        embeds.append(o[length - 1, :hidden_size] + o[length - 1, hidden_size:])
+        embed = o[length - 1, :hidden_size] + o[length - 1, hidden_size:]
+        embeds.append(embed.detach().numpy())
     embeds = np.array(embeds)
-    print(embeds.shape)
+    np.savetxt('./datasets/DTINet/protein_embeds.csv', embeds, delimiter=',')
 
 if __name__=='__main__':
     transform()

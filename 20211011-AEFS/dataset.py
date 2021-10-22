@@ -36,7 +36,7 @@ class DTINet(Dataset):
         'drugs_fps': './datasets/DTINet/drug_ecfps.txt',
         'drugs_sim': './datasets/DTINet/Similarity_Matrix_Drugs.txt',
         'protein_sim': './datasets/DTINet/Similarity_Matrix_Proteins.txt',
-        'protein_embed': './datasets/DTINet/protein_embed.txt',
+        'protein_embed': './datasets/DTINet/protein_embeds.csv',
         'dpi': './datasets/DTINet/mat_drug_protein.txt',
         'rda': './datasets/DTINet/mat_drug_disease.txt',
         'pdi': './datasets/DTINet/mat_protein_disease.txt',
@@ -72,7 +72,7 @@ class DTINet(Dataset):
         '''
         药物相似性
         '''
-        return np.loadtxt(self.path['protein_embed'], dtype=int, delimiter=' ')
+        return np.loadtxt(self.path['protein_embed'], dtype=float, delimiter=',')
     
     def fps(self, type='train'):
         '''
