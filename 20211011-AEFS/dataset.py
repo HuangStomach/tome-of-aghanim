@@ -1,34 +1,27 @@
 import numpy as np
-import torch
 from lib import *
 
 class Dataset:
     def prepare(self):
         print("读取数据")
-        drug_A = self.drug_sim('train')
-        drug_x1 = np.matmul(drug_A, self.fps('train')) # 指纹
-        drug_x2 = np.matmul(drug_A, self.dpi('train'))
-        drug_x3 = np.matmul(drug_A, self.rda('train'))
+        self.id = self.idx('train')
+        self.drug_A = self.drug_sim('train')
+        self.drug_x1 = np.matmul(self.drug_A, self.fps('train')) # 指纹
+        self.drug_x2 = np.matmul(self.drug_A, self.rda('train'))
+        self.drug_x3 = np.matmul(self.drug_A, self.dpi('train'))
 
-        protein_A = max_min_normalize(self.protein_sim())
-        protein_x1 = np.matmul(protein_A, self.protein_embed()) # wordembedding
-        protein_x2 = np.matmul(protein_A, self.dpi('train').T)
-        protein_x3 = np.matmul(protein_A, self.pdi())
-        print(drug_x1.shape, drug_x2.shape, drug_x3.shape)
-        print(protein_x1.shape, protein_x2.shape, protein_x3.shape)
-        
-        print("numpy 转 tensor")
-        self.id = torch.from_numpy(self.idx('train')).int()
-        self.drug_x1 = torch.from_numpy(drug_x1).float()
-        self.drug_x2 = torch.from_numpy(drug_x2).float()
-        self.drug_x3 = torch.from_numpy(drug_x3).float()
-
-        self.protein_x1 = torch.from_numpy(protein_x1).float()
-        self.protein_x2 = torch.from_numpy(protein_x2).float()
-        self.protein_x3 = torch.from_numpy(protein_x3).float()
-
-        self.drug_A = torch.from_numpy(drug_A).float()
-        self.protein_A = torch.from_numpy(protein_A).float()
+        self.protein_x1 = self.protein_embed() # wordembedding
+        self.protein_x2 = self.pdi()
+        self.protein_x3 = self.dpi('train').T
+    
+    def edge_index(self, sim_mat):
+        l = sim_mat.shape[0]
+        edge_index = []
+        for i in range(l):
+            for j in range(i + 1, l):
+                if sim_mat[i, j] >= 0.5:
+                    edge_index.append([i, j])
+        return np.array(edge_index)
 
 class DTINet(Dataset):
     path = {
@@ -90,7 +83,7 @@ class DTINet(Dataset):
         '''
         药物疾病关联
         '''
-        return np.loadtxt(self.path['split_fps'].format(type), dtype=int, delimiter=' ')
+        return np.loadtxt(self.path['split_rda'].format(type), dtype=int, delimiter=' ')
     
     def pdi(self):
         '''
@@ -127,3 +120,33 @@ class DTINet(Dataset):
         rda = np.loadtxt(self.path['rda'], dtype=int, delimiter=' ')
         np.savetxt(self.path['split_rda'].format('train'), rda[train_id], delimiter=' ', fmt='%d')
         np.savetxt(self.path['split_rda'].format('test'), rda[test_id], delimiter=' ', fmt='%d')
+
+    # def split_graph(self):
+    #     drug_sim = np.loadtxt(self.path['drugs_sim'], dtype=float, delimiter='    ')
+    #     d = drug_sim[690]
+    #     d.sort()
+    #     print(d)
+    #     quit()
+    #     drugs = self.drugs()
+
+    #     drug_mark = np.zeros(drugs.shape[0])
+
+    #     graphs = []
+    #     print(drugs.shape[0])
+    #     for i in range(drugs.shape[0]):
+    #         if drug_mark[i] != 0: continue
+
+    #         drug_mark[i] = 1
+    #         g = [i]
+    #         self.dfs(drug_sim, drug_mark, i, g)
+    #         graphs.append(g)
+        
+    #     for g in graphs:
+    #         print(len(g))
+
+    # def dfs(self, drug_sim, drug_mark, i, g):
+    #     for j, drug in enumerate(drug_sim[i]):
+    #         if drug >= 0.5 and drug_mark[j] == 0:
+    #             g.append(j)
+    #             drug_mark[j] = 1
+    #             self.dfs(drug_sim, drug_mark, j, g)

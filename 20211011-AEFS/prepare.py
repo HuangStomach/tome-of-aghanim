@@ -3,13 +3,13 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.utils.rnn as rnn_utils
-from torch.utils.data import DataLoader, TensorDataset
+from sklearn.metrics import jaccard_score
 np.set_printoptions(suppress=True, linewidth=np.nan)
 
 hidden_size = 128
 num_layers = 2
 
-def transform():
+def proteins():
     train_prots = np.loadtxt("./datasets/DTINet/protein_sequence.csv", dtype=str, delimiter=',')[:, 1]
     blosum62 = pd.read_table("./datasets/DTINet/blosum62.txt", header=0, index_col=0, sep=' ', dtype=str)
 
@@ -45,5 +45,16 @@ def transform():
     embeds = np.array(embeds)
     np.savetxt('./datasets/DTINet/protein_embeds.csv', embeds, delimiter=',')
 
+def diseases(dataset):
+    pdi = dataset.pdi()
+    disease_num = pdi.shape[1]
+
+    disease_A = np.zeros((disease_num, disease_num), dtype=float)
+    for i in range(disease_num):
+        for j in range(disease_num):
+            disease_A[i, j] = jaccard_score(pdi[:, i], pdi[:, j])
+    np.savetxt('./datasets/DTINet/Similarity_Matrix_Diseases.txt.txt', disease_A, delimiter=' ')
+
 if __name__=='__main__':
-    transform()
+    proteins()
+    diseases()
