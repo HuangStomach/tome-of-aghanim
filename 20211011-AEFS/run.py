@@ -1,10 +1,10 @@
 from importlib import import_module
-from itertools import cycle
+import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import TensorDataset, DataLoader
+import sklearn
 
-from lib import *
+# from lib import *
 import prepare
 from models.autoencoder import AutoEncoder, SONLoss
 
@@ -21,27 +21,28 @@ a2 = 0.0001
 
 def train(model_1, model_2, model_3, dataset):
     # 每次train 要train两组数据 药物和蛋白
-    drug_x1 = torch.from_numpy(dataset.drug_x1[:10, :]).float() # [556, 1024]
-    drug_x2 = torch.from_numpy(dataset.drug_x2[:10, :]).float() # [556, 5603]
-    drug_x3 = torch.from_numpy(dataset.drug_x3[:10, :]).float() # [556, 1512]
-    protein_x1 = torch.from_numpy(dataset.protein_x1[:20, :]).float() # [1512, 128]
-    protein_x2 = torch.from_numpy(dataset.protein_x2[:20, :]).float() # [1512, 5603]
-    protein_x3 = torch.from_numpy(dataset.protein_x3[:20, :]).float() # [1512, 556]
+    drug_x1 = torch.from_numpy(dataset.drug_x1).float() # [556, 1024]
+    drug_x2 = torch.from_numpy(dataset.drug_x2).float() # [556, 5603]
+    drug_x3 = torch.from_numpy(dataset.drug_x3).float() # [556, 1512]
+    protein_x1 = torch.from_numpy(dataset.protein_x1).float() # [1512, 128]
+    protein_x2 = torch.from_numpy(dataset.protein_x2).float() # [1512, 5603]
+    protein_x3 = torch.from_numpy(dataset.protein_x3).float() # [1512, 556] 蛋白和药物关联
 
-    SR = dataset.drug_A[:10, :10] # 药物相似性
-    SP = max_min_normalize(dataset.protein_sim()[:20, :20]) # 疾病相似性
-    drug_edge = torch.from_numpy(dataset.edge_index(SR)).long()
-    protein_edge = torch.from_numpy(dataset.edge_index(SP)).long()
+    SR = dataset.drug_A # 药物相似性
+    SP = sklearn.preprocessing.minmax_scale(dataset.protein_A) # 疾病相似性
+
+    drug_edge = torch.from_numpy(dataset.edge_index(dataset.split('rri'))).long()
+    protein_edge = torch.from_numpy(dataset.edge_index(dataset.ppi())).long()
     
     eye_R = torch.eye(SR.shape[0]).float()
     eye_P = torch.eye(SP.shape[0]).float()
     SR = torch.from_numpy(SR).float()
     SP = torch.from_numpy(SP).float()
-
+    
     print("初始化模型")
     AE = AutoEncoder(
         [1024, 128], [5603, 1024], [1512, 256],
-        [128, 128], [1512, 1024], [556, 256],
+        [128, 128], [5603, 1024], [drug_x1.size()[0], 256],
         drug_num=drug_x1.size()[0], protein_num=protein_x1.size()[0], disease_num=protein_x2.size()[1],
         models=[model_1, model_2, model_3],
     )
@@ -51,14 +52,14 @@ def train(model_1, model_2, model_3, dataset):
 
     print("开始训练")
     for epoch in range(EPOCH):
-        encoded, decoded = AE(
+        encoded, SR_hat, decoded, SP_hat = AE(
             drug_x1, drug_x2, drug_x3,
             protein_x1, protein_x2, protein_x3,
             drug_edge, protein_edge
         ) # h3:encoded h6:decoded
 
-        loss1 = mse_loss(encoded, SR) + son_loss(SR, encoded, eye_R, a1)
-        loss2 = mse_loss(decoded, SP) + son_loss(SP, decoded, eye_P, a2)
+        loss1 = mse_loss(SR_hat, SR) + son_loss(SR_hat, SR, eye_R, a1)
+        loss2 = mse_loss(SP_hat, SP) + son_loss(SP_hat, SP, eye_P, a2)
         loss = loss1 + loss2
         optimizer.zero_grad()
         loss.backward()
