@@ -1,5 +1,4 @@
 from importlib import import_module
-import numpy as np
 import torch
 import torch.nn as nn
 import sklearn
@@ -8,36 +7,34 @@ import sklearn
 import prepare
 from models.autoencoder import AutoEncoder, SONLoss
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 200
-BATCH_SIZE = 4
-LR = 0.0001
-# drug_num = 1307
-# protein_num = 1996
-# indication_num = 3926
-drug_feature = 1024  # ECFPs指纹
+LR = 0.000001
 a1 = 0.00000001
 a2 = 0.0001
 
 def train(model_1, model_2, model_3, dataset):
     # 每次train 要train两组数据 药物和蛋白
-    drug_x1 = torch.from_numpy(dataset.drug_x1).float() # [556, 1024]
-    drug_x2 = torch.from_numpy(dataset.drug_x2).float() # [556, 5603]
-    drug_x3 = torch.from_numpy(dataset.drug_x3).float() # [556, 1512]
-    protein_x1 = torch.from_numpy(dataset.protein_x1).float() # [1512, 128]
-    protein_x2 = torch.from_numpy(dataset.protein_x2).float() # [1512, 5603]
-    protein_x3 = torch.from_numpy(dataset.protein_x3).float() # [1512, 556] 蛋白和药物关联
+    drug_x1 = torch.from_numpy(dataset.drug_x1).float().to(device) # [556, 1024]
+    drug_x2 = torch.from_numpy(dataset.drug_x2).float().to(device) # [556, 5603]
+    drug_x3 = torch.from_numpy(dataset.drug_x3).float().to(device) # [556, 1512]
+    protein_x1 = torch.from_numpy(dataset.protein_x1).float().to(device) # [1512, 128]
+    protein_x2 = torch.from_numpy(dataset.protein_x2).float().to(device) # [1512, 5603]
+    protein_x3 = torch.from_numpy(dataset.protein_x3).float().to(device) # [1512, 556] 蛋白和药物关联
 
     SR = dataset.drug_A # 药物相似性
     SP = sklearn.preprocessing.minmax_scale(dataset.protein_A) # 疾病相似性
 
-    drug_edge = torch.from_numpy(dataset.edge_index(dataset.split('rri'))).long()
-    protein_edge = torch.from_numpy(dataset.edge_index(dataset.ppi())).long()
+    drug_edge = torch.from_numpy(dataset.edge_index(dataset.split('rri'))).long().to(device)
+    protein_edge = torch.from_numpy(dataset.edge_index(dataset.ppi())).long().to(device)
     
-    eye_R = torch.eye(SR.shape[0]).float()
-    eye_P = torch.eye(SP.shape[0]).float()
-    SR = torch.from_numpy(SR).float()
-    SP = torch.from_numpy(SP).float()
+    eye_R = torch.eye(SR.shape[0]).float().to(device)
+    eye_P = torch.eye(SP.shape[0]).float().to(device)
+    SR = torch.from_numpy(SR).float().to(device)
+    SP = torch.from_numpy(SP).float().to(device)
+
+    RPI = torch.from_numpy(dataset.split('rpi')).float().to(device)
+    PDI = torch.from_numpy(dataset.split('pdi')).float().to(device)
     
     print("初始化模型")
     AE = AutoEncoder(
@@ -58,13 +55,14 @@ def train(model_1, model_2, model_3, dataset):
             drug_edge, protein_edge
         ) # h3:encoded h6:decoded
 
-        loss1 = mse_loss(SR_hat, SR) + son_loss(SR_hat, SR, eye_R, a1)
-        loss2 = mse_loss(SP_hat, SP) + son_loss(SP_hat, SP, eye_P, a2)
+        loss1 = mse_loss(encoded, RPI) + son_loss(SR_hat, SR, eye_R, a1)
+        loss2 = mse_loss(decoded, PDI) + son_loss(SP_hat, SP, eye_P, a2)
+
         loss = loss1 + loss2
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        print('Epoch:', epoch, 'train loss: %.20f' % loss.to(device).data)
+        print('Epoch:', epoch, 'train loss: %.20f' % loss.data)
 
     torch.save(AE.to(device), 'output/DTINet/model.pkl')
 

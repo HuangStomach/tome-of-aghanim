@@ -22,12 +22,8 @@ class AutoEncoder(nn.Module):
         self.decoder_2 = model_2(feature_p2[0], feature_p2[1])
         self.decoder_3 = model_3(feature_p3[0], feature_p3[1])
         
-        self.encoder = nn.Sequential(
+        self.encoder = nn.Sequential( # 1-2层
             nn.Linear(feature_r1[1] + feature_r2[1] + feature_r3[1], 2048),
-            nn.Dropout(0.2),
-            nn.GELU(),
-            nn.BatchNorm1d(2048),
-            nn.Linear(2048, 2048),
             nn.Dropout(0.2),
             nn.GELU(),
             nn.BatchNorm1d(2048),
@@ -37,10 +33,6 @@ class AutoEncoder(nn.Module):
 
         self.decoder = nn.Sequential(
             nn.Linear(feature_p1[1] + feature_p2[1] + feature_p3[1], 6144),
-            nn.Dropout(0.2),
-            nn.GELU(),
-            nn.BatchNorm1d(6144),
-            nn.Linear(6144, 6144),
             nn.Dropout(0.2),
             nn.GELU(),
             nn.BatchNorm1d(6144),
@@ -61,9 +53,9 @@ class AutoEncoder(nn.Module):
     def _gat(self, feature_in, feature_out, heads=5, dropout=.2):
         return Sequential('x, edge_index', [
             (GATConv(feature_in, feature_in, heads=heads, dropout=dropout), 'x, edge_index -> x1'),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             (GATConv(feature_in * heads, feature_out, dropout=dropout), 'x1, edge_index -> x2'),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
         ])
     
     def _gin(self, feature_in, feature_out):
@@ -127,7 +119,6 @@ class SONLoss(nn.Module):
         S_val, S_idx = _S.topk(self.k)
 
         diff_idx = S_hat_idx.bitwise_xor(S_idx)
-        punish = diff_idx.abs().sum(1) # 对位近邻的索引之差视为惩罚项
         cal_flag = diff_idx.div(diff_idx).nan_to_num(0) # 索引相同为1 不同为0
-        
-        return a * S_hat_val.sub(S_val).pow(2).mul(cal_flag).sum(1).sqrt().mul(punish).sum()
+
+        return a * S_hat_val.sub(S_val).pow(2).mul(cal_flag).sum(1).sqrt().sum()
