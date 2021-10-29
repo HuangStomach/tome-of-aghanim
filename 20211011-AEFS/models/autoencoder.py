@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torch_geometric.nn import Sequential, GCNConv, GATConv, GINConv, global_max_pool as gmp
+from torch_geometric.nn import Sequential, GCNConv, GATConv, GINConv
 import numpy as np
 from lib import *
 
@@ -22,15 +21,15 @@ class AutoEncoder(nn.Module):
         self.decoder_2 = model_2(feature_p2[0], feature_p2[1])
         self.decoder_3 = model_3(feature_p3[0], feature_p3[1])
         
-        self.encoder = nn.Sequential( # 1-2层
+        self.encoder = nn.Sequential(
             nn.Linear(feature_r1[1] + feature_r2[1] + feature_r3[1], 2048),
             nn.Dropout(0.2),
             nn.GELU(),
             nn.BatchNorm1d(2048),
             nn.Linear(2048, protein_num),
             nn.Dropout(0.2),
+            nn.Softmax(dim=1),
         )
-
         self.decoder = nn.Sequential(
             nn.Linear(feature_p1[1] + feature_p2[1] + feature_p3[1], 6144),
             nn.Dropout(0.2),
@@ -38,37 +37,42 @@ class AutoEncoder(nn.Module):
             nn.BatchNorm1d(6144),
             nn.Linear(6144, disease_num),
             nn.Dropout(0.2),
+            nn.Softmax(dim=1),
         )
     
     def _gcn(self, feature_in, feature_out):
         return Sequential('x, edge_index', [
-            (GCNConv(feature_in, feature_in), 'x, edge_index -> x1'),
+            (GCNConv(feature_in, feature_out), 'x, edge_index -> x1'),
             nn.ReLU(inplace=True),
-            (nn.Dropout(0.2), 'x1 -> x1'),
-            (GCNConv(feature_in, feature_out), 'x1, edge_index -> x2'),
+            (GCNConv(feature_out, feature_out), 'x1, edge_index -> x2'),
             nn.ReLU(inplace=True),
-            (nn.Dropout(0.2), 'x2 -> x2'),
         ])
     
-    def _gat(self, feature_in, feature_out, heads=5, dropout=.2):
+    def _gat(self, feature_in, feature_out, heads=10, dropout=0.2):
         return Sequential('x, edge_index', [
-            (GATConv(feature_in, feature_in, heads=heads, dropout=dropout), 'x, edge_index -> x1'),
+            (GATConv(feature_in, feature_out, heads=heads, dropout=dropout), 'x, edge_index -> x1'),
             nn.ReLU(inplace=True),
-            (GATConv(feature_in * heads, feature_out, dropout=dropout), 'x1, edge_index -> x2'),
+            (GATConv(feature_out * heads, feature_out, dropout=dropout), 'x1, edge_index -> x2'),
             nn.ReLU(inplace=True),
         ])
     
     def _gin(self, feature_in, feature_out):
-        fc = nn.Sequential(
+        fc1 = nn.Sequential(
             nn.Linear(feature_in, feature_out),
             nn.ReLU(inplace=True),
             nn.Linear(feature_out, feature_out)
         )
 
-        return Sequential('x, edge_index', [
-            (GINConv(fc), 'x, edge_index -> x1'),
+        fc2 = nn.Sequential(
+            nn.Linear(feature_out, feature_out),
             nn.ReLU(inplace=True),
-            (GINConv(fc), 'x1, edge_index -> x2'),
+            nn.Linear(feature_out, feature_out)
+        )
+
+        return Sequential('x, edge_index', [
+            (GINConv(fc1), 'x, edge_index -> x1'),
+            nn.ReLU(inplace=True),
+            (GINConv(fc2), 'x1, edge_index -> x2'),
             nn.ReLU(inplace=True),
         ])
 
@@ -79,9 +83,8 @@ class AutoEncoder(nn.Module):
         
         drug_feature = torch.cat([en1, en2, en3], dim=1)
         encoder0 = self.encoder(drug_feature) # (batch, protein_num)
-        encoder1 = F.softmax(encoder0, dim=1)
 
-        protein_sim = torch.matmul(encoder1.t(), encoder1) # (protein_num, protein_num)
+        protein_sim = torch.matmul(encoder0.t(), encoder0) # (protein_num, protein_num)
         p1 = protein_sim.matmul(p1)
         p2 = protein_sim.matmul(p2)
         p3 = protein_sim.matmul(p3)
@@ -92,9 +95,8 @@ class AutoEncoder(nn.Module):
 
         protein_feature = torch.cat([de1, de2, de3], dim=1)
         decoder0 = self.decoder(protein_feature)
-        decoder1 = F.softmax(decoder0, dim=1)
 
-        return encoder1, encoder1.matmul(encoder1.t()), decoder1, decoder1.matmul(decoder1.t())
+        return encoder0, encoder0.matmul(encoder0.t()), decoder0, decoder0.matmul(decoder0.t())
 
 class SONLoss(nn.Module):
     def __init__(self, k):

@@ -1,3 +1,4 @@
+import logging
 from importlib import import_module
 import torch
 import torch.nn as nn
@@ -8,10 +9,14 @@ import prepare
 from models.autoencoder import AutoEncoder, SONLoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-EPOCH = 200
-LR = 0.000001
-a1 = 0.00000001
-a2 = 0.0001
+EPOCH = 1000
+LR = 0.00001
+a1 = 0.00001
+a2 = 0.00001
+formatter = logging.Formatter(
+    fmt="%(asctime)s %(levelname)s [%(filename)s] - %(message)s",
+    datefmt="%Y-%m-%d %X"
+)
 
 def train(model_1, model_2, model_3, dataset):
     # 每次train 要train两组数据 药物和蛋白
@@ -38,14 +43,23 @@ def train(model_1, model_2, model_3, dataset):
     
     print("初始化模型")
     AE = AutoEncoder(
-        [1024, 128], [5603, 1024], [1512, 256],
-        [128, 128], [5603, 1024], [drug_x1.size()[0], 256],
+        [1024, 256], [5603, 2048], [1512, 512],
+        [128, 32], [5603, 1024], [drug_x1.size()[0], 256],
         drug_num=drug_x1.size()[0], protein_num=protein_x1.size()[0], disease_num=protein_x2.size()[1],
         models=[model_1, model_2, model_3],
-    )
+    ).to(device)
     optimizer = torch.optim.Adam(AE.parameters(), lr=LR)
     son_loss = SONLoss(5)
     mse_loss = nn.MSELoss()
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    f = logging.FileHandler('./output/{}_{}_{}.log'.format(model_1, model_2, model_3), encoding='utf-8')
+    c = logging.StreamHandler()
+    f.setFormatter(formatter)
+    c.setFormatter(formatter)
+    logger.addHandler(f)
+    logger.addHandler(c)
 
     print("开始训练")
     for epoch in range(EPOCH):
@@ -56,15 +70,17 @@ def train(model_1, model_2, model_3, dataset):
         ) # h3:encoded h6:decoded
 
         loss1 = mse_loss(encoded, RPI) + son_loss(SR_hat, SR, eye_R, a1)
-        loss2 = mse_loss(decoded, PDI) + son_loss(SP_hat, SP, eye_P, a2)
+        loss2 = mse_loss(decoded, PDI) + son_loss(SP_hat, SP, eye_P, a2)\
 
         loss = loss1 + loss2
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        print('Epoch:', epoch, 'train loss: %.20f' % loss.data)
+        logger.info('[{} {} {}] Epoch: {} train loss: {:.6f}'.format(model_1, model_2, model_3, epoch, loss.item()))
 
-    torch.save(AE.to(device), 'output/DTINet/model.pkl')
+    logger.removeHandler(f)
+    logger.removeHandler(c)
+    torch.save(AE.to(device), 'output/DTINet/{}_{}_{}_model.pkl'.format(model_1, model_2, model_3))
 
 if __name__=='__main__':
     while True:
@@ -105,7 +121,7 @@ if __name__=='__main__':
             print('\033[32m完成\033[0m')
         elif index == 3:
             dataset.prepare()
-            models = ['gat', 'gcn', 'gin']
+            models = ['gcn', 'gat', 'gin']
 
             for model_1 in models:
                 for model_2 in models:
