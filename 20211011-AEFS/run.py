@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 from importlib import import_module
 import torch
 import torch.nn as nn
@@ -6,6 +7,7 @@ import sklearn
 
 # from lib import *
 import prepare
+import metric
 from models.autoencoder import AutoEncoder, SONLoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -30,7 +32,7 @@ def train(model_1, model_2, model_3, dataset):
     SR = dataset.drug_A # 药物相似性
     SP = sklearn.preprocessing.minmax_scale(dataset.protein_A) # 疾病相似性
 
-    drug_edge = torch.from_numpy(dataset.edge_index(dataset.split('rri'))).long().to(device)
+    drug_edge = torch.from_numpy(dataset.edge_index(dataset.data('rri'))).long().to(device)
     protein_edge = torch.from_numpy(dataset.edge_index(dataset.ppi())).long().to(device)
     
     eye_R = torch.eye(SR.shape[0]).float().to(device)
@@ -38,8 +40,8 @@ def train(model_1, model_2, model_3, dataset):
     SR = torch.from_numpy(SR).float().to(device)
     SP = torch.from_numpy(SP).float().to(device)
 
-    RPI = torch.from_numpy(dataset.split('rpi')).float().to(device)
-    PDI = torch.from_numpy(dataset.split('pdi')).float().to(device)
+    RPI = torch.from_numpy(dataset.data('rpi')).float().to(device)
+    PDI = torch.from_numpy(dataset.data('pdi')).float().to(device)
     
     print("初始化模型")
     AE = AutoEncoder(
@@ -78,6 +80,9 @@ def train(model_1, model_2, model_3, dataset):
         optimizer.step()
         logger.info('[{} {} {}] Epoch: {} train loss: {:.6f}'.format(model_1, model_2, model_3, epoch, loss.item()))
 
+        np.savetxt('output/DTINet/{}_{}_{}_RPI.txt'.format(model_1, model_2, model_3), encoded.detach().numpy(), fmt='%f')
+        np.savetxt('output/DTINet/{}_{}_{}_PDI.txt'.format(model_1, model_2, model_3), decoded.detach().numpy(), fmt='%f')
+
     logger.removeHandler(f)
     logger.removeHandler(c)
     torch.save(AE.to(device), 'output/DTINet/{}_{}_{}_model.pkl'.format(model_1, model_2, model_3))
@@ -102,8 +107,8 @@ if __name__=='__main__':
     while True:
         print("[0] 处理蛋白序列")
         print("[1] 生成疾病相似性")
-        print("[2] 随机切分数据")
-        print("[3] 训练数据")
+        print("[2] 训练数据")
+        print("[3] 评价模型")
         print("[4] 退出")
         str_in = input("请选择需要进行的操作: ");
         if not str_in.isdigit(): continue
@@ -116,10 +121,8 @@ if __name__=='__main__':
         if index == 1:
             prepare.diseases(dataset)
             print('\033[32m完成\033[0m')
-        elif index == 2:
-            dataset.split_data()
             print('\033[32m完成\033[0m')
-        elif index == 3:
+        elif index == 2:
             dataset.prepare()
             models = ['gcn', 'gat', 'gin']
 
@@ -127,7 +130,8 @@ if __name__=='__main__':
                 for model_2 in models:
                     for model_3 in models:
                         train(model_1, model_2, model_3, dataset)
-                        quit()
+        elif index == 3:
+            metric.run(dataset)
         elif index == 4:
             quit()
         else: continue

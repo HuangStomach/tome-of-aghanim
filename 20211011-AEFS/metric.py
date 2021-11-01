@@ -1,63 +1,31 @@
 import numpy as np
-import matplotlib.pylab
-from sklearn.metrics import auc, roc_curve, precision_recall_curve
-from lib import *
-from tqdm import tqdm
+import matplotlib.pyplot as plt
+from sklearn import metrics
 
-fold = 0
-# n = 1307
-m = 1996
+def run(dataset):
+    models = ['gcn', 'gat', 'gin']
+    RPI = dataset.data('rpi')
+    PDI = dataset.data('pdi')
 
-y_true = np.loadtxt('dataset/test_DPI.txt').tolist()
-y_pre = np.loadtxt('result/y_pre_DPI.txt').tolist()
-# y_pre = np.loadtxt('result/y_pre_DPI.txt').tolist()
-idx = []
-auc_list = []
-aupr_list = []
-tpr_list = []
-fpr_list = []
-recall_list = []
-precision_list = []
-c = 0
-for i in tqdm(range(len(y_true))):
-    if np.sum(np.array(y_true[i])) == 0:
-        c += 1
-        continue
-    else:
-        tpr1, fpr1, precision1, recall1 = tpr_fpr_precision_recall(np.array(y_true[i]), np.array(y_pre[i]))
-        fpr_list.append(fpr1)
-        tpr_list.append(tpr1)
-        precision_list.append(precision1)
-        recall_list.append(recall1)
-        auc_list.append(auc(fpr1, tpr1))
-        aupr_list.append(auc(recall1, precision1)+recall1[0]*precision1[0])
+    for model_1 in models:
+        for model_2 in models:
+            for model_3 in models:
+                metric(model_1, model_2, model_3, RPI, PDI)
 
-coverage = []
-for i in tpr_list:
-    try:
-        coverage.append(i.index(1.0)+1)
-    except:
-        print('1')
-print(np.mean(np.array(coverage)))
+def metric(model_1, model_2, model_3, RPI, PDI): 
+    RPI_hat = np.loadtxt('output/DTINet/{}_{}_{}_RPI.txt'.format(model_1, model_2, model_3))
+    PDI_hat = np.loadtxt('output/DTINet/{}_{}_{}_PDI.txt'.format(model_1, model_2, model_3))
 
-tpr = equal_len_list(tpr_list)
-fpr = equal_len_list(fpr_list)
-precision = equal_len_list(precision_list)
-recall = equal_len_list(recall_list)
-tpr_mean = np.mean(tpr, axis=0)
-fpr_mean = np.mean(fpr, axis=0)
-recall_mean = np.mean(recall, axis=0)
-precision_mean = np.mean(precision, axis=0)
-print('The auc of prediction is:', auc(fpr_mean, tpr_mean))
-print('The aupr of prediction is:', auc(recall_mean, precision_mean)+recall_mean[0]*precision_mean[0])
-matplotlib.pylab.plt.figure(2)
-matplotlib.pylab.plt.plot(fpr_mean, tpr_mean, 'r')
-matplotlib.pylab.plt.plot(recall_mean, precision_mean, 'b')
-matplotlib.pylab.plt.show()
+    fpr, tpr, thresholds = metrics.roc_curve(RPI, RPI_hat, pos_label=1)
+    auc = metrics.auc(fpr, tpr)
+    print('{}_{}_{}_{}_auc: '.format(model_1, model_2, model_3, 'RPI'), auc)
 
-np.savetxt('result/AEFS_fpr.txt', fpr_mean)
-np.savetxt('result/AEFS_tpr.txt', tpr_mean)
-np.savetxt('result/AEFS_recall.txt', recall_mean)
-np.savetxt('result/AEFS_p.txt', precision_mean)
-np.savetxt('result/AEFS_AUC_list.txt', auc_list)
-np.savetxt('result/AEFS_AUPR_list.txt', aupr_list)
+    aupr = metrics.average_precision_score(RPI, RPI_hat)
+    print('{}_{}_{}_{}_aupr: '.format(model_1, model_2, model_3, 'RPI'), aupr)
+
+    fpr, tpr, thresholds = metrics.roc_curve(PDI, PDI_hat, pos_label=1)
+    auc = metrics.auc(fpr, tpr)
+    print('{}_{}_{}_{}_auc: '.format(model_1, model_2, model_3, 'PDI'), auc)
+
+    aupr = metrics.average_precision_score(PDI, PDI_hat)
+    print('{}_{}_{}_{}_aupr: '.format(model_1, model_2, model_3, 'PDI'), aupr)
