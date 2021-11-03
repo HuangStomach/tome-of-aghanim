@@ -33,7 +33,7 @@ def train(model_1, model_2, model_3, dataset):
     SP = sklearn.preprocessing.minmax_scale(dataset.protein_A) # 疾病相似性
 
     drug_edge = torch.from_numpy(dataset.edge_index(dataset.data('rri'))).long().to(device)
-    protein_edge = torch.from_numpy(dataset.edge_index(dataset.ppi())).long().to(device)
+    protein_edge = torch.from_numpy(dataset.edge_index(dataset.data('ppi'))).long().to(device)
     
     eye_R = torch.eye(SR.shape[0]).float().to(device)
     eye_P = torch.eye(SP.shape[0]).float().to(device)

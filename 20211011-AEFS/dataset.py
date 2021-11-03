@@ -5,8 +5,8 @@ class Dataset:
     def prepare(self):
         print("读取数据")
 
-        self.drug_A = self.data('drug_sim', dtype=float)
-        self.drug_x1 = np.matmul(self.drug_A, self.data('drug_fps')) # 指纹
+        self.drug_A = self.data('drug_sim', dtype=float, delimiter='    ')
+        self.drug_x1 = np.matmul(self.drug_A, self.data('drug_fps', delimiter=',')) # 指纹
         self.drug_x2 = np.matmul(self.drug_A, self.data('rdi'))
         self.drug_x3 = np.matmul(self.drug_A, self.data('rpi'))
 
