@@ -6,6 +6,7 @@ import torch.nn.utils.rnn as rnn_utils
 from sklearn.metrics import jaccard_score
 np.set_printoptions(suppress=True, linewidth=np.nan)
 
+device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 hidden_size = 128
 num_layers = 2
 
@@ -26,13 +27,11 @@ def proteins():
     proteins = torch.nn.utils.rnn.pad_sequence(proteins, batch_first=True).to(torch.float32)
     seq_lens = torch.tensor(seq_lens)
     
-    output = None
-    lstm = nn.LSTM(blosum62.shape[0], hidden_size, 2, bidirectional=True, batch_first=True)
+    lstm = nn.LSTM(blosum62.shape[0], hidden_size, 2, bidirectional=True, batch_first=True).to(device)
     sorted_lens, indices = seq_lens.sort(descending=True)
     _, un_idx = torch.sort(indices, dim=0)
     sorted_proteins = torch.from_numpy(proteins.numpy()[indices])
-    proteins_pack = rnn_utils.pack_padded_sequence(sorted_proteins, sorted_lens, batch_first=True)
-
+    proteins_pack = rnn_utils.pack_padded_sequence(sorted_proteins, sorted_lens, batch_first=True).to(device)
 
     output, (h, c) = lstm(proteins_pack)
     out, _ = rnn_utils.pad_packed_sequence(output, batch_first=True)
@@ -45,16 +44,5 @@ def proteins():
     embeds = np.array(embeds)
     np.savetxt('./datasets/DTINet/protein_embeds.csv', embeds, delimiter=',')
 
-def diseases(dataset):
-    pdi = dataset.pdi()
-    disease_num = pdi.shape[1]
-
-    disease_A = np.zeros((disease_num, disease_num), dtype=float)
-    for i in range(disease_num):
-        for j in range(disease_num):
-            disease_A[i, j] = jaccard_score(pdi[:, i], pdi[:, j])
-    np.savetxt('./datasets/DTINet/Similarity_Matrix_Diseases.txt.txt', disease_A, delimiter=' ')
-
 if __name__=='__main__':
     proteins()
-    diseases()

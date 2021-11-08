@@ -1,4 +1,6 @@
 datasets/**/*.txt
 datasets/**/*.csv
+output/*
 __pycache__
 真迹.jpg
+metric.csv

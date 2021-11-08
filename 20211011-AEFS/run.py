@@ -72,7 +72,7 @@ def train(model_1, model_2, model_3, dataset):
         ) # h3:encoded h6:decoded
 
         loss1 = mse_loss(encoded, RPI) + son_loss(SR_hat, SR, eye_R, a1)
-        loss2 = mse_loss(decoded, PDI) + son_loss(SP_hat, SP, eye_P, a2)\
+        loss2 = mse_loss(decoded, PDI) + son_loss(SP_hat, SP, eye_P, a2)
 
         loss = loss1 + loss2
         optimizer.zero_grad()
@@ -80,11 +80,10 @@ def train(model_1, model_2, model_3, dataset):
         optimizer.step()
         logger.info('[{} {} {}] Epoch: {} train loss: {:.6f}'.format(model_1, model_2, model_3, epoch, loss.item()))
 
-        np.savetxt('output/DTINet/{}_{}_{}_RPI.txt'.format(model_1, model_2, model_3), encoded.detach().numpy(), fmt='%f')
-        np.savetxt('output/DTINet/{}_{}_{}_PDI.txt'.format(model_1, model_2, model_3), decoded.detach().numpy(), fmt='%f')
-
     logger.removeHandler(f)
     logger.removeHandler(c)
+    np.savetxt('output/DTINet/{}_{}_{}_RPI.txt'.format(model_1, model_2, model_3), encoded.detach().cpy().numpy(), fmt='%f')
+    np.savetxt('output/DTINet/{}_{}_{}_PDI.txt'.format(model_1, model_2, model_3), decoded.detach().cpy().numpy(), fmt='%f')
     torch.save(AE.to(device), 'output/DTINet/{}_{}_{}_model.pkl'.format(model_1, model_2, model_3))
 
 if __name__=='__main__':
@@ -106,10 +105,9 @@ if __name__=='__main__':
 
     while True:
         print("[0] 处理蛋白序列")
-        print("[1] 生成疾病相似性")
-        print("[2] 训练数据")
-        print("[3] 评价模型")
-        print("[4] 退出")
+        print("[1] 训练数据")
+        print("[2] 评价模型")
+        print("[3] 退出")
         str_in = input("请选择需要进行的操作: ");
         if not str_in.isdigit(): continue
 
@@ -118,11 +116,7 @@ if __name__=='__main__':
         if index == 0:
             prepare.proteins()
             print('\033[32m完成\033[0m')
-        if index == 1:
-            prepare.diseases(dataset)
-            print('\033[32m完成\033[0m')
-            print('\033[32m完成\033[0m')
-        elif index == 2:
+        elif index == 1:
             dataset.prepare()
             models = ['gcn', 'gat', 'gin']
 
@@ -130,8 +124,8 @@ if __name__=='__main__':
                 for model_2 in models:
                     for model_3 in models:
                         train(model_1, model_2, model_3, dataset)
-        elif index == 3:
+        elif index == 2:
             metric.run(dataset)
-        elif index == 4:
+        elif index == 3:
             quit()
         else: continue
