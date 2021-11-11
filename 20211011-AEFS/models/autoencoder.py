@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torch_geometric.nn import Sequential, GCNConv, GATConv, GINConv
-import numpy as np
 from lib import *
 
 class AutoEncoder(nn.Module):
@@ -23,63 +22,72 @@ class AutoEncoder(nn.Module):
         
         self.encoder = nn.Sequential(
             nn.Linear(feature_r1[1] + feature_r2[1] + feature_r3[1], 2048),
-            nn.Dropout(0.2),
-            nn.GELU(),
+            # nn.Dropout(0.2),
+            nn.Softmax(dim=1),
             nn.BatchNorm1d(2048),
             nn.Linear(2048, protein_num),
-            nn.Dropout(0.2),
+            # nn.Dropout(0.2),
             nn.Softmax(dim=1),
         )
+        
         self.decoder = nn.Sequential(
             nn.Linear(feature_p1[1] + feature_p2[1] + feature_p3[1], 6144),
-            nn.Dropout(0.2),
-            nn.GELU(),
+            # nn.Dropout(0.2),
+            nn.Softmax(dim=1),
             nn.BatchNorm1d(6144),
             nn.Linear(6144, disease_num),
-            nn.Dropout(0.2),
+            # nn.Dropout(0.2),
             nn.Softmax(dim=1),
         )
     
     def _gcn(self, feature_in, feature_out):
         return Sequential('x, edge_index', [
             (GCNConv(feature_in, feature_out), 'x, edge_index -> x1'),
-            nn.ReLU(inplace=True),
+            # nn.ReLU(inplace=True),
+            nn.Softmax(dim=1),
             (GCNConv(feature_out, feature_out), 'x1, edge_index -> x2'),
-            nn.ReLU(inplace=True),
+            # nn.ReLU(inplace=True),
+            nn.Softmax(dim=1),
         ])
     
     def _gat(self, feature_in, feature_out, heads=10, dropout=0.2):
         return Sequential('x, edge_index', [
-            (GATConv(feature_in, feature_out, heads=heads, dropout=dropout), 'x, edge_index -> x1'),
-            nn.ReLU(inplace=True),
-            (GATConv(feature_out * heads, feature_out, dropout=dropout), 'x1, edge_index -> x2'),
-            nn.ReLU(inplace=True),
+            (GATConv(feature_in, feature_out, heads=heads), 'x, edge_index -> x1'),
+            # nn.ReLU(inplace=True),
+            nn.Softmax(dim=1),
+            (GATConv(feature_out * heads, feature_out), 'x1, edge_index -> x2'),
+            # nn.ReLU(inplace=True),
+            nn.Softmax(dim=1),
         ])
     
     def _gin(self, feature_in, feature_out):
         fc1 = nn.Sequential(
             nn.Linear(feature_in, feature_out),
-            nn.ReLU(inplace=True),
+            # nn.ReLU(inplace=True),
+            nn.Softmax(dim=1),
             nn.Linear(feature_out, feature_out)
         )
 
         fc2 = nn.Sequential(
             nn.Linear(feature_out, feature_out),
-            nn.ReLU(inplace=True),
+            # nn.ReLU(inplace=True),
+            nn.Softmax(dim=1),
             nn.Linear(feature_out, feature_out)
         )
 
-        return Sequential('x, edge_index', [
+        return Sequential('x, edge_index,', [
             (GINConv(fc1), 'x, edge_index -> x1'),
-            nn.ReLU(inplace=True),
+            # nn.ReLU(inplace=True),
+            nn.Softmax(dim=1),
             (GINConv(fc2), 'x1, edge_index -> x2'),
-            nn.ReLU(inplace=True),
+            # nn.ReLU(inplace=True),
+            nn.Softmax(dim=1),
         ])
 
-    def forward(self, r1, r2, r3, p1, p2, p3, drug_edge, protein_edge):
-        en1 = self.encoder_1(r1, drug_edge)
-        en2 = self.encoder_2(r2, drug_edge)
-        en3 = self.encoder_3(r3, drug_edge)
+    def forward(self, r1, r2, r3, p1, p2, p3, drug_edge, drug_weight, protein_edge, protein_weight):
+        en1 = self.encoder_1(r1, drug_edge, drug_weight)
+        en2 = self.encoder_2(r2, drug_edge, drug_weight)
+        en3 = self.encoder_3(r3, drug_edge, drug_weight)
         
         drug_feature = torch.cat([en1, en2, en3], dim=1)
         encoder0 = self.encoder(drug_feature) # (batch, protein_num)
@@ -89,9 +97,9 @@ class AutoEncoder(nn.Module):
         p2 = protein_sim.matmul(p2)
         p3 = protein_sim.matmul(p3)
 
-        de1 = self.decoder_1(p1, protein_edge)
-        de2 = self.decoder_2(p2, protein_edge)
-        de3 = self.decoder_3(p3, protein_edge)
+        de1 = self.decoder_1(p1, protein_edge, protein_weight)
+        de2 = self.decoder_2(p2, protein_edge, protein_weight)
+        de3 = self.decoder_3(p3, protein_edge, protein_weight)
 
         protein_feature = torch.cat([de1, de2, de3], dim=1)
         decoder0 = self.decoder(protein_feature)

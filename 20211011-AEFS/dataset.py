@@ -3,7 +3,7 @@ from lib import *
 
 class Dataset:
     def prepare(self):
-        print("读取数据")
+        print("Loading Data...")
 
         self.drug_A = self.data('drug_sim', dtype=float, delimiter='    ')
         self.drug_x1 = np.matmul(self.drug_A, self.data('drug_fps', delimiter=',')) # 指纹
@@ -15,16 +15,18 @@ class Dataset:
         self.protein_x2 = self.data('pdi')
         self.protein_x3 = self.data('rpi').T
 
-    def edge_index(self, sim_mat):
-        l = sim_mat.shape[0]
+    def edge(self, edge_mat, sim_mat):
+        l = edge_mat.shape[0]
         
         edge_index = [[], []]
+        edge_wight = []
         for i in range(l):
             for j in range(i + 1, l):
-                if sim_mat[i, j] < 0.5: continue
+                if edge_mat[i][j] < 0.5: continue
                 edge_index[0].append(i)
                 edge_index[1].append(j)
-        return np.array(edge_index)
+                edge_wight.append(sim_mat[i][j])
+        return [np.array(edge_index), np.array(edge_wight)]
 
     def data(self, name, dtype=int, delimiter=' '):
         if hasattr(self, name):

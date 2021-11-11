@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import sklearn
 
-# from lib import *
 import prepare
 import metric
 from models.autoencoder import AutoEncoder, SONLoss
@@ -13,8 +12,8 @@ from models.autoencoder import AutoEncoder, SONLoss
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
 LR = 0.00001
-a1 = 0.00001
-a2 = 0.00001
+a1 = 0.0000001
+a2 = 0.0000001
 formatter = logging.Formatter(
     fmt="%(asctime)s %(levelname)s [%(filename)s] - %(message)s",
     datefmt="%Y-%m-%d %X"
@@ -32,8 +31,12 @@ def train(model_1, model_2, model_3, dataset):
     SR = dataset.drug_A # 药物相似性
     SP = sklearn.preprocessing.minmax_scale(dataset.protein_A) # 疾病相似性
 
-    drug_edge = torch.from_numpy(dataset.edge_index(dataset.data('rri'))).long().to(device)
-    protein_edge = torch.from_numpy(dataset.edge_index(dataset.data('ppi'))).long().to(device)
+    [drug_edge, drug_weight] = dataset.edge(dataset.data('rri'), SR)
+    drug_edge = torch.from_numpy(drug_edge).long().to(device)
+    drug_weight = torch.from_numpy(drug_weight).float().to(device)
+    [protein_edge, protein_weight] = dataset.edge(dataset.data('ppi'), SP)
+    protein_edge = torch.from_numpy(protein_edge).long().to(device)
+    protein_weight = torch.from_numpy(protein_weight).float().to(device)
     
     eye_R = torch.eye(SR.shape[0]).float().to(device)
     eye_P = torch.eye(SP.shape[0]).float().to(device)
@@ -43,7 +46,7 @@ def train(model_1, model_2, model_3, dataset):
     RPI = torch.from_numpy(dataset.data('rpi')).float().to(device)
     PDI = torch.from_numpy(dataset.data('pdi')).float().to(device)
     
-    print("初始化模型")
+    print("Initialling model...")
     AE = AutoEncoder(
         [1024, 256], [5603, 2048], [1512, 512],
         [128, 32], [5603, 1024], [drug_x1.size()[0], 256],
@@ -63,12 +66,12 @@ def train(model_1, model_2, model_3, dataset):
     logger.addHandler(f)
     logger.addHandler(c)
 
-    print("开始训练")
+    print("Starting...")
     for epoch in range(EPOCH):
         encoded, SR_hat, decoded, SP_hat = AE(
             drug_x1, drug_x2, drug_x3,
             protein_x1, protein_x2, protein_x3,
-            drug_edge, protein_edge
+            drug_edge, drug_weight, protein_edge, protein_weight
         ) # h3:encoded h6:decoded
 
         loss1 = mse_loss(encoded, RPI) + son_loss(SR_hat, SR, eye_R, a1)
@@ -82,8 +85,8 @@ def train(model_1, model_2, model_3, dataset):
 
     logger.removeHandler(f)
     logger.removeHandler(c)
-    np.savetxt('output/DTINet/{}_{}_{}_RPI.txt'.format(model_1, model_2, model_3), encoded.detach().cpy().numpy(), fmt='%f')
-    np.savetxt('output/DTINet/{}_{}_{}_PDI.txt'.format(model_1, model_2, model_3), decoded.detach().cpy().numpy(), fmt='%f')
+    np.savetxt('output/DTINet/{}_{}_{}_RPI.txt'.format(model_1, model_2, model_3), encoded.detach().cpu().numpy(), fmt='%f')
+    np.savetxt('output/DTINet/{}_{}_{}_PDI.txt'.format(model_1, model_2, model_3), decoded.detach().cpu().numpy(), fmt='%f')
     torch.save(AE.to(device), 'output/DTINet/{}_{}_{}_model.pkl'.format(model_1, model_2, model_3))
 
 if __name__=='__main__':
@@ -91,9 +94,9 @@ if __name__=='__main__':
         datasets = ['DTINet', 'AEFS']
         for i, dataset in enumerate(datasets):
             print("[{}] {}".format(i, dataset))
-        print("[{}] 退出".format(len(datasets)))
+        print("[{}] exit".format(len(datasets)))
         
-        str_in = input("请选择数据源: ");
+        str_in = input("Plz select data source: ");
         if str_in.isdigit():
             index = int(str_in)
             if index < 0 or index > len(datasets): continue
@@ -104,18 +107,18 @@ if __name__=='__main__':
         break
 
     while True:
-        print("[0] 处理蛋白序列")
-        print("[1] 训练数据")
-        print("[2] 评价模型")
-        print("[3] 退出")
-        str_in = input("请选择需要进行的操作: ");
+        print("[0] protein embedding")
+        print("[1] train")
+        print("[2] metric")
+        print("[3] exit")
+        str_in = input("Plz select the opt: ");
         if not str_in.isdigit(): continue
 
         index = int(str_in)
 
         if index == 0:
             prepare.proteins()
-            print('\033[32m完成\033[0m')
+            print('\033[32mfinish.\033[0m')
         elif index == 1:
             dataset.prepare()
             models = ['gcn', 'gat', 'gin']
