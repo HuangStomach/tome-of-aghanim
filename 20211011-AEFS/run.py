@@ -10,7 +10,7 @@ import metric
 from models.autoencoder import AutoEncoder, SONLoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-EPOCH = 1000
+EPOCH = 100
 LR = 0.00001
 a1 = 0.0000001
 a2 = 0.0000001
@@ -49,7 +49,7 @@ def train(model_1, model_2, model_3, dataset):
     print("Initialling model...")
     AE = AutoEncoder(
         [1024, 256], [5603, 2048], [1512, 512],
-        [128, 32], [5603, 1024], [drug_x1.size()[0], 256],
+        [128, 128], [5603, 1024], [drug_x1.size()[0], 256],
         drug_num=drug_x1.size()[0], protein_num=protein_x1.size()[0], disease_num=protein_x2.size()[1],
         models=[model_1, model_2, model_3],
     ).to(device)
@@ -121,7 +121,8 @@ if __name__=='__main__':
             print('\033[32mfinish.\033[0m')
         elif index == 1:
             dataset.prepare()
-            models = ['gcn', 'gat', 'gin']
+            # models = ['gcn', 'gat', 'gin']
+            models = ['gcn', 'gin']
 
             for model_1 in models:
                 for model_2 in models:

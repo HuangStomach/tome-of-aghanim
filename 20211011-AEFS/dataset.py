@@ -45,7 +45,7 @@ class DTINet(Dataset):
         'drug_fps': './datasets/DTINet/drug_ecfps.txt',
         'protein_embed': './datasets/DTINet/protein_embeds.csv',
 
-        'rpi': './datasets/DTINet/mat_drug_protein.txt',
+        'rpi': './datasets/DTINet/mat_drug_protein_s.txt',
         'rri': './datasets/DTINet/mat_drug_drug.txt',
         'ppi': './datasets/DTINet/mat_protein_protein.txt',
         'rdi': './datasets/DTINet/mat_drug_disease.txt',
