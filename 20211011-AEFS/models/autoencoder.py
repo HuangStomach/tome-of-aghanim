@@ -8,6 +8,7 @@ class AutoEncoder(nn.Module):
         drug_num, protein_num, disease_num, models):
         super(AutoEncoder, self).__init__()
  
+        self.models = models
         model_1 = getattr(self, '_' + models[0])
         model_2 = getattr(self, '_' + models[1])
         model_3 = getattr(self, '_' + models[2])
@@ -75,7 +76,7 @@ class AutoEncoder(nn.Module):
             nn.Linear(feature_out, feature_out)
         )
 
-        return Sequential('x, edge_index,', [
+        return Sequential('x, edge_index', [
             (GINConv(fc1), 'x, edge_index -> x1'),
             # nn.ReLU(inplace=True),
             nn.Softmax(dim=1),
@@ -85,9 +86,9 @@ class AutoEncoder(nn.Module):
         ])
 
     def forward(self, r1, r2, r3, p1, p2, p3, drug_edge, drug_weight, protein_edge, protein_weight):
-        en1 = self.encoder_1(r1, drug_edge, edge_weight=drug_weight)
-        en2 = self.encoder_2(r2, drug_edge, edge_weight=drug_weight)
-        en3 = self.encoder_3(r3, drug_edge, edge_weight=drug_weight)
+        en1 = self.encoder_1(r1, drug_edge, edge_weight=drug_weight) if self.models[0] == 'gcn' else self.encoder_1(r1, drug_edge)
+        en2 = self.encoder_2(r2, drug_edge, edge_weight=drug_weight) if self.models[1] == 'gcn' else self.encoder_2(r2, drug_edge)
+        en3 = self.encoder_3(r3, drug_edge, edge_weight=drug_weight) if self.models[2] == 'gcn' else self.encoder_3(r3, drug_edge)
         
         drug_feature = torch.cat([en1, en2, en3], dim=1)
         encoder0 = self.encoder(drug_feature) # (batch, protein_num)
@@ -97,9 +98,9 @@ class AutoEncoder(nn.Module):
         p2 = protein_sim.matmul(p2)
         p3 = protein_sim.matmul(p3)
 
-        de1 = self.decoder_1(p1, protein_edge, edge_weight=protein_weight)
-        de2 = self.decoder_2(p2, protein_edge, edge_weight=protein_weight)
-        de3 = self.decoder_3(p3, protein_edge, edge_weight=protein_weight)
+        de1 = self.decoder_1(p1, protein_edge, edge_weight=protein_weight) if self.models[0] == 'gcn' else self.decoder_1(p1, protein_edge)
+        de2 = self.decoder_2(p2, protein_edge, edge_weight=protein_weight) if self.models[1] == 'gcn' else self.decoder_2(p2, protein_edge)
+        de3 = self.decoder_3(p3, protein_edge, edge_weight=protein_weight) if self.models[2] == 'gcn' else self.decoder_3(p3, protein_edge)
 
         protein_feature = torch.cat([de1, de2, de3], dim=1)
         decoder0 = self.decoder(protein_feature)

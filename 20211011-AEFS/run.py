@@ -1,4 +1,3 @@
-import logging
 import numpy as np
 from importlib import import_module
 import torch
@@ -11,13 +10,9 @@ from models.autoencoder import AutoEncoder, SONLoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 100
-LR = 0.00001
-a1 = 0.0000001
-a2 = 0.0000001
-formatter = logging.Formatter(
-    fmt="%(asctime)s %(levelname)s [%(filename)s] - %(message)s",
-    datefmt="%Y-%m-%d %X"
-)
+LR = 0.003
+a1 = 0.000000001
+a2 = 0.000000001
 
 def train(model_1, model_2, model_3, dataset):
     # 每次train 要train两组数据 药物和蛋白
@@ -29,42 +24,33 @@ def train(model_1, model_2, model_3, dataset):
     protein_x3 = torch.from_numpy(dataset.protein_x3).float().to(device) # [1512, 556] 蛋白和药物关联
 
     SR = dataset.drug_A # 药物相似性
-    SP = sklearn.preprocessing.minmax_scale(dataset.protein_A) # 疾病相似性
+    SP = dataset.protein_A # 疾病相似性
 
-    [drug_edge, drug_weight] = dataset.edge(dataset.data('rri'), SR)
+    drug_edge, drug_weight = dataset.edge(dataset.rri, SR)
     drug_edge = torch.from_numpy(drug_edge).long().to(device)
     drug_weight = torch.from_numpy(drug_weight).float().to(device)
-    [protein_edge, protein_weight] = dataset.edge(dataset.data('ppi'), SP)
+    protein_edge, protein_weight = dataset.edge(dataset.ppi, SP)
     protein_edge = torch.from_numpy(protein_edge).long().to(device)
     protein_weight = torch.from_numpy(protein_weight).float().to(device)
     
-    eye_R = torch.eye(SR.shape[0]).float().to(device)
-    eye_P = torch.eye(SP.shape[0]).float().to(device)
+    eye_R = torch.eye(dataset.rnum).float().to(device)
+    eye_P = torch.eye(dataset.pnum).float().to(device)
     SR = torch.from_numpy(SR).float().to(device)
     SP = torch.from_numpy(SP).float().to(device)
 
-    RPI = torch.from_numpy(dataset.data('rpi')).float().to(device)
-    PDI = torch.from_numpy(dataset.data('pdi')).float().to(device)
+    RPI = torch.from_numpy(dataset.rpi).float().to(device)
+    PDI = torch.from_numpy(dataset.pdi).float().to(device)
     
     print("Initialling model...")
     AE = AutoEncoder(
-        [1024, 256], [5603, 2048], [1512, 512],
-        [128, 128], [5603, 1024], [drug_x1.size()[0], 256],
-        drug_num=drug_x1.size()[0], protein_num=protein_x1.size()[0], disease_num=protein_x2.size()[1],
+        [1024, 512], [dataset.dnum, 2048], [dataset.pnum, 512],
+        [128, 128], [dataset.dnum, 2048], [dataset.rnum, 256],
+        drug_num=dataset.rnum, protein_num=dataset.pnum, disease_num=dataset.dnum,
         models=[model_1, model_2, model_3],
     ).to(device)
     optimizer = torch.optim.Adam(AE.parameters(), lr=LR)
-    son_loss = SONLoss(5)
+    son_loss = SONLoss(10)
     mse_loss = nn.MSELoss()
-
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    f = logging.FileHandler('./output/{}_{}_{}.log'.format(model_1, model_2, model_3), encoding='utf-8')
-    c = logging.StreamHandler()
-    f.setFormatter(formatter)
-    c.setFormatter(formatter)
-    logger.addHandler(f)
-    logger.addHandler(c)
 
     print("Starting...")
     for epoch in range(EPOCH):
@@ -81,10 +67,8 @@ def train(model_1, model_2, model_3, dataset):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        logger.info('[{} {} {}] Epoch: {} train loss: {:.6f}'.format(model_1, model_2, model_3, epoch, loss.item()))
+        print('[{} {} {}] Epoch: {} train loss: {:.6f}'.format(model_1, model_2, model_3, epoch, loss.item()))
 
-    logger.removeHandler(f)
-    logger.removeHandler(c)
     np.savetxt('output/DTINet/{}_{}_{}_RPI.txt'.format(model_1, model_2, model_3), encoded.detach().cpu().numpy(), fmt='%f')
     np.savetxt('output/DTINet/{}_{}_{}_PDI.txt'.format(model_1, model_2, model_3), decoded.detach().cpu().numpy(), fmt='%f')
     torch.save(AE.to(device), 'output/DTINet/{}_{}_{}_model.pkl'.format(model_1, model_2, model_3))
@@ -96,7 +80,7 @@ if __name__=='__main__':
             print("[{}] {}".format(i, dataset))
         print("[{}] exit".format(len(datasets)))
         
-        str_in = input("Plz select data source: ");
+        str_in = input("Plz select the data source: ");
         if str_in.isdigit():
             index = int(str_in)
             if index < 0 or index > len(datasets): continue
@@ -122,7 +106,7 @@ if __name__=='__main__':
         elif index == 1:
             dataset.prepare()
             # models = ['gcn', 'gat', 'gin']
-            models = ['gcn', 'gin']
+            models = ['gcn']
 
             for model_1 in models:
                 for model_2 in models:

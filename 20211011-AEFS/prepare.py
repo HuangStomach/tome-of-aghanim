@@ -3,7 +3,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.utils.rnn as rnn_utils
-from sklearn.metrics import jaccard_score
+
 np.set_printoptions(suppress=True, linewidth=np.nan)
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'

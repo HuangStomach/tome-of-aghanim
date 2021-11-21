@@ -1,7 +1,8 @@
+真迹.jpg
+__pycache__
 datasets/**/*.txt
 datasets/**/*.csv
 output/*
-__pycache__
-真迹.jpg
+!output/DTINet/.gitkeep
 metric.csv
 !.gitkeep
