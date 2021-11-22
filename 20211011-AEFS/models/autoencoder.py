@@ -24,18 +24,17 @@ class AutoEncoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(feature_r1[1] + feature_r2[1] + feature_r3[1], 2048),
             # nn.Dropout(0.2),
-            nn.Softmax(dim=1),
-            nn.BatchNorm1d(2048),
+            nn.Tanh(),
             nn.Linear(2048, protein_num),
             # nn.Dropout(0.2),
-            nn.Softmax(dim=1),
+            nn.Tanh(),
+            nn.BatchNorm1d(protein_num)
         )
         
         self.decoder = nn.Sequential(
             nn.Linear(feature_p1[1] + feature_p2[1] + feature_p3[1], 6144),
             # nn.Dropout(0.2),
             nn.Softmax(dim=1),
-            nn.BatchNorm1d(6144),
             nn.Linear(6144, disease_num),
             # nn.Dropout(0.2),
             nn.Softmax(dim=1),
