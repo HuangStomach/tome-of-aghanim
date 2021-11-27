@@ -1,8 +1,7 @@
 import numpy as np
-from importlib import import_module
 import torch
 import torch.nn as nn
-import sklearn
+import dataset
 
 import prepare
 import metric
@@ -11,10 +10,10 @@ from models.autoencoder import AutoEncoder, SONLoss
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
 LR = 0.001
-a1 = 0.000000001
-a2 = 0.000000001
+a1 = 0.00000001
+a2 = 0.00000001
 
-def train(model_1, model_2, model_3, dataset):
+def train(model_1, model_2, model_3, dataset, tag='train'):
     # 每次train 要train两组数据 药物和蛋白
     drug_x1 = torch.from_numpy(dataset.drug_x1).float().to(device) # [556, 1024]
     drug_x2 = torch.from_numpy(dataset.drug_x2).float().to(device) # [556, 5603]
@@ -43,8 +42,8 @@ def train(model_1, model_2, model_3, dataset):
     
     print("Initialling model...")
     AE = AutoEncoder(
-        [1024, 512], [dataset.dnum, 2048], [dataset.pnum, 512],
-        [128, 128], [dataset.dnum, 2048], [dataset.rnum, 256],
+        [1024, 512], [dataset.dnum, 1024], [dataset.pnum, 512],
+        [128, 128], [dataset.dnum, 1024], [dataset.rnum, 256],
         drug_num=dataset.rnum, protein_num=dataset.pnum, disease_num=dataset.dnum,
         models=[model_1, model_2, model_3],
     ).to(device)
@@ -60,7 +59,7 @@ def train(model_1, model_2, model_3, dataset):
             drug_edge, drug_weight, protein_edge, protein_weight
         ) # h3:encoded h6:decoded
 
-        loss1 = 0.5 * mse_loss(encoded, RPI) + son_loss(SR_hat, SR, eye_R, a1)
+        loss1 = 0.4 * mse_loss(encoded, RPI) + son_loss(SR_hat, SR, eye_R, a1)
         loss2 = mse_loss(decoded, PDI) + son_loss(SP_hat, SP, eye_P, a2)
 
         loss = loss1 + loss2
@@ -69,32 +68,19 @@ def train(model_1, model_2, model_3, dataset):
         optimizer.step()
         print('[{} {} {}] Epoch: {} train loss: {:.6f}'.format(model_1, model_2, model_3, epoch, loss.item()))
 
-    np.savetxt('output/DTINet/{}_{}_{}_RPI.txt'.format(model_1, model_2, model_3), encoded.detach().cpu().numpy(), fmt='%f')
-    np.savetxt('output/DTINet/{}_{}_{}_PDI.txt'.format(model_1, model_2, model_3), decoded.detach().cpu().numpy(), fmt='%f')
-    torch.save(AE.to(device), 'output/DTINet/{}_{}_{}_model.pkl'.format(model_1, model_2, model_3))
+    np.savetxt('output/DTINet/{}_{}_{}_{}_RPI.txt'.format(model_1, model_2, model_3, tag), 
+        encoded.detach().cpu().numpy(), fmt='%f')
+    # torch.save(AE.to(device), 'output/DTINet/{}_{}_{}_model.pkl'.format(model_1, model_2, model_3))
 
 if __name__=='__main__':
-    while True:
-        datasets = ['DTINet', 'AEFS']
-        for i, dataset in enumerate(datasets):
-            print("[{}] {}".format(i, dataset))
-        print("[{}] exit".format(len(datasets)))
-        
-        str_in = input("Plz select the data source: ");
-        if str_in.isdigit():
-            index = int(str_in)
-            if index < 0 or index > len(datasets): continue
-            elif index == len(datasets):
-                quit()
-        else: continue
-        dataset = getattr(import_module('dataset'), datasets[index])()
-        break
+    dataset = dataset.Dataset()
 
     while True:
         print("[0] protein embedding")
         print("[1] train")
         print("[2] metric")
-        print("[3] exit")
+        print("[3] cross validation")
+        print("[4] exit")
         str_in = input("Plz select the opt: ");
         if not str_in.isdigit(): continue
 
@@ -115,5 +101,12 @@ if __name__=='__main__':
         elif index == 2:
             metric.run(dataset)
         elif index == 3:
+            rdis = np.array(dataset.split())
+            np.random.shuffle(rdis)
+            splits = np.array_split(rdis, 5)
+            for i in range(5):
+                dataset.prepare(ignore_rdi=splits[i])
+                train('gcn', 'gcn', 'gcn', dataset, i)
+        elif index == 4:
             quit()
         else: continue

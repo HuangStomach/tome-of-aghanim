@@ -3,10 +3,42 @@ import sklearn
 from lib import *
 
 class Dataset:
-    def prepare(self):
+    prepared = False
+    path = {
+        'drugs': './datasets/DTINet/drug.txt',
+        'drug_sim': './datasets/DTINet/Similarity_Matrix_Drugs.txt',
+        'protein_sim': './datasets/DTINet/Similarity_Matrix_Proteins.txt',
+
+        'drug_fps': './datasets/DTINet/drug_ecfps.txt',
+        'protein_embed': './datasets/DTINet/protein_embeds.csv',
+
+        'rpi': './datasets/DTINet/mat_drug_protein.txt',
+        'rri': './datasets/DTINet/mat_drug_drug.txt',
+        'ppi': './datasets/DTINet/mat_protein_protein.txt',
+        'rdi': './datasets/DTINet/mat_drug_disease.txt',
+        'pdi': './datasets/DTINet/mat_protein_disease.txt',
+    }
+
+    def drugs(self):
+        return np.loadtxt(self.path['drugs'], dtype=str, delimiter='\n')
+
+    def split(self):
+        rpi = self.data('rpi')
+        rdis = []
+        for i in range(rpi.shape[0]):
+            for j in range(rpi.shape[1]):
+                if rpi[i, j] == 1:
+                    rdis.append((i, j))
+        return rdis
+
+    def prepare(self, ignore_rdi=None):
         print("Loading Data...")
         self.rpi = self.data('rpi')
-        self.rdi = self.data('rdi') 
+        if ignore_rdi is not None: 
+            for item in ignore_rdi: 
+                self.rpi[item[0]][item[1]] = 0
+
+        self.rdi = self.data('rdi')
         self.pdi = self.data('pdi')
         self.rri = self.data('rri')
         self.ppi = self.data('ppi')
@@ -28,6 +60,8 @@ class Dataset:
         self.rnum = drug_fps.shape[0]
         self.pnum = protein_embed.shape[0]
         self.dnum = self.pdi.shape[1]
+
+        self.prepared = True
 
     def edge(self, edge_mat, sim_mat):
         l = edge_mat.shape[0]
@@ -51,25 +85,6 @@ class Dataset:
 
         return np.loadtxt(self.path[name], dtype=dtype, delimiter=delimiter)
 
-class DTINet(Dataset):
-    path = {
-        'drugs': './datasets/DTINet/drug.txt',
-        'drug_sim': './datasets/DTINet/Similarity_Matrix_Drugs.txt',
-        'protein_sim': './datasets/DTINet/Similarity_Matrix_Proteins.txt',
-
-        'drug_fps': './datasets/DTINet/drug_ecfps.txt',
-        'protein_embed': './datasets/DTINet/protein_embeds.csv',
-
-        'rpi': './datasets/DTINet/mat_drug_protein.txt',
-        'rri': './datasets/DTINet/mat_drug_drug.txt',
-        'ppi': './datasets/DTINet/mat_protein_protein.txt',
-        'rdi': './datasets/DTINet/mat_drug_disease.txt',
-        'pdi': './datasets/DTINet/mat_protein_disease.txt',
-    }
-
-    def drugs(self):
-        return np.loadtxt(self.path['drugs'], dtype=str, delimiter='\n')
-
 if __name__=='__main__':
-    dataset = DTINet()
+    dataset = Dataset()
     dataset.prepare()

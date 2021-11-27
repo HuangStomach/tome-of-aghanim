@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn import metrics
-from lib import *
+import dataset
 
 file_name = 'metric.csv'
 def run(dataset):
@@ -19,8 +19,8 @@ def run(dataset):
                 for model_3 in models:
                     metric(model_1, model_2, model_3, RPI, f)
 
-def metric(model_1, model_2, model_3, RPI, f): 
-    RPI_hat = np.loadtxt('output/DTINet/{}_{}_{}_RPI.txt'.format(model_1, model_2, model_3))
+def metric(model_1, model_2, model_3, RPI, f, tag='train'): 
+    RPI_hat = np.loadtxt('output/DTINet/{}_{}_{}_{}_RPI.txt'.format(model_1, model_2, model_3, tag))
 
     aupr_rpi_list = []
     for i, row in enumerate(RPI):
@@ -36,3 +36,16 @@ def metric(model_1, model_2, model_3, RPI, f):
 
     print('{}_{}_{}, {}, {}({})'.format(model_1, model_2, model_3, auc_rpi, aupr_rpi, np.mean(aupr_rpi_list)))
     f.write('{}_{}_{}, {}, {}({})\n'.format(model_1, model_2, model_3, auc_rpi, aupr_rpi, np.mean(aupr_rpi_list)))
+
+if __name__=='__main__':
+    dataset = dataset.Dataset()
+    dataset.prepare()
+    RPI = dataset.rpi
+    print('model, RPI_auc, RPI_aupr(RPI_aupr_avg)')
+    
+    with open(file_name, 'w') as f:
+        f.write('model, RPI_auc, RPI_aupr(RPI_aupr_avg)\n')
+
+    with open(file_name, 'a') as f:
+        for i in range(5):
+            metric('gcn', 'gcn', 'gcn', RPI, f, i)
