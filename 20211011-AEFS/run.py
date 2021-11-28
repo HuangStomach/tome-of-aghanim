@@ -59,7 +59,7 @@ def train(model_1, model_2, model_3, dataset, tag='train'):
             drug_edge, drug_weight, protein_edge, protein_weight
         ) # h3:encoded h6:decoded
 
-        loss1 = 0.4 * mse_loss(encoded, RPI) + son_loss(SR_hat, SR, eye_R, a1)
+        loss1 = mse_loss(encoded, RPI) + son_loss(SR_hat, SR, eye_R, a1)
         loss2 = mse_loss(decoded, PDI) + son_loss(SP_hat, SP, eye_P, a2)
 
         loss = loss1 + loss2
