@@ -22,41 +22,43 @@ class Dataset:
     def drugs(self):
         return np.loadtxt(self.path['drugs'], dtype=str, delimiter='\n')
 
-    def split(self):
-        rpi = self.data('rpi')
-        rdis = []
-        for i in range(rpi.shape[0]):
-            for j in range(rpi.shape[1]):
-                if rpi[i, j] == 1:
-                    rdis.append((i, j))
-        return rdis
-
-    def prepare(self, ignore_drugs=None):
+    def prepare(self, mask_drugs=None):
         print("Loading Data...")
-        self.rpi = self.data('rpi')
-        self.rdi = self.data('rdi')
+        self.mask_drugs = mask_drugs
+        self.rpi = self.mask(self.data('rpi'))
+        self.rdi = self.mask(self.data('rdi'))
         self.pdi = self.data('pdi')
-        self.rri = self.data('rri')
         self.ppi = self.data('ppi')
 
-        drug_fps = self.data('drug_fps', delimiter=',')
-        self.drug_A = self.data('drug_sim', dtype=float, delimiter='    ')
-        
-        protein_embed = self.data('protein_embed', dtype=float, delimiter=',')
-        self.protein_A = sklearn.preprocessing.minmax_scale(self.data('protein_sim', dtype=float))
+        drug_fps = self.mask(self.data('drug_fps', delimiter=','))
+        self.drug_A = self.mask(self.mask(
+            self.data('drug_sim', dtype=float, delimiter='    ')
+        ).T)
 
         self.drug_x1 = np.matmul(self.drug_A, drug_fps) # ecfps
         self.drug_x2 = np.matmul(self.drug_A, self.rdi)
         self.drug_x3 = np.matmul(self.drug_A, self.rpi)
 
-        self.protein_x1 = np.matmul(self.protein_A, protein_embed) # lstm embedding
-        self.protein_x2 = np.matmul(self.protein_A, self.pdi)
+        self.drug_z1 = np.matmul(self.drug_A, self.rdi)
+        self.drug_z2 = np.matmul(self.drug_A, self.rpi)
 
         self.rnum = drug_fps.shape[0]
-        self.pnum = protein_embed.shape[0]
+        self.pnum = self.pdi.shape[0]
         self.dnum = self.pdi.shape[1]
 
         self.prepared = True
+
+    def mask(self, mat):
+        mat = mat[self.mask_drugs, :] = 0
+        return mat
+
+    def data(self, name, dtype=int, delimiter=' '):
+        if hasattr(self, '_' + name):
+            return getattr(self, '_' + name)()
+
+        if name not in self.path: return []
+
+        return np.loadtxt(self.path[name], dtype=dtype, delimiter=delimiter)
 
     def edge(self, edge_mat, sim_mat):
         l = edge_mat.shape[0]
@@ -71,14 +73,6 @@ class Dataset:
                 edge_wight.append(sim_mat[i][j])
 
         return (np.array(edge_index), np.array(edge_wight))
-
-    def data(self, name, dtype=int, delimiter=' '):
-        if hasattr(self, '_' + name):
-            return getattr(self, '_' + name)()
-
-        if name not in self.path: return []
-
-        return np.loadtxt(self.path[name], dtype=dtype, delimiter=delimiter)
 
 if __name__=='__main__':
     dataset = Dataset()
