@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch_geometric.nn import Sequential, GCNConv, GATConv, GINConv
+from torch_geometric.nn import Sequential, GCNConv
 from lib import *
 
 class AutoEncoder(nn.Module):

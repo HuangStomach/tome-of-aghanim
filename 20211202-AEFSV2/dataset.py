@@ -1,5 +1,4 @@
 import numpy as np
-import sklearn
 from lib import *
 
 class Dataset:
@@ -45,6 +44,7 @@ class Dataset:
         self.prepared = True
 
     def mask(self, mat):
+        if self.mask_drugs is None: return mat
         mat[self.mask_drugs, :] = 0
         return mat
 

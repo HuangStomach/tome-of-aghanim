@@ -61,35 +61,32 @@ def train(dataset, tag='train'):
         optimizer.step()
         print('Epoch: {} train loss: {:.6f}'.format(epoch, loss.item()))
 
-    np.savetxt('output/{}_RPI.txt'.format(tag), RPI_hat.detach().cpu().numpy(), fmt='%f')
-    np.savetxt('output/{}_RDI.txt'.format(tag), RDI_hat.detach().cpu().numpy(), fmt='%f')
-    torch.save(AE.to(device), 'output/{}_model.pkl'.format(tag))
+    np.savetxt('output/{}_RPI_hat.txt'.format(tag), RPI_hat.detach().cpu().numpy(), fmt='%f')
+    np.savetxt('output/{}_RPI.txt'.format(tag), RPI.detach().cpu().numpy(), fmt='%f')
+    np.savetxt('output/{}_RDI_hat.txt'.format(tag), RDI_hat.detach().cpu().numpy(), fmt='%f')
+    np.savetxt('output/{}_RDI.txt'.format(tag), RDI.detach().cpu().numpy(), fmt='%f')
+    torch.save(AE.state_dict(), 'output/{}_model.pt'.format(tag))
 
 if __name__=='__main__':
     dataset = dataset.Dataset()
 
     while True:
-        print("[0] protein embedding")
-        print("[1] train")
-        print("[2] metric")
-        print("[3] exit")
+        print("[0] train")
+        print("[1] metric")
+        print("[2] exit")
         str_in = input("Plz select the opt: ");
         if not str_in.isdigit(): continue
 
         index = int(str_in)
-
         if index == 0:
-            prepare.proteins()
-            print('\033[32mfinish.\033[0m')
-        elif index == 1:
             drugs = np.arange(dataset.data('rri').shape[0])
             np.random.shuffle(drugs)
             splits = np.array_split(drugs, 5)
             for i in range(5):
                 dataset.prepare(mask_drugs=splits[i])
                 train(dataset, i)
-        elif index == 2:
+        elif index == 1:
             metric.run(dataset)
-        elif index == 3:
+        elif index == 2:
             quit()
         else: continue
