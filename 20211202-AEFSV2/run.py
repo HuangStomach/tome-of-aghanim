@@ -10,11 +10,11 @@ from models.loss import SONLoss, FocalLoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
-LR = 0.001
+LR = 0.00001
 a1 = 0.00000001
 a2 = 0.00000001
 
-def train(model_1, model_2, model_3, dataset, tag='train'):
+def train(dataset, tag='train'):
     # 每次train 要train两组数据 药物和蛋白
     drug_x1 = torch.from_numpy(dataset.drug_x1).float().to(device) # [556, 1024]
     drug_x2 = torch.from_numpy(dataset.drug_x2).float().to(device) # [556, 5603]
@@ -32,12 +32,12 @@ def train(model_1, model_2, model_3, dataset, tag='train'):
     SR = torch.from_numpy(SR).float().to(device)
 
     RPI = torch.from_numpy(dataset.rpi).float().to(device)
-    PDI = torch.from_numpy(dataset.pdi).float().to(device)
+    RDI = torch.from_numpy(dataset.rdi).float().to(device)
     
     print("Initialling model...")
     AE = AutoEncoder(
         [1024, 512], [dataset.dnum, 1024], [dataset.pnum, 512],
-        [128, 128], [dataset.dnum, 1024], [dataset.rnum, 256],
+        [1024, 1024], [dataset.dnum, 1024], [dataset.pnum, 512],
         protein_num=dataset.pnum, disease_num=dataset.dnum,
     ).to(device)
     optimizer = torch.optim.Adam(AE.parameters(), lr=LR)
@@ -46,23 +46,24 @@ def train(model_1, model_2, model_3, dataset, tag='train'):
 
     print("Starting...")
     for epoch in range(EPOCH):
-        encoded, SR_hat_1, decoded, SR_hat_2 = AE(
+        RPI_hat, SR_hat_1, RDI_hat, SR_hat_2 = AE(
             drug_x1, drug_x2, drug_x3,
-            drug_z1, drug_z2,
+            drug_z1, drug_z2, SR,
             drug_edge, drug_weight
         ) # h3:encoded h6:decoded
 
-        loss1 = mse_loss(encoded, RPI) + son_loss(SR_hat_1, SR, eye_R, a1)
-        loss2 = mse_loss(decoded, PDI) + son_loss(SR_hat_2, SR, eye_R, a2)
+        loss1 = mse_loss(RPI_hat, RPI) + son_loss(SR_hat_1, SR, eye_R, a1)
+        loss2 = mse_loss(RDI_hat, RDI) + son_loss(SR_hat_2, SR, eye_R, a2)
 
         loss = loss1 + loss2
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        print('[{} {} {}] Epoch: {} train loss: {:.6f}'.format(model_1, model_2, model_3, epoch, loss.item()))
+        print('Epoch: {} train loss: {:.6f}'.format(epoch, loss.item()))
 
-    np.savetxt('output/{}_RPI.txt'.format(tag), encoded.detach().cpu().numpy(), fmt='%f')
-    torch.save(AE.to(device), 'output/{}_{}_{}_model.pkl'.format(model_1, model_2, model_3))
+    np.savetxt('output/{}_RPI.txt'.format(tag), RPI_hat.detach().cpu().numpy(), fmt='%f')
+    np.savetxt('output/{}_RDI.txt'.format(tag), RDI_hat.detach().cpu().numpy(), fmt='%f')
+    torch.save(AE.to(device), 'output/{}_model.pkl'.format(tag))
 
 if __name__=='__main__':
     dataset = dataset.Dataset()
@@ -81,11 +82,11 @@ if __name__=='__main__':
             prepare.proteins()
             print('\033[32mfinish.\033[0m')
         elif index == 1:
-            rdis = np.arange()
-            np.random.shuffle(rdis)
-            splits = np.array_split(rdis, 5)
+            drugs = np.arange(dataset.data('rri').shape[0])
+            np.random.shuffle(drugs)
+            splits = np.array_split(drugs, 5)
             for i in range(5):
-                dataset.prepare(ignore_drugs=splits[i])
+                dataset.prepare(mask_drugs=splits[i])
                 train(dataset, i)
         elif index == 2:
             metric.run(dataset)

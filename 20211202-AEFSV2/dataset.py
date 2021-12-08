@@ -5,18 +5,16 @@ from lib import *
 class Dataset:
     prepared = False
     path = {
-        'drugs': './data/DTINet/drug.txt',
-        'drug_sim': './data/DTINet/Similarity_Matrix_Drugs.txt',
-        'protein_sim': './data/DTINet/Similarity_Matrix_Proteins.txt',
+        'drugs': './data/drug.txt',
+        'drug_sim': './data/Similarity_Matrix_Drugs.txt',
+        # 'protein_sim': './data/Similarity_Matrix_Proteins.txt',
 
-        'drug_fps': './data/DTINet/drug_ecfps.txt',
-        'protein_embed': './data/DTINet/protein_embeds.csv',
+        'drug_fps': './data/drug_ecfps.txt',
+        # 'protein_embed': './data/protein_embeds.csv',
 
-        'rpi': './data/DTINet/mat_drug_protein.txt',
-        'rri': './data/DTINet/mat_drug_drug.txt',
-        'ppi': './data/DTINet/mat_protein_protein.txt',
-        'rdi': './data/DTINet/mat_drug_disease.txt',
-        'pdi': './data/DTINet/mat_protein_disease.txt',
+        'rpi': './data/mat_drug_protein.txt',
+        'rri': './data/mat_drug_drug.txt',
+        'rdi': './data/mat_drug_disease.txt',
     }
 
     def drugs(self):
@@ -27,8 +25,6 @@ class Dataset:
         self.mask_drugs = mask_drugs
         self.rpi = self.mask(self.data('rpi'))
         self.rdi = self.mask(self.data('rdi'))
-        self.pdi = self.data('pdi')
-        self.ppi = self.data('ppi')
 
         drug_fps = self.mask(self.data('drug_fps', delimiter=','))
         self.drug_A = self.mask(self.mask(
@@ -43,13 +39,13 @@ class Dataset:
         self.drug_z2 = np.matmul(self.drug_A, self.rpi)
 
         self.rnum = drug_fps.shape[0]
-        self.pnum = self.pdi.shape[0]
-        self.dnum = self.pdi.shape[1]
+        self.pnum = self.rpi.shape[1]
+        self.dnum = self.rdi.shape[1]
 
         self.prepared = True
 
     def mask(self, mat):
-        mat = mat[self.mask_drugs, :] = 0
+        mat[self.mask_drugs, :] = 0
         return mat
 
     def data(self, name, dtype=int, delimiter=' '):

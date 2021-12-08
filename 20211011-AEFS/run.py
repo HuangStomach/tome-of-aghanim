@@ -101,11 +101,11 @@ if __name__=='__main__':
         elif index == 2:
             metric.run(dataset)
         elif index == 3:
-            drugs = np.arange(dataset.data('rri').shape[0])
-            np.random.shuffle(drugs)
-            splits = np.array_split(drugs, 5)
+            rdis = np.array(dataset.split())
+            np.random.shuffle(rdis)
+            splits = np.array_split(rdis, 5)
             for i in range(5):
-                dataset.prepare(mask_drugs=splits[i])
+                dataset.prepare(ignore_rdi=splits[i])
                 train('gcn', 'gcn', 'gcn', dataset, i)
         elif index == 4:
             quit()
