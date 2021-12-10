@@ -40,9 +40,11 @@ def train(dataset, tag='train'):
         protein_num=dataset.pnum, disease_num=dataset.dnum,
     ).to(device)
     optimizer = torch.optim.Adam(AE.parameters(), lr=LR)
-    son_loss = SONLoss(10)
+    son_loss_p = SONLoss(10)
+    son_loss_d = SONLoss(10)
     # mse_loss = nn.MSELoss()
-    mse_loss = WeightMSELoss(0.8)
+    mse_loss_p = WeightMSELoss(0.996)
+    mse_loss_d = WeightMSELoss(0.95)
 
     print("Starting...")
     for epoch in range(EPOCH):
@@ -52,8 +54,8 @@ def train(dataset, tag='train'):
             drug_edge, drug_weight
         ) # h3:encoded h6:decoded
 
-        loss1 = mse_loss(RPI_hat, RPI) + son_loss(SR_hat_1, SR, eye_R, a1)
-        loss2 = mse_loss(RDI_hat, RDI) + son_loss(SR_hat_2, SR, eye_R, a2)
+        loss1 = mse_loss_p(RPI_hat, RPI) + son_loss_p(SR_hat_1, SR, eye_R, a1)
+        loss2 = mse_loss_d(RDI_hat, RDI) + son_loss_d(SR_hat_2, SR, eye_R, a2)
 
         loss = loss1 + loss2
         optimizer.zero_grad()

@@ -17,21 +17,19 @@ class AutoEncoder(nn.Module):
         self.decoder_3 = self._gcn(feature_p3[0], feature_p3[1])
         
         self.encoder = nn.Sequential(
-            nn.Linear(feature_r1[1] + feature_r2[1] + feature_r3[1], 8192),
-            nn.Dropout(0.1),
+            nn.Linear(feature_r1[1] + feature_r2[1] + feature_r3[1], 10240),
             nn.LeakyReLU(inplace=True),
-            # nn.Tanh(),
-            nn.Linear(8192, protein_num + 1024),
-            nn.Sigmoid(),
+            nn.Linear(10240, 5120),
+            nn.LeakyReLU(inplace=True),
+            nn.Linear(5120, protein_num + 1024),
         )
         
         self.decoder = nn.Sequential(
-            nn.Linear(feature_p1[1] + feature_p2[1] + feature_p3[1], 8192),
-            nn.Dropout(0.1),
+            nn.Linear(feature_p1[1] + feature_p2[1] + feature_p3[1], 10240),
             nn.LeakyReLU(inplace=True),
-            # nn.Tanh(),
+            nn.Linear(10240, 8192),
+            nn.LeakyReLU(inplace=True),
             nn.Linear(8192, disease_num),
-            # nn.Sigmoid(dim=1),
         )
     
     def _gcn(self, feature_in, feature_out):
@@ -39,13 +37,11 @@ class AutoEncoder(nn.Module):
             (GCNConv(feature_in, feature_out), 'x, edge_index, edge_weight -> x1',),
             nn.Dropout(0.1),
             # nn.LeakyReLU(inplace=True),
-            nn.Sigmoid(),
-            # nn.Softmax(dim=1),
+            nn.LeakyReLU(),
             (GCNConv(feature_out, feature_out), 'x1, edge_index, edge_weight -> x2'),
             nn.Dropout(0.1),
-            nn.Sigmoid(),
             # nn.LeakyReLU(inplace=True),
-            # nn.Softmax(dim=1),
+            nn.LeakyReLU(),
         ])
 
     def forward(self, x1, x2, x3, z1, z2, SR, drug_edge, drug_weight):
@@ -54,11 +50,11 @@ class AutoEncoder(nn.Module):
         en3 = self.encoder_3(x3, drug_edge, edge_weight=drug_weight)
 
         drug_feature = torch.cat([en1, en2, en3], dim=1)
-        encoder0 = self.encoder(drug_feature) # (batch, protein_num)
-        rpi_hat = encoder0[:, :self.protein_num]
-        hidden_state = encoder0[:, self.protein_num:]
+        encoder0 = self.encoder(drug_feature)
+        rpi_hat = encoder0[:, :self.protein_num] # 可以用作估计蛋白质的特征
+        hidden_state = encoder0[:, self.protein_num:] # 剩余的潜在特征
 
-        drug_sim_1 = rpi_hat.matmul(rpi_hat.t()) # (protein_num, protein_num)
+        drug_sim_1 = rpi_hat.matmul(rpi_hat.t())
 
         de1 = self.decoder_1(SR.matmul(hidden_state), drug_edge, edge_weight=drug_weight)
         de2 = self.decoder_2(z1, drug_edge, edge_weight=drug_weight)

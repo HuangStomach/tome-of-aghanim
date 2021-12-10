@@ -47,7 +47,7 @@ class WeightMSELoss(nn.Module):
 
     def forward(self, input, target):
         target_p = target
-        target_n = torch.logical_not(target_p, out=torch.empty(target_p.size(), dtype=int))
+        target_n = torch.logical_not(target_p, out=torch.empty(target_p.size(), dtype=int, device=target_p.device))
         return self.alpha * F.mse_loss(target_p.mul(input), target) \
             + (1 - self.alpha) * F.mse_loss(target_n.mul(input), target)
 
