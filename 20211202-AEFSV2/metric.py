@@ -78,7 +78,7 @@ def metric(dataset, RPI, RDI, f, tag='train'):
     auc_rdi = metrics.auc(fpr, tpr)
     aupr_rdi = metrics.average_precision_score(RDI, RDI_hat)
 
-    line = 'train, {}, {}({}), {}, {}({})'.format(
+    line = 'test, {}, {}({}), {}, {}({})'.format(
         auc_rpi, aupr_rpi, np.mean(aupr_rpi_list), 
         auc_rdi, aupr_rdi, np.mean(aupr_rdi_list)
     )
@@ -114,7 +114,7 @@ def metric(dataset, RPI, RDI, f, tag='train'):
     auc_rdi = metrics.auc(fpr, tpr)
     aupr_rdi = metrics.average_precision_score(RDI, RDI_hat)
 
-    line = 'test, {}, {}({}), {}, {}({})'.format(
+    line = 'train, {}, {}({}), {}, {}({})'.format(
         auc_rpi, aupr_rpi, np.mean(aupr_rpi_list), 
         auc_rdi, aupr_rdi, np.mean(aupr_rdi_list)
     )
