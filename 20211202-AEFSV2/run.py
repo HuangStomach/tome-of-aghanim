@@ -3,10 +3,9 @@ import torch
 import torch.nn as nn
 import dataset
 
-import prepare
 import metric
 from models.ae import AutoEncoder
-from models.loss import SONLoss, FocalLoss
+from models.loss import SONLoss, FocalLoss, WeightMSELoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
@@ -42,7 +41,8 @@ def train(dataset, tag='train'):
     ).to(device)
     optimizer = torch.optim.Adam(AE.parameters(), lr=LR)
     son_loss = SONLoss(10)
-    mse_loss = nn.MSELoss()
+    # mse_loss = nn.MSELoss()
+    mse_loss = WeightMSELoss(0.8)
 
     print("Starting...")
     for epoch in range(EPOCH):

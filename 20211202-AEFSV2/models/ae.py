@@ -22,6 +22,7 @@ class AutoEncoder(nn.Module):
             nn.LeakyReLU(inplace=True),
             # nn.Tanh(),
             nn.Linear(8192, protein_num + 1024),
+            nn.Sigmoid(),
         )
         
         self.decoder = nn.Sequential(
