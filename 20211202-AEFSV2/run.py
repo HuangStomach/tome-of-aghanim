@@ -10,7 +10,7 @@ from models.loss import SONLoss, FocalLoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
-LR = 0.00001
+LR = 0.00003
 a1 = 0.00000001
 a2 = 0.00000001
 
@@ -36,8 +36,8 @@ def train(dataset, tag='train'):
     
     print("Initialling model...")
     AE = AutoEncoder(
-        [1024, 512], [dataset.dnum, 1024], [dataset.pnum, 512],
-        [1024, 1024], [dataset.dnum, 1024], [dataset.pnum, 512],
+        [1024, 512], [dataset.dnum, 2048], [dataset.pnum, 1024],
+        [1024, 1024], [dataset.dnum, 2048], [dataset.pnum, 1024],
         protein_num=dataset.pnum, disease_num=dataset.dnum,
     ).to(device)
     optimizer = torch.optim.Adam(AE.parameters(), lr=LR)
@@ -90,3 +90,4 @@ if __name__=='__main__':
         elif index == 2:
             quit()
         else: continue
+

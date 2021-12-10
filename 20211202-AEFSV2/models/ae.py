@@ -18,27 +18,32 @@ class AutoEncoder(nn.Module):
         
         self.encoder = nn.Sequential(
             nn.Linear(feature_r1[1] + feature_r2[1] + feature_r3[1], 8192),
-            nn.Dropout(0.2),
-            nn.ReLU(inplace=True),
+            nn.Dropout(0.1),
+            nn.LeakyReLU(inplace=True),
+            # nn.Tanh(),
             nn.Linear(8192, protein_num + 1024),
         )
         
         self.decoder = nn.Sequential(
             nn.Linear(feature_p1[1] + feature_p2[1] + feature_p3[1], 8192),
-            nn.Dropout(0.2),
-            nn.ReLU(inplace=True),
+            nn.Dropout(0.1),
+            nn.LeakyReLU(inplace=True),
+            # nn.Tanh(),
             nn.Linear(8192, disease_num),
-            # nn.Dropout(0.2),
             # nn.Sigmoid(dim=1),
         )
     
     def _gcn(self, feature_in, feature_out):
         return Sequential('x, edge_index, edge_weight', [
-            (GCNConv(feature_in, feature_out), 'x, edge_index, edge_weight -> x1'),
-            nn.ReLU(inplace=True),
+            (GCNConv(feature_in, feature_out), 'x, edge_index, edge_weight -> x1',),
+            nn.Dropout(0.1),
+            # nn.LeakyReLU(inplace=True),
+            nn.Sigmoid(),
             # nn.Softmax(dim=1),
             (GCNConv(feature_out, feature_out), 'x1, edge_index, edge_weight -> x2'),
-            nn.ReLU(inplace=True),
+            nn.Dropout(0.1),
+            nn.Sigmoid(),
+            # nn.LeakyReLU(inplace=True),
             # nn.Softmax(dim=1),
         ])
 
@@ -62,3 +67,4 @@ class AutoEncoder(nn.Module):
         decoder0 = self.decoder(diease_feature)
 
         return rpi_hat, drug_sim_1, decoder0, decoder0.matmul(decoder0.t())
+
