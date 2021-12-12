@@ -5,21 +5,22 @@ import dataset
 from models.ae import AutoEncoder
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-file_name = './output/metric.csv'
-def run(dataset):
+def run(dataset, tag='train'):
+    file_name = './output/{}_metric.csv'.format(tag)
+
     dataset.prepare()
     RPI = dataset.rpi
     RDI = dataset.rdi
-    print('model, RPI_auc, RPI_aupr(RPI_aupr_avg), RDI_auc, RDI_aupr(RDI_aupr_avg)')
+    print('model, RPI_auc, RPI_aupr, RPI_aupr_avg, RDI_auc, RDI_aupr, RDI_aupr_avg')
     
     with open(file_name, 'w') as f:
-        f.write('model, RPI_auc, RPI_aupr(RPI_aupr_avg), RDI_auc, RDI_aupr(RDI_aupr_avg)\n')
+        f.write('model, RPI_auc, RPI_aupr, RPI_aupr_avg, RDI_auc, RDI_aupr, RDI_aupr_avg\n')
 
     with open(file_name, 'a') as f:
         for i in range(5):
             metric(dataset, RPI, RDI, f, i)
 
-def metric(dataset, RPI, RDI, f, tag='train'):
+def metric(dataset, RPI, RDI, f, tag):
     drug_x1 = torch.from_numpy(dataset.drug_x1).float().to(device) # [556, 1024]
     drug_x2 = torch.from_numpy(dataset.drug_x2).float().to(device) # [556, 5603]
     drug_x3 = torch.from_numpy(dataset.drug_x3).float().to(device) # [556, 1512]
@@ -78,7 +79,7 @@ def metric(dataset, RPI, RDI, f, tag='train'):
     auc_rdi = metrics.auc(fpr, tpr)
     aupr_rdi = metrics.average_precision_score(RDI, RDI_hat)
 
-    line = 'test, {}, {}({}), {}, {}({})'.format(
+    line = 'test, {}, {}, {}, {}, {}, {}'.format(
         auc_rpi, aupr_rpi, np.mean(aupr_rpi_list), 
         auc_rdi, aupr_rdi, np.mean(aupr_rdi_list)
     )
@@ -114,7 +115,7 @@ def metric(dataset, RPI, RDI, f, tag='train'):
     auc_rdi = metrics.auc(fpr, tpr)
     aupr_rdi = metrics.average_precision_score(RDI, RDI_hat)
 
-    line = 'train, {}, {}({}), {}, {}({})'.format(
+    line = 'train, {}, {}, {}, {}, {}, {}'.format(
         auc_rpi, aupr_rpi, np.mean(aupr_rpi_list), 
         auc_rdi, aupr_rdi, np.mean(aupr_rdi_list)
     )

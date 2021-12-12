@@ -39,7 +39,7 @@ def train(dataset, tag='train'):
         [1024, 1024], [dataset.dnum, 2048], [dataset.pnum, 1024],
         protein_num=dataset.pnum, disease_num=dataset.dnum,
     ).to(device)
-    optimizer = torch.optim.Adam(AE.parameters(), lr=LR)
+    optimizer = torch.optim.Adam(AE.parameters(), lr=LR, weight_decay=0.000004)
     son_loss = SONLoss(10)
     mse_loss_p = WeightMSELoss(0.996)
     mse_loss_d = WeightMSELoss(0.95)
