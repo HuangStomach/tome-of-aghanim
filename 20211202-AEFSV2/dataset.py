@@ -30,7 +30,8 @@ class Dataset:
             self.data('drug_sim', dtype=float, delimiter='    ')
         ).T)
 
-        self.drug_x1 = np.matmul(self.drug_A, drug_fps) # ecfps
+        # self.drug_x1 = np.matmul(self.drug_A, drug_fps) # ecfps
+        self.drug_x1 = drug_fps
         self.drug_x2 = np.matmul(self.drug_A, self.rdi)
         self.drug_x3 = np.matmul(self.drug_A, self.rpi)
 

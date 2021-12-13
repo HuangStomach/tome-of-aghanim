@@ -8,7 +8,7 @@ class AutoEncoder(nn.Module):
         super(AutoEncoder, self).__init__()
         self.protein_num = protein_num
         
-        self.encoder_1 = self._gcn(feature_r1[0], feature_r1[1])
+        # self.encoder_1 = self._gcn(feature_r1[0], feature_r1[1])
         self.encoder_2 = self._gcn(feature_r2[0], feature_r2[1])
         self.encoder_3 = self._gcn(feature_r3[0], feature_r3[1])
 
@@ -37,7 +37,8 @@ class AutoEncoder(nn.Module):
         ])
 
     def forward(self, x1, x2, x3, z1, z2, SR, drug_edge, drug_weight):
-        en1 = self.encoder_1(x1, drug_edge, edge_weight=drug_weight)
+        # en1 = self.encoder_1(x1, drug_edge, edge_weight=drug_weight)
+        en1 = x1
         en2 = self.encoder_2(x2, drug_edge, edge_weight=drug_weight)
         en3 = self.encoder_3(x3, drug_edge, edge_weight=drug_weight)
 
