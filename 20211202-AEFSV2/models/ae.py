@@ -19,8 +19,10 @@ class AutoEncoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(feature_r1[1] + feature_r2[1] + feature_r3[1], 8192),
             nn.LeakyReLU(inplace=True),
-            nn.Linear(8192, protein_num + 1024),
+            # nn.Linear(8192, protein_num + 1024),
         )
+        self.fc_p = nn.Linear(8192, protein_num)
+        self.fc_d = nn.Linear(8192, 1024)
         
         self.decoder = nn.Sequential(
             nn.Linear(feature_p1[1] + feature_p2[1] + feature_p3[1], 8192),
@@ -44,17 +46,17 @@ class AutoEncoder(nn.Module):
 
         drug_feature = torch.cat([en1, en2, en3], dim=1)
         encoder0 = self.encoder(drug_feature)
-        rpi_hat = encoder0[:, :self.protein_num] # 可以用作估计蛋白质的特征
-        hidden_state = encoder0[:, self.protein_num:] # 剩余的潜在特征
+        rpi_hat = self.fc_p(encoder0)
+        hidden_state = self.fc_d(encoder0)
 
-        drug_sim_1 = rpi_hat.matmul(rpi_hat.t())
+        SR_hat = rpi_hat.matmul(rpi_hat.t())
 
-        de1 = self.decoder_1(SR.matmul(hidden_state), drug_edge, edge_weight=drug_weight)
+        # de1 = self.decoder_1(SR.matmul(hidden_state), drug_edge, edge_weight=drug_weight)
+        de1 = hidden_state
         de2 = self.decoder_2(z1, drug_edge, edge_weight=drug_weight)
         de3 = self.decoder_3(z2, drug_edge, edge_weight=drug_weight)
 
         diease_feature = torch.cat([de1, de2, de3], dim=1)
         decoder0 = self.decoder(diease_feature)
 
-        return rpi_hat, drug_sim_1, decoder0, decoder0.matmul(decoder0.t())
-
+        return rpi_hat, SR_hat, decoder0, decoder0.matmul(decoder0.t())
