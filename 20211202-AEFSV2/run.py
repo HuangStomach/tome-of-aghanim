@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
+from sklearn import metrics
 import dataset
 
 import metric
@@ -13,38 +14,38 @@ LR = 0.00005
 a1 = 0.00000001
 a2 = 0.00000001
 
-def train(dataset, tag='train'):
+def train(trainData, testData, mask, tag='train'):
     # 每次train 要train两组数据 药物和蛋白
-    drug_x1 = torch.from_numpy(dataset.drug_x1).float().to(device) # [556, 1024]
-    drug_x2 = torch.from_numpy(dataset.drug_x2).float().to(device) # [556, 5603]
-    drug_x3 = torch.from_numpy(dataset.drug_x3).float().to(device) # [556, 1512]
-    drug_z1 = torch.from_numpy(dataset.drug_z1).float().to(device) # [556, 5603]
-    drug_z2 = torch.from_numpy(dataset.drug_z2).float().to(device) # [556, 1512]
+    drug_x1 = torch.from_numpy(trainData.drug_x1).float().to(device) # [556, 1024]
+    drug_x2 = torch.from_numpy(trainData.drug_x2).float().to(device) # [556, 5603]
+    drug_x3 = torch.from_numpy(trainData.drug_x3).float().to(device) # [556, 1512]
+    drug_z1 = torch.from_numpy(trainData.drug_z1).float().to(device) # [556, 5603]
+    drug_z2 = torch.from_numpy(trainData.drug_z2).float().to(device) # [556, 1512]
 
-    SR = dataset.drug_A # 药物相似性
+    SR = trainData.drug_A # 药物相似性
 
-    drug_edge, drug_weight = dataset.edge(SR, SR)
+    drug_edge, drug_weight = trainData.edge(SR, SR)
     drug_edge = torch.from_numpy(drug_edge).long().to(device)
     drug_weight = torch.from_numpy(drug_weight).float().to(device)
     
-    eye_R = torch.eye(dataset.rnum).float().to(device)
+    eye_R = torch.eye(trainData.rnum).float().to(device)
     SR = torch.from_numpy(SR).float().to(device)
 
-    RPI = torch.from_numpy(dataset.rpi).float().to(device)
-    RDI = torch.from_numpy(dataset.rdi).float().to(device)
+    RPI = torch.from_numpy(trainData.rpi).float().to(device)
+    RDI = torch.from_numpy(trainData.rdi).float().to(device)
     
     print("Initialling model...")
     AE = AutoEncoder(
-        [1024, 1024], [dataset.dnum, 2048], [dataset.pnum, 1024],
-        [1024, 1024], [dataset.dnum, 2048], [dataset.pnum, 1024],
-        protein_num=dataset.pnum, disease_num=dataset.dnum,
+        [1024, 1024], [trainData.dnum, 2048], [trainData.pnum, 1024],
+        [1024, 1024], [trainData.dnum, 2048], [trainData.pnum, 1024],
+        protein_num=trainData.pnum, disease_num=trainData.dnum,
     ).to(device)
-    optimizer = torch.optim.Adam(AE.parameters(), lr=LR, weight_decay=0.000006)
+    optimizer = torch.optim.Adam(AE.parameters(), lr=LR, weight_decay=0.000004)
     son_loss = SONLoss(10)
     mse_loss_p = WeightMSELoss(0.999)
     mse_loss_d = WeightMSELoss(0.95)
 
-    print("Starting...")
+    print("Starting {}...".format(tag))
     for epoch in range(EPOCH):
         RPI_hat, SR_hat_1, RDI_hat, SR_hat_2 = AE(
             drug_x1, drug_x2, drug_x3,
@@ -68,7 +69,8 @@ def train(dataset, tag='train'):
     torch.save(AE.state_dict(), 'output/{}_model.pt'.format(tag))
 
 if __name__=='__main__':
-    dataset = dataset.Dataset()
+    trainData = dataset.Dataset()
+    testData = dataset.Dataset()
 
     while True:
         print("[0] train")
@@ -79,14 +81,16 @@ if __name__=='__main__':
 
         index = int(str_in)
         if index == 0:
-            drugs = np.arange(dataset.data('rri').shape[0])
+            drugs = np.arange(trainData.data('rri').shape[0])
             np.random.shuffle(drugs)
             splits = np.array_split(drugs, 5)
             for i in range(5):
-                dataset.prepare(mask_drugs=splits[i])
-                train(dataset, i)
+                trainData.prepare(mask_drugs=splits[i])
+                testData.prepare()
+                train(trainData, testData, splits[i], i)
+                np.savetxt('output/{}_masks.txt'.format(i), splits[i], fmt='%d')
         elif index == 1:
-            metric.run(dataset)
+            metric.run(trainData)
         elif index == 2:
             quit()
         else: continue

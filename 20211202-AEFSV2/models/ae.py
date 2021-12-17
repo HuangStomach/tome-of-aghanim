@@ -19,21 +19,24 @@ class AutoEncoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(feature_r1[1] + feature_r2[1] + feature_r3[1], 8192),
             nn.LeakyReLU(inplace=True),
+            nn.Dropout(0.5),
             # nn.Linear(8192, protein_num + 1024),
         )
         self.fc_p = nn.Linear(8192, protein_num)
         self.fc_d = nn.Linear(8192, 1024)
         
         self.decoder = nn.Sequential(
-            nn.Linear(feature_p1[1] + feature_p2[1] + feature_p3[1], 8192),
+            nn.Linear(feature_p1[1] + feature_p2[1] + feature_p3[1] + feature_r1[1], 8192),
             nn.LeakyReLU(inplace=True),
+            nn.Dropout(0.5),
             nn.Linear(8192, disease_num),
         )
     
     def _gcn(self, feature_in, feature_out):
         return Sequential('x, edge_index, edge_weight', [
-            (GCNConv(feature_in, feature_out), 'x, edge_index, edge_weight -> x1',),
+            (GCNConv(feature_in, feature_out, True), 'x, edge_index, edge_weight -> x1',),
             nn.Sigmoid(),
+            nn.Dropout(.2),
             # (GCNConv(feature_out, feature_out), 'x1, edge_index, edge_weight -> x2'),
             # nn.Sigmoid(),
         ])
@@ -55,8 +58,9 @@ class AutoEncoder(nn.Module):
         de1 = hidden_state
         de2 = self.decoder_2(z1, drug_edge, edge_weight=drug_weight)
         de3 = self.decoder_3(z2, drug_edge, edge_weight=drug_weight)
+        de4 = x1
 
-        diease_feature = torch.cat([de1, de2, de3], dim=1)
+        diease_feature = torch.cat([de1, de2, de3, de4], dim=1)
         decoder0 = self.decoder(diease_feature)
 
         return rpi_hat, SR_hat, decoder0, decoder0.matmul(decoder0.t())

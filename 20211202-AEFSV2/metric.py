@@ -21,6 +21,7 @@ def run(dataset, tag='train'):
             metric(dataset, RPI, RDI, f, i)
 
 def metric(dataset, RPI, RDI, f, tag):
+    masks = np.loadtxt('output/{}_masks.txt'.format(tag), dtype=int, delimiter='\n')
     drug_x1 = torch.from_numpy(dataset.drug_x1).float().to(device) # [556, 1024]
     drug_x2 = torch.from_numpy(dataset.drug_x2).float().to(device) # [556, 5603]
     drug_x3 = torch.from_numpy(dataset.drug_x3).float().to(device) # [556, 1512]
@@ -50,10 +51,10 @@ def metric(dataset, RPI, RDI, f, tag):
         drug_edge, drug_weight
     )
 
-    RPI = dataset.rpi
-    RDI = dataset.rdi
-    RPI_hat = RPI_hat.detach().cpu().numpy()
-    RDI_hat = RDI_hat.detach().cpu().numpy()
+    RPI = dataset.rpi[masks]
+    RDI = dataset.rdi[masks]
+    RPI_hat = RPI_hat.detach().cpu().numpy()[masks]
+    RDI_hat = RDI_hat.detach().cpu().numpy()[masks]
 
     aupr_rpi_list = []
     for i, row in enumerate(RPI):

@@ -46,7 +46,7 @@ class Dataset:
 
     def mask(self, mat):
         if self.mask_drugs is None: return mat
-        mat[self.mask_drugs, :] = 0
+        mat = np.delete(mat, self.mask_drugs, axis=0)
         return mat
 
     def data(self, name, dtype=int, delimiter=' '):
