@@ -12,6 +12,7 @@ class Dataset:
         # 'protein_embed': './data/protein_embeds.csv',
 
         'rpi': './data/mat_drug_protein.txt',
+        # 'rpi': './data/mat_drug_protein_s.txt',
         'rri': './data/mat_drug_drug.txt',
         'rdi': './data/mat_drug_disease.txt',
     }

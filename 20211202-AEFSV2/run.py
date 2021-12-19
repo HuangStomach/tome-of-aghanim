@@ -1,20 +1,18 @@
 import numpy as np
 import torch
-import torch.nn as nn
-from sklearn import metrics
 import dataset
 
 import metric
 from models.ae import AutoEncoder
-from models.loss import SONLoss, FocalLoss, WeightMSELoss
+from models.loss import SONLoss, WeightMSELoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
-LR = 0.00005
+LR = 0.00007
 a1 = 0.00000001
 a2 = 0.00000001
 
-def train(trainData, testData, mask, tag='train'):
+def train(trainData, tag='train'):
     # 每次train 要train两组数据 药物和蛋白
     drug_x1 = torch.from_numpy(trainData.drug_x1).float().to(device) # [556, 1024]
     drug_x2 = torch.from_numpy(trainData.drug_x2).float().to(device) # [556, 5603]
@@ -27,23 +25,23 @@ def train(trainData, testData, mask, tag='train'):
     drug_edge, drug_weight = trainData.edge(SR, SR)
     drug_edge = torch.from_numpy(drug_edge).long().to(device)
     drug_weight = torch.from_numpy(drug_weight).float().to(device)
-    
+
     eye_R = torch.eye(trainData.rnum).float().to(device)
     SR = torch.from_numpy(SR).float().to(device)
 
     RPI = torch.from_numpy(trainData.rpi).float().to(device)
     RDI = torch.from_numpy(trainData.rdi).float().to(device)
-    
+
     print("Initialling model...")
     AE = AutoEncoder(
         [1024, 1024], [trainData.dnum, 2048], [trainData.pnum, 1024],
         [1024, 1024], [trainData.dnum, 2048], [trainData.pnum, 1024],
         protein_num=trainData.pnum, disease_num=trainData.dnum,
     ).to(device)
-    optimizer = torch.optim.Adam(AE.parameters(), lr=LR, weight_decay=0.000004)
+    optimizer = torch.optim.Adam(AE.parameters(), lr=LR, weight_decay=0.000006)
     son_loss = SONLoss(10)
-    mse_loss_p = WeightMSELoss(0.999)
-    mse_loss_d = WeightMSELoss(0.95)
+    mse_loss_p = WeightMSELoss(0.95)
+    mse_loss_d = WeightMSELoss(0.9)
 
     print("Starting {}...".format(tag))
     for epoch in range(EPOCH):
@@ -70,7 +68,6 @@ def train(trainData, testData, mask, tag='train'):
 
 if __name__=='__main__':
     trainData = dataset.Dataset()
-    testData = dataset.Dataset()
 
     while True:
         print("[0] train")
@@ -86,12 +83,10 @@ if __name__=='__main__':
             splits = np.array_split(drugs, 5)
             for i in range(5):
                 trainData.prepare(mask_drugs=splits[i])
-                testData.prepare()
-                train(trainData, testData, splits[i], i)
+                train(trainData, i)
                 np.savetxt('output/{}_masks.txt'.format(i), splits[i], fmt='%d')
         elif index == 1:
             metric.run(trainData)
         elif index == 2:
             quit()
         else: continue
-
