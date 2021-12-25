@@ -26,7 +26,7 @@ class AutoEncoder(nn.Module):
         self.fc_d = nn.Linear(8192, 2048)
 
         self.decoder = nn.Sequential(
-            nn.Linear(2048 + feature_p2[1] + feature_r1[1], 10240),
+            nn.Linear(2048 + feature_p2[1] + feature_p3[1] + feature_r1[1], 10240),
             nn.LeakyReLU(inplace=True),
             nn.Dropout(0.6),
             nn.Linear(10240, disease_num),
@@ -42,7 +42,6 @@ class AutoEncoder(nn.Module):
         ])
 
     def forward(self, x1, x2, x3, z1, z2, SR, drug_edge, drug_weight):
-        # en1 = self.encoder_1(x1, drug_edge, edge_weight=drug_weight)
         en1 = x1
         en2 = self.encoder_2(x2, drug_edge)
         en3 = self.encoder_3(x3, drug_edge)
@@ -54,13 +53,12 @@ class AutoEncoder(nn.Module):
 
         SR_hat = rpi_hat.matmul(rpi_hat.t())
 
-        # de1 = self.decoder_1(SR.matmul(hidden_state), drug_edge, edge_weight=drug_weight)
         de1 = hidden_state
         de2 = self.decoder_2(z1, drug_edge)
-        #de3 = self.decoder_3(z2, drug_edge)
+        de3 = self.decoder_3(z2, drug_edge)
         de4 = x1
 
-        diease_feature = torch.cat([de1, de2, de4], dim=1)
+        diease_feature = torch.cat([de1, de2, de3, de4], dim=1)
         decoder0 = self.decoder(diease_feature)
 
         return rpi_hat, SR_hat, decoder0, decoder0.matmul(decoder0.t())
