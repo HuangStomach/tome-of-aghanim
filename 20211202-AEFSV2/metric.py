@@ -32,13 +32,13 @@ def metric(dataset, RPI, RDI, f, tag):
 
     drug_edge, drug_weight = dataset.edge(SR, SR)
     drug_edge = torch.from_numpy(drug_edge).long().to(device)
-    drug_weight = torch.from_numpy(drug_weight).float().to(device)
+    # drug_weight = torch.from_numpy(drug_weight).float().to(device)
     
     SR = torch.from_numpy(SR).float().to(device)
 
     AE = AutoEncoder(
-        [1024, 256], [dataset.dnum, 2048], [dataset.pnum, 1024],
-        [1024, 256], [dataset.dnum, 2048], [dataset.pnum, 1024],
+        [1024, 1024], [dataset.dnum, 2048], [dataset.pnum, 1024],
+        [1024, 1024], [dataset.dnum, 2048], [dataset.pnum, 1024],
         protein_num=dataset.pnum, disease_num=dataset.dnum,
     ).to(device)
     AE_state_dict = torch.load("output/{}_model.pt".format(tag))
@@ -47,8 +47,7 @@ def metric(dataset, RPI, RDI, f, tag):
 
     RPI_hat, _, RDI_hat, _ = AE(
         drug_x1, drug_x2, drug_x3,
-        drug_z1, drug_z2, SR,
-        drug_edge, drug_weight
+        drug_z1, drug_z2, drug_edge
     )
 
     RPI = dataset.rpi[masks]

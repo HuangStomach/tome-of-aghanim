@@ -39,7 +39,7 @@ class AutoEncoder(nn.Module):
             nn.Dropout(0.5),
         ])
 
-    def forward(self, x1, x2, x3, z1, z2, SR, drug_edge, drug_weight):
+    def forward(self, x1, x2, x3, z1, z2, drug_edge):
         en1 = x1
         en2 = self.encoder_2(x2, drug_edge)
         en3 = self.encoder_3(x3, drug_edge)
