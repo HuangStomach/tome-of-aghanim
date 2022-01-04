@@ -8,7 +8,7 @@ class Dataset:
         'drug_sim': './data/Similarity_Matrix_Drugs.txt',
         # 'protein_sim': './data/Similarity_Matrix_Proteins.txt',
 
-        'drug_fps': './data/drug_ecfps.txt',
+        'drug_fps': './data/drug_ecfps8.txt',
         # 'protein_embed': './data/protein_embeds.csv',
 
         'rpi': './data/mat_drug_protein.txt',

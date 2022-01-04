@@ -37,8 +37,8 @@ def metric(dataset, RPI, RDI, f, tag):
     SR = torch.from_numpy(SR).float().to(device)
 
     AE = AutoEncoder(
-        [1024, 1024], [dataset.dnum, 2048], [dataset.pnum, 1024],
-        [1024, 1024], [dataset.dnum, 2048], [dataset.pnum, 1024],
+        [1024, 256], [dataset.dnum, 2048], [dataset.pnum, 1024],
+        [1024, 256], [dataset.dnum, 2048], [dataset.pnum, 1024],
         protein_num=dataset.pnum, disease_num=dataset.dnum,
     ).to(device)
     AE_state_dict = torch.load("output/{}_model.pt".format(tag))

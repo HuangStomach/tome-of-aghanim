@@ -19,16 +19,16 @@ class AutoEncoder(nn.Module):
         self.encoder = nn.Sequential(
             nn.Linear(feature_r1[1] + feature_r2[1] + feature_r3[1], 8192),
             nn.LeakyReLU(inplace=True),
-            nn.Dropout(0.6),
-            # nn.Linear(8192, protein_num + 1024),
+            nn.Dropout(0.5),
         )
-        self.fc_p = nn.Linear(8192, protein_num)
-        self.fc_d = nn.Linear(8192, 2048)
+
+        self.fc_protein = nn.Linear(8192, protein_num)
+        self.fc_disease = nn.Linear(8192, 1024)
 
         self.decoder = nn.Sequential(
-            nn.Linear(2048 + feature_p2[1] + feature_p3[1] + feature_r1[1], 10240),
+            nn.Linear(1024 + feature_p2[1] + feature_p3[1], 10240),
             nn.LeakyReLU(inplace=True),
-            nn.Dropout(0.6),
+            nn.Dropout(0.5),
             nn.Linear(10240, disease_num),
         )
 
@@ -37,8 +37,6 @@ class AutoEncoder(nn.Module):
             (GCNConv(feature_in, feature_out), 'x, edge_index -> x1',),
             nn.Sigmoid(),
             nn.Dropout(0.5),
-            # (GCNConv(feature_out, feature_out), 'x1, edge_index, edge_weight -> x2'),
-            # nn.Sigmoid(),
         ])
 
     def forward(self, x1, x2, x3, z1, z2, SR, drug_edge, drug_weight):
@@ -48,17 +46,16 @@ class AutoEncoder(nn.Module):
 
         drug_feature = torch.cat([en1, en2, en3], dim=1)
         encoder0 = self.encoder(drug_feature)
-        rpi_hat = self.fc_p(encoder0)
-        hidden_state = self.fc_d(encoder0)
+        rpi_hat = self.fc_protein(encoder0)
 
         SR_hat = rpi_hat.matmul(rpi_hat.t())
 
-        de1 = hidden_state
+        de1 = self.fc_disease(encoder0).add(x1)
         de2 = self.decoder_2(z1, drug_edge)
         de3 = self.decoder_3(z2, drug_edge)
-        de4 = x1
+        # de4 = x1
 
-        diease_feature = torch.cat([de1, de2, de3, de4], dim=1)
+        diease_feature = torch.cat([de1, de2, de3], dim=1)
         decoder0 = self.decoder(diease_feature)
 
         return rpi_hat, SR_hat, decoder0, decoder0.matmul(decoder0.t())

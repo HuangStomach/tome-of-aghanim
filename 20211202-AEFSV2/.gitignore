@@ -1,6 +1,7 @@
 __pycache__
 data/*.txt
 data/*.csv
+data/*.tsv
 output/*
 !output/DTINet/.gitkeep
 metric.csv

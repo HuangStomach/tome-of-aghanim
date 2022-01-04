@@ -8,7 +8,7 @@ from models.loss import SONLoss, WeightMSELoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
-LR = 0.00007
+LR = 0.00003
 a1 = 0.00000001
 a2 = 0.00000001
 
@@ -34,14 +34,14 @@ def train(trainData, tag='train'):
 
     print("Initialling model...")
     AE = AutoEncoder(
-        [1024, 1024], [trainData.dnum, 2048], [trainData.pnum, 1024],
-        [1024, 1024], [trainData.dnum, 2048], [trainData.pnum, 1024],
+        [1024, 256], [trainData.dnum, 2048], [trainData.pnum, 1024],
+        [1024, 256], [trainData.dnum, 2048], [trainData.pnum, 1024],
         protein_num=trainData.pnum, disease_num=trainData.dnum,
     ).to(device)
     optimizer = torch.optim.Adam(AE.parameters(), lr=LR, weight_decay=0.000006)
     son_loss = SONLoss(10)
-    mse_loss_p = WeightMSELoss(0.95)
-    mse_loss_d = WeightMSELoss(0.9)
+    mse_loss_p = WeightMSELoss(0.995)
+    mse_loss_d = WeightMSELoss(0.95)
 
     print("Starting {}...".format(tag))
     for epoch in range(EPOCH):
