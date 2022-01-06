@@ -1,6 +1,6 @@
 import numpy as np
-from numpy.lib.function_base import meshgrid
 import torch
+import torch.nn as nn
 import dataset
 
 import metric
@@ -9,11 +9,11 @@ from models.loss import SONLoss, WeightMSELoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
-LR = 0.00009 # 0.00008
-WD = 0.000006
+LR = 0.0001 # 0.00009
+WD = 0.000004 # 0.000004
 
-loss_p_weight = 0.995
-loss_d_weight = 0.95
+loss_p_weight = 0.999
+loss_d_weight = 0.99
 a1 = 0.00000001
 a2 = 0.00000001
 
@@ -60,8 +60,8 @@ def train(trainData, testData, tag='train'):
     mse_loss_p = WeightMSELoss(loss_p_weight)
     mse_loss_d = WeightMSELoss(loss_d_weight)
 
-    mse_loss_p_test = WeightMSELoss(loss_p_weight)
-    mse_loss_d_test = WeightMSELoss(loss_d_weight)
+    mse_loss_p_test = nn.MSELoss()
+    mse_loss_d_test = nn.MSELoss()
 
     print("Starting {}...".format(tag))
     for epoch in range(EPOCH):
