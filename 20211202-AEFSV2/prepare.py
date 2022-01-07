@@ -70,17 +70,18 @@ def ecfps():
 
     # np.savetxt('./data/drug_smiles.csv', seqs, fmt='%s', delimiter=',')
     seqs = []
+    radius = 6
 
     drugs = np.loadtxt('./data/drug_smiles.csv', delimiter=',', dtype=str, comments=None)
     for drug in drugs:
         try:
             name, smiles = drug
             mol = Chem.MolFromSmiles(smiles)
-            seqs.append(AllChem.GetMorganFingerprintAsBitVect(mol, 4, nBits=1024).ToList())
+            seqs.append(AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=1024).ToList())
         except Exception as e:
             print(drug, e)
 
-    np.savetxt('./data/drug_ecfps8.txt', seqs, fmt='%s', delimiter=',')
+    np.savetxt('./data/drug_ecfps{}.txt'.format(radius * 2), seqs, fmt='%s', delimiter=',')
 
 if __name__=='__main__':
     # proteins()

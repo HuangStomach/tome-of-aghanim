@@ -10,7 +10,7 @@ from models.loss import SONLoss, WeightMSELoss
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
 LR = 0.00001 # 0.00009
-WD = 0.000005 # 0.000004
+WD = 0.000004 # 0.000004
 
 loss_p_weight = 0.91
 loss_d_weight = 0.7
