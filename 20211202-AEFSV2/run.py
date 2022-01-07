@@ -9,11 +9,11 @@ from models.loss import SONLoss, WeightMSELoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
-LR = 0.0001 # 0.00009
-WD = 0.000004 # 0.000004
+LR = 0.00001 # 0.00009
+WD = 0.000005 # 0.000004
 
-loss_p_weight = 0.999
-loss_d_weight = 0.99
+loss_p_weight = 0.91
+loss_d_weight = 0.7
 a1 = 0.00000001
 a2 = 0.00000001
 
@@ -57,8 +57,10 @@ def train(trainData, testData, tag='train'):
     ).to(device)
     optimizer = torch.optim.Adam(AE.parameters(), lr=LR, weight_decay=WD)
     son_loss = SONLoss(10)
-    mse_loss_p = WeightMSELoss(loss_p_weight)
-    mse_loss_d = WeightMSELoss(loss_d_weight)
+    # mse_loss_p = WeightMSELoss(loss_p_weight)
+    # mse_loss_d = WeightMSELoss(loss_d_weight)
+    mse_loss_p = nn.MSELoss()
+    mse_loss_d = nn.MSELoss()
 
     mse_loss_p_test = nn.MSELoss()
     mse_loss_d_test = nn.MSELoss()
@@ -104,10 +106,13 @@ if __name__=='__main__':
 
         index = int(str_in)
         if index == 0:
-            drugs = np.arange(trainData.data('rri').shape[0])
-            np.random.shuffle(drugs)
-            splits = np.array_split(drugs, 5)
-            for i in range(5):
+            drug_count = trainData.data('rri').shape[0]
+            shuffled_drugs = np.arange(drug_count)
+            drugs = np.arange(drug_count)
+            np.random.shuffle(shuffled_drugs)
+            splits = np.array_split(shuffled_drugs, 10)
+            
+            for i in range(10):
                 trainData.prepare(mask_drugs=splits[i])
 
                 testData = dataset.Dataset()

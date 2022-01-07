@@ -18,27 +18,24 @@ class AutoEncoder(nn.Module):
 
         self.encoder = nn.Sequential(
             nn.Linear(feature_r1[1] + feature_r2[1] + feature_r3[1], 8192),
-            nn.LeakyReLU(inplace=True),
-            nn.Dropout(0.2),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.4),
         )
 
         self.fc_protein = nn.Linear(8192, protein_num)
-        self.fc_disease = nn.Linear(8192, 1024)
+        self.fc_disease = nn.Linear(8192, 2048)
 
         self.decoder = nn.Sequential(
-            nn.Linear(1024 + feature_p2[1] + feature_p3[1], 10240),
-            nn.LeakyReLU(inplace=True),
-            nn.Dropout(0.2),
+            nn.Linear(2048 + feature_p2[1] + feature_p3[1], 10240),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.4),
             nn.Linear(10240, disease_num),
         )
 
     def _gcn(self, feature_in, feature_out):
         return Sequential('x, edge_index', [
             (GCNConv(feature_in, feature_out), 'x, edge_index -> x1',),
-            nn.Sigmoid(),
-            nn.Dropout(0.4), 
-            # 0.2 0.038805
-            # 0.5 0.036589
+            nn.Softmax(dim=1),
         ])
 
     def forward(self, x1, x2, x3, z1, z2, drug_edge):
@@ -52,7 +49,7 @@ class AutoEncoder(nn.Module):
 
         SR_hat = rpi_hat.matmul(rpi_hat.t())
 
-        de1 = self.fc_disease(encoder0).add(x1)
+        de1 = self.fc_disease(encoder0)
         de2 = self.decoder_2(z1, drug_edge)
         de3 = self.decoder_3(z2, drug_edge)
         # de4 = x1
