@@ -70,7 +70,7 @@ def ecfps():
 
     # np.savetxt('./data/drug_smiles.csv', seqs, fmt='%s', delimiter=',')
     seqs = []
-    radius = 6
+    radius = 3
 
     drugs = np.loadtxt('./data/drug_smiles.csv', delimiter=',', dtype=str, comments=None)
     for drug in drugs:

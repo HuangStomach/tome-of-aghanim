@@ -23,10 +23,10 @@ class AutoEncoder(nn.Module):
         )
 
         self.fc_protein = nn.Linear(8192, protein_num)
-        self.fc_disease = nn.Linear(8192, 2048)
+        self.fc_disease = nn.Linear(8192, 1024)
 
         self.decoder = nn.Sequential(
-            nn.Linear(2048 + feature_p2[1] + feature_p3[1], 10240),
+            nn.Linear(1024 + feature_p2[1] + feature_p3[1], 10240),
             nn.ReLU(inplace=True),
             nn.Dropout(0.4),
             nn.Linear(10240, disease_num),
@@ -35,7 +35,8 @@ class AutoEncoder(nn.Module):
     def _gcn(self, feature_in, feature_out):
         return Sequential('x, edge_index', [
             (GCNConv(feature_in, feature_out), 'x, edge_index -> x1',),
-            nn.Softmax(dim=1),
+            # nn.Softmax(dim=1),
+            nn.Sigmoid()
         ])
 
     def forward(self, x1, x2, x3, z1, z2, drug_edge):
