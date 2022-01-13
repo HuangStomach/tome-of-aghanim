@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.utils.rnn as rnn_utils
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from sklearn.metrics import jaccard_score
 
 from urllib import request
 from time import sleep
@@ -49,28 +50,30 @@ def proteins():
     embeds = np.array(embeds)
     np.savetxt('./datasets/DTINet/protein_embeds.csv', embeds, delimiter=',')
 
-def ecfps():
-    # seqs = []
-    # drug_dict = np.loadtxt('./data/drug.txt', dtype=str, delimiter='\n')
-    # drug_url = 'https://go.drugbank.com/structures/small_molecule_drugs/{}.smiles'
-
-    # for drug in drug_dict:
-    #     sleep(1)
-    #     try:
-    #         req = request.Request(drug_url.format(drug), headers={
-    #             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'
-    #         })
-    #         data = request.urlopen(req).read()
-    #         seqs.append([drug, data])
-    #         print(drug, 'OK')
-
-    #     except Exception as e:
-    #         print(drug, e)
-    #         seqs.append([drug, 'ERROR'])
-
-    # np.savetxt('./data/drug_smiles.csv', seqs, fmt='%s', delimiter=',')
+def smiles():
     seqs = []
-    radius = 3
+    drug_dict = np.loadtxt('./data/drug.txt', dtype=str, delimiter='\n')
+    drug_url = 'https://go.drugbank.com/structures/small_molecule_drugs/{}.smiles'
+
+    for drug in drug_dict:
+        sleep(1)
+        try:
+            req = request.Request(drug_url.format(drug), headers={
+                'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'
+            })
+            data = request.urlopen(req).read()
+            seqs.append([drug, data])
+            print(drug, 'OK')
+
+        except Exception as e:
+            print(drug, e)
+            seqs.append([drug, 'ERROR'])
+
+    np.savetxt('./data/drug_smiles.csv', seqs, fmt='%s', delimiter=',')
+
+def ecfps():
+    seqs = []
+    radius = 6
 
     drugs = np.loadtxt('./data/drug_smiles.csv', delimiter=',', dtype=str, comments=None)
     for drug in drugs:
@@ -83,6 +86,17 @@ def ecfps():
 
     np.savetxt('./data/drug_ecfps{}.txt'.format(radius * 2), seqs, fmt='%s', delimiter=',')
 
+def drug_sim():
+    drugs = pd.read_table('./data/LRSSL/drug_pubchem_mat.txt', sep='\t', index_col=0)
+    length = drugs.shape[0]
+    sim = np.zeros((length, length))
+
+    for indexA, (labelA, drugA) in enumerate(drugs.iterrows()):
+        for indexB, (labelB, drugB) in enumerate(drugs.iterrows()):
+            sim[indexA][indexB] = jaccard_score(drugA.to_numpy(), drugB.to_numpy())
+
+    np.savetxt('./data/LRSSL/drug_sim.txt', sim, fmt='%s', delimiter=',')
+
 if __name__=='__main__':
     # proteins()
-    ecfps()
+    drug_sim()

@@ -9,7 +9,7 @@ from models.loss import SONLoss, WeightMSELoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
-LR = 0.000005 # 0.00009
+LR = 0.00001 # 0.00009
 WD = 0.000004 # 0.000004
 
 loss_p_weight = 0.91
@@ -22,22 +22,24 @@ def train(trainData, testData, tag='train'):
     drug_x1 = torch.from_numpy(trainData.drug_x1).float().to(device) # [556, 1024]
     drug_x2 = torch.from_numpy(trainData.drug_x2).float().to(device) # [556, 5603]
     drug_x3 = torch.from_numpy(trainData.drug_x3).float().to(device) # [556, 1512]
+    # drug_x4 = torch.from_numpy(trainData.drug_x4).float().to(device) # [556, 1512]
     drug_z1 = torch.from_numpy(trainData.drug_z1).float().to(device) # [556, 5603]
     drug_z2 = torch.from_numpy(trainData.drug_z2).float().to(device) # [556, 1512]
 
     drug_x1_test = torch.from_numpy(testData.drug_x1).float().to(device) # [556, 1024]
     drug_x2_test = torch.from_numpy(testData.drug_x2).float().to(device) # [556, 5603]
     drug_x3_test = torch.from_numpy(testData.drug_x3).float().to(device) # [556, 1512]
+    # drug_x4_test = torch.from_numpy(testData.drug_x4).float().to(device) # [556, 1512]
     drug_z1_test = torch.from_numpy(testData.drug_z1).float().to(device) # [556, 5603]
     drug_z2_test = torch.from_numpy(testData.drug_z2).float().to(device) # [556, 1512]
 
     SR = trainData.drug_A # 药物相似性
     SR_test = testData.drug_A # 药物相似性
 
-    drug_edge, drug_weight = trainData.edge(SR, SR)
+    drug_edge, drug_weight = trainData.edge(SR)
     drug_edge = torch.from_numpy(drug_edge).long().to(device)
     # drug_weight = torch.from_numpy(drug_weight).float().to(device)
-    drug_edge_test, drug_weight_test = testData.edge(SR_test, SR_test)
+    drug_edge_test, drug_weight_test = testData.edge(SR_test)
     drug_edge_test = torch.from_numpy(drug_edge_test).long().to(device)
     # drug_weight = torch.from_numpy(drug_weight).float().to(device)
 
@@ -81,7 +83,7 @@ def train(trainData, testData, tag='train'):
         optimizer.step()
 
         RPI_hat_test, _, RDI_hat_test, _ = AE(
-            drug_x1_test, drug_x2_test, drug_x3_test,
+            drug_x1_test, drug_x2_test, drug_x3_test, drug_x4_test,
             drug_z1_test, drug_z2_test, drug_edge_test
         ) # h3:encoded h6:decoded
         loss_test = mse_loss_p_test(RPI_hat_test, RPI_test) + mse_loss_d_test(RDI_hat_test, RDI_test)
@@ -106,7 +108,7 @@ if __name__=='__main__':
 
         index = int(str_in)
         if index == 0:
-            drug_count = trainData.data('rri').shape[0]
+            drug_count = trainData.drugs().shape[0]
             shuffled_drugs = np.arange(drug_count)
             drugs = np.arange(drug_count)
             np.random.shuffle(shuffled_drugs)
