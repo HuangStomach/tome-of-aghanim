@@ -87,15 +87,32 @@ def ecfps():
     np.savetxt('./data/drug_ecfps{}.txt'.format(radius * 2), seqs, fmt='%s', delimiter=',')
 
 def drug_sim():
-    drugs = pd.read_table('./data/LRSSL/drug_pubchem_mat.txt', sep='\t', index_col=0)
-    length = drugs.shape[0]
+    # drugs_pubchem = pd.read_table('./data/LRSSL/drug_pubchem_mat.txt', sep='\t', index_col=0)
+    # drugs_domain = pd.read_table('./data/LRSSL/drug_target_domain_mat.txt', sep='\t', index_col=0)
+    # drugs_go = pd.read_table('./data/LRSSL/drug_target_go_mat.txt', sep='\t', index_col=0)
+    # length = drugs_pubchem.shape[0]
+    # sim = np.zeros((length, length))
+
+    # for i in range(length):
+    #     for j in range(length):
+    #         drugA = np.concatenate((drugs_pubchem.iloc[i], drugs_domain.iloc[i], drugs_go.iloc[i]), axis=1)
+    #         drugB = np.concatenate((drugs_pubchem.iloc[j], drugs_domain.iloc[j], drugs_go.iloc[j]), axis=1)
+    #         sim[i][j] = jaccard_score(drugA.to_numpy(), drugB.to_numpy())
+
+    # np.savetxt('./data/LRSSL/drug_sim.txt', sim, fmt='%s', delimiter=' ')
+
+    drugs_protein = np.loadtxt('./data/DTINet/mat_drug_protein_s.txt', dtype=int, delimiter=' ')
+    drugs_disease = np.loadtxt('./data/DTINet/mat_drug_disease.txt', dtype=int, delimiter=' ')
+    length = drugs_protein.shape[0]
     sim = np.zeros((length, length))
 
-    for indexA, (labelA, drugA) in enumerate(drugs.iterrows()):
-        for indexB, (labelB, drugB) in enumerate(drugs.iterrows()):
-            sim[indexA][indexB] = jaccard_score(drugA.to_numpy(), drugB.to_numpy())
+    for i in range(length):
+        for j in range(length):
+            drugA = np.concatenate((drugs_protein[i], drugs_disease[i]))
+            drugB = np.concatenate((drugs_protein[j], drugs_disease[j]))
+            sim[i][j] = jaccard_score(drugA, drugB)
 
-    np.savetxt('./data/LRSSL/drug_sim.txt', sim, fmt='%s', delimiter=',')
+    np.savetxt('./data/DTINet/Similarity_Matrix_Drugs_s.txt', sim, fmt='%s', delimiter='    ')
 
 if __name__=='__main__':
     # proteins()

@@ -17,7 +17,7 @@ def run(dataset, tag='train'):
         f.write('model, RPI_auc, RPI_aupr, RPI_aupr_avg, RDI_auc, RDI_aupr, RDI_aupr_avg\n')
 
     with open(file_name, 'a') as f:
-        for i in range(5):
+        for i in range(10):
             metric(dataset, RPI, RDI, f, i)
 
 def metric(dataset, RPI, RDI, f, tag):
@@ -30,7 +30,7 @@ def metric(dataset, RPI, RDI, f, tag):
 
     SR = dataset.drug_A # 药物相似性
 
-    drug_edge, drug_weight = dataset.edge(SR, SR)
+    drug_edge, drug_weight = dataset.edge(SR)
     drug_edge = torch.from_numpy(drug_edge).long().to(device)
     # drug_weight = torch.from_numpy(drug_weight).float().to(device)
     

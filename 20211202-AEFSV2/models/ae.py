@@ -5,7 +5,7 @@ from lib import *
 
 class AutoEncoder(nn.Module):
     def __init__(self, 
-        feature_r1, feature_r2, feature_r3, feature_r4, 
+        feature_r1, feature_r2, feature_r3,
         feature_p1, feature_p2, feature_p3, 
         protein_num, disease_num):
 
@@ -28,10 +28,10 @@ class AutoEncoder(nn.Module):
         )
 
         self.fc_protein = nn.Linear(8196, protein_num)
-        self.fc_disease = nn.Linear(8196, 1024)
+        self.fc_disease = nn.Linear(8196, feature_p1[1])
 
         self.decoder = nn.Sequential(
-            nn.Linear(1024 + feature_p2[1] + feature_p3[1], 10240),
+            nn.Linear(feature_p1[1] + feature_p2[1] + feature_p3[1], 10240),
             nn.ReLU(inplace=True),
             nn.Dropout(0.4),
             nn.Linear(10240, disease_num),
@@ -44,7 +44,7 @@ class AutoEncoder(nn.Module):
             nn.Sigmoid()
         ])
 
-    def forward(self, x1, x2, x3, x4, z1, z2, drug_edge):
+    def forward(self, x1, x2, x3, z1, z2, drug_edge):
         en1 = x1
         en2 = self.encoder_2(x2, drug_edge)
         en3 = self.encoder_3(x3, drug_edge)
