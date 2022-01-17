@@ -8,7 +8,7 @@ class DTINet(Base):
         'drug_sim': './data/DTINet/Similarity_Matrix_Drugs.txt',
         # 'drug_sim': './data/DTINet/Similarity_Matrix_Drugs_s.txt',
 
-        'drug_ecfps': './data/DTINet/drug_ecfps12.txt',
+        'drug_ecfps': './data/DTINet/drug_ecfps8.txt',
         'rpi': './data/DTINet/mat_drug_protein.txt',
         # 'rpi': './data/DTINet/mat_drug_protein_s.txt',
         # 'rri': './data/DTINet/mat_drug_drug.txt',
@@ -64,10 +64,9 @@ class DTINet(Base):
         edge_wight = []
         for i in range(l):
             for j in range(i + 1, l):
-                if sim_mat[i][j] < 0.45: continue
+                if sim_mat[i][j] < 0.5: continue
                 edge_index[0].append(i)
                 edge_index[1].append(j)
                 edge_wight.append(sim_mat[i][j])
 
         return (np.array(edge_index), np.array(edge_wight))
-
