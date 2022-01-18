@@ -6,3 +6,4 @@ output/*
 !output/DTINet/.gitkeep
 metric.csv
 !.gitkeep
+*.*~

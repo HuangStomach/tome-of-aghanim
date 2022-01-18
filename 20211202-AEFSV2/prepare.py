@@ -101,19 +101,21 @@ def drug_sim():
 
     # np.savetxt('./data/LRSSL/drug_sim.txt', sim, fmt='%s', delimiter=' ')
 
-    drugs_protein = np.loadtxt('./data/DTINet/mat_drug_protein_s.txt', dtype=int, delimiter=' ')
-    drugs_disease = np.loadtxt('./data/DTINet/mat_drug_disease.txt', dtype=int, delimiter=' ')
-    length = drugs_protein.shape[0]
+    # drugs_protein = np.loadtxt('./data/DTINet/mat_drug_protein_s.txt', dtype=int, delimiter=' ')
+    # drugs_disease = np.loadtxt('./data/DTINet/mat_drug_disease.txt', dtype=int, delimiter=' ')
+    drugs_ecfps = np.loadtxt('./data/DTINet/drug_ecfps12.txt', dtype=int, delimiter=',')
+    length = drugs_ecfps.shape[0]
     sim = np.zeros((length, length))
 
     for i in range(length):
         for j in range(length):
-            drugA = np.concatenate((drugs_protein[i], drugs_disease[i]))
-            drugB = np.concatenate((drugs_protein[j], drugs_disease[j]))
+            drugA = drugs_ecfps[i]
+            drugB = drugs_ecfps[j]
             sim[i][j] = jaccard_score(drugA, drugB)
 
     np.savetxt('./data/DTINet/Similarity_Matrix_Drugs_s.txt', sim, fmt='%s', delimiter='    ')
 
 if __name__=='__main__':
     # proteins()
+    # ecfps()
     drug_sim()

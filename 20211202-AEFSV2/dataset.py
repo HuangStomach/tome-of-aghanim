@@ -22,8 +22,8 @@ class Dataset:
     def data(self, name, dtype=int, delimiter=' '):
         return self.handler.data(name, dtype, delimiter)
 
-    def edge(self, sim_mat):
-        return self.handler.edge(sim_mat)
+    def edge(self, sim_mat, threshold):
+        return self.handler.edge(sim_mat, threshold)
 
 if __name__=='__main__':
     dataset = Dataset()

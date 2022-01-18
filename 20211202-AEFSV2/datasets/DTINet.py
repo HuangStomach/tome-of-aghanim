@@ -9,9 +9,10 @@ class DTINet(Base):
         'drug_sim': base + 'Similarity_Matrix_Drugs.txt',
         # 'drug_sim': './data/DTINet/Similarity_Matrix_Drugs_s.txt',
 
-        'drug_ecfps': './data/DTINet/drug_ecfps8.txt',
-        # 'rpi': './data/DTINet/mat_drug_protein.txt',
-        'rpi': './data/DTINet/mat_drug_protein_s.txt',
+        'drug_ecfps': './data/DTINet/drug_ecfps12.txt',
+        'drug_se': './data/DTINet/mat_drug_se.txt',
+        'rpi': './data/DTINet/mat_drug_protein.txt',
+        # 'rpi': './data/DTINet/mat_drug_protein_s.txt',
         # 'rri': './data/DTINet/mat_drug_drug.txt',
         'rdi': './data/DTINet/mat_drug_disease.txt',
     }
@@ -25,7 +26,7 @@ class DTINet(Base):
         self.rdi = self.mask(self.data('rdi'))
 
         drug_fps = self.mask(self.data('drug_ecfps', delimiter=','))
-        # drug_se = self.mask(self.data('drug_se'))
+        drug_se = self.mask(self.data('drug_se'))
         self.drug_A = self.mask(self.mask(
             self.data('drug_sim', dtype=float, delimiter='    ')
         ).T)
@@ -34,7 +35,7 @@ class DTINet(Base):
         self.drug_x1 = drug_fps
         self.drug_x2 = np.matmul(self.drug_A, self.rdi)
         self.drug_x3 = np.matmul(self.drug_A, self.rpi)
-        # self.drug_x4 = drug_se
+        self.drug_x4 = drug_se
 
         self.drug_z1 = np.matmul(self.drug_A, self.rdi)
         self.drug_z2 = np.matmul(self.drug_A, self.rpi)
@@ -58,14 +59,14 @@ class DTINet(Base):
 
         return np.loadtxt(self.path[name], dtype=dtype, delimiter=delimiter)
 
-    def edge(self, sim_mat):
+    def edge(self, sim_mat, threshold = 0.5):
         l = sim_mat.shape[0]
         
         edge_index = [[], []]
         edge_wight = []
         for i in range(l):
             for j in range(i + 1, l):
-                if sim_mat[i][j] < 0.5: continue
+                if sim_mat[i][j] < threshold: continue
                 edge_index[0].append(i)
                 edge_index[1].append(j)
                 edge_wight.append(sim_mat[i][j])
