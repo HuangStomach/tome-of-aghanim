@@ -12,7 +12,7 @@ from models.loss import SONLoss, WeightMSELoss
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 EPOCH = 1000
-LR = 0.0001  # 0.00009
+LR = 0.00003  # 0.00009
 WD = 0.000004 # 0.000004
 
 sim_threshold = 0.5
@@ -40,8 +40,8 @@ def train(trainData, testData, mask, logger, tag='train'):
 
     print("Initialling model...")
     AE = AutoEncoder(
-        1024, [trainData.dnum, 2048], [trainData.pnum, 1024], [4192, 128],
-        1024, [trainData.dnum, 2048], [trainData.pnum, 1024], [4192, 128],
+        4096, [trainData.dnum, 2048], [trainData.pnum, 1024], [4192, 128],
+        2048, [trainData.dnum, 2048], [trainData.pnum, 1024], [4192, 128],
     ).to(device)
     optimizer = torch.optim.Adam(AE.parameters(), lr=LR, weight_decay=WD)
     son_loss = SONLoss(8)

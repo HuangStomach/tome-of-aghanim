@@ -27,11 +27,11 @@ class AutoEncoder(nn.Module):
 
         self.fc_protein = nn.Linear(8196, feature_r3[0])
         self.fc_disease = nn.Linear(8196, feature_p1)
-
+        
         self.decoder = nn.Sequential(
-            nn.Linear(feature_p1 + feature_p2[1] + feature_p3[1], 10240),
+            nn.Linear(feature_p1 + feature_r1 + feature_p2[1] + feature_p3[1], 10240),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.4),
+            nn.Dropout(0.2),
             nn.Linear(10240, feature_r2[0]),
         )
 
@@ -53,12 +53,13 @@ class AutoEncoder(nn.Module):
 
         SR_hat = rpi_hat.matmul(rpi_hat.t())
 
-        de1 = self.fc_disease(encoder0)
+        de0 = self.fc_disease(encoder0)
+        de1 = x1
         de2 = self.decoder_2(x2, drug_edge)
         de3 = self.decoder_3(x3, drug_edge)
         # de4 = self.decoder_4(x4, drug_edge)
 
-        diease_feature = torch.cat([de1, de2, de3], dim=1)
+        diease_feature = torch.cat([de0, de1, de2, de3], dim=1)
         decoder0 = self.decoder(diease_feature)
 
         return rpi_hat, SR_hat, decoder0, decoder0.matmul(decoder0.t())

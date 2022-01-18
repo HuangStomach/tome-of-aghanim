@@ -6,6 +6,7 @@ import torch.nn.utils.rnn as rnn_utils
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from sklearn.metrics import jaccard_score
+# from transformers import AutoTokenizer, AutoModelForMaskedLM
 
 from urllib import request
 from time import sleep
@@ -74,17 +75,22 @@ def smiles():
 def ecfps():
     seqs = []
     radius = 6
+    length = 4096
 
-    drugs = np.loadtxt('./data/drug_smiles.csv', delimiter=',', dtype=str, comments=None)
+    drugs = np.loadtxt('./data/DTINet/drug_smiles.csv', delimiter=',', dtype=str, comments=None)
     for drug in drugs:
         try:
             name, smiles = drug
             mol = Chem.MolFromSmiles(smiles)
-            seqs.append(AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=1024).ToList())
+            seqs.append(AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=length).ToList())
         except Exception as e:
             print(drug, e)
 
-    np.savetxt('./data/drug_ecfps{}.txt'.format(radius * 2), seqs, fmt='%s', delimiter=',')
+    np.savetxt('./data/DTINet/drug_ecfps{}.txt'.format(radius * 2), seqs, fmt='%s', delimiter=',')
+
+def drug_token():
+    tokenizer = AutoTokenizer.from_pretrained("seyonec/SMILES_tokenized_PubChem_shard00_160k")
+
 
 def drug_sim():
     # drugs_pubchem = pd.read_table('./data/LRSSL/drug_pubchem_mat.txt', sep='\t', index_col=0)
@@ -117,5 +123,5 @@ def drug_sim():
 
 if __name__=='__main__':
     # proteins()
-    # ecfps()
-    drug_sim()
+    ecfps()
+    # drug_sim()
