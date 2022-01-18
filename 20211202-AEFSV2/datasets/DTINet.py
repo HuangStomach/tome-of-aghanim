@@ -3,14 +3,15 @@ import numpy as np
 
 class DTINet(Base):
     prepared = False
+    base = './data/DTINet/'
     path = {
-        'drugs': './data/DTINet/drug.txt',
-        'drug_sim': './data/DTINet/Similarity_Matrix_Drugs.txt',
+        'drugs': base + 'drug.txt',
+        'drug_sim': base + 'Similarity_Matrix_Drugs.txt',
         # 'drug_sim': './data/DTINet/Similarity_Matrix_Drugs_s.txt',
 
         'drug_ecfps': './data/DTINet/drug_ecfps8.txt',
-        'rpi': './data/DTINet/mat_drug_protein.txt',
-        # 'rpi': './data/DTINet/mat_drug_protein_s.txt',
+        # 'rpi': './data/DTINet/mat_drug_protein.txt',
+        'rpi': './data/DTINet/mat_drug_protein_s.txt',
         # 'rri': './data/DTINet/mat_drug_drug.txt',
         'rdi': './data/DTINet/mat_drug_disease.txt',
     }
