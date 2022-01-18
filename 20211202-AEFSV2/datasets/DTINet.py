@@ -1,5 +1,7 @@
-from datasets.base import Base
 import numpy as np
+import torch
+
+from datasets.base import Base
 
 class DTINet(Base):
     prepared = False
@@ -7,14 +9,14 @@ class DTINet(Base):
     path = {
         'drugs': base + 'drug.txt',
         'drug_sim': base + 'Similarity_Matrix_Drugs.txt',
-        # 'drug_sim': './data/DTINet/Similarity_Matrix_Drugs_s.txt',
+        # 'drug_sim': 'base + 'Similarity_Matrix_Drugs_s.txt',
 
-        'drug_ecfps': './data/DTINet/drug_ecfps12.txt',
-        'drug_se': './data/DTINet/mat_drug_se.txt',
-        'rpi': './data/DTINet/mat_drug_protein.txt',
-        # 'rpi': './data/DTINet/mat_drug_protein_s.txt',
-        # 'rri': './data/DTINet/mat_drug_drug.txt',
-        'rdi': './data/DTINet/mat_drug_disease.txt',
+        'drug_ecfps': base + 'drug_ecfps12.txt',
+        'drug_se': base + 'mat_drug_se.txt',
+        'rpi': base + 'mat_drug_protein.txt',
+        # 'rpi': base + 'mat_drug_protein_s.txt',
+        'rri': base + 'mat_drug_drug.txt',
+        'rdi': base + 'mat_drug_disease.txt',
     }
 
     def drugs(self):
@@ -24,6 +26,7 @@ class DTINet(Base):
         self.mask_drugs = mask_drugs
         self.rpi = self.mask(self.data('rpi'))
         self.rdi = self.mask(self.data('rdi'))
+        # self.rri = self.mask(self.data('rri'))
 
         drug_fps = self.mask(self.data('drug_ecfps', delimiter=','))
         drug_se = self.mask(self.data('drug_se'))
@@ -32,15 +35,12 @@ class DTINet(Base):
         ).T)
 
         # self.drug_x1 = np.matmul(self.drug_A, drug_fps) # ecfps
-        self.drug_x1 = drug_fps
-        self.drug_x2 = np.matmul(self.drug_A, self.rdi)
-        self.drug_x3 = np.matmul(self.drug_A, self.rpi)
-        self.drug_x4 = drug_se
+        self.drug_x1 = torch.from_numpy(drug_fps).float().to(self.device)
+        self.drug_x2 = torch.from_numpy(np.matmul(self.drug_A, self.rdi)).float().to(self.device)
+        self.drug_x3 = torch.from_numpy(np.matmul(self.drug_A, self.rpi)).float().to(self.device)
+        self.drug_x4 = torch.from_numpy(np.matmul(self.drug_A, drug_se)).float().to(self.device)
 
-        self.drug_z1 = np.matmul(self.drug_A, self.rdi)
-        self.drug_z2 = np.matmul(self.drug_A, self.rpi)
-
-        self.rnum = drug_fps.shape[0]
+        self.rnum = self.rpi.shape[0]
         self.pnum = self.rpi.shape[1]
         self.dnum = self.rdi.shape[1]
 
@@ -58,17 +58,3 @@ class DTINet(Base):
         if name not in self.path: return []
 
         return np.loadtxt(self.path[name], dtype=dtype, delimiter=delimiter)
-
-    def edge(self, sim_mat, threshold = 0.5):
-        l = sim_mat.shape[0]
-        
-        edge_index = [[], []]
-        edge_wight = []
-        for i in range(l):
-            for j in range(i + 1, l):
-                if sim_mat[i][j] < threshold: continue
-                edge_index[0].append(i)
-                edge_index[1].append(j)
-                edge_wight.append(sim_mat[i][j])
-
-        return (np.array(edge_index), np.array(edge_wight))
