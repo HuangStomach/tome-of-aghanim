@@ -20,13 +20,13 @@ class AutoEncoder(nn.Module):
         # self.decoder_4 = self._gcn(feature_p4[0], feature_p4[1])
 
         self.encoder = nn.Sequential(
-            nn.Linear(feature_r1 + feature_r2[1] + feature_r3[1], 8196),
+            nn.Linear(feature_r1 + feature_r2[1] + feature_r3[1], 10240),
             nn.ReLU(inplace=True),
             nn.Dropout(0.2),
         )
 
-        self.fc_protein = nn.Linear(8196, feature_r3[0])
-        self.fc_disease = nn.Linear(8196, feature_p1)
+        self.fc_protein = nn.Linear(10240, feature_r3[0])
+        self.fc_disease = nn.Linear(10240, feature_p1)
         
         self.decoder = nn.Sequential(
             nn.Linear(feature_p1 + feature_r1 + feature_p2[1] + feature_p3[1], 10240),

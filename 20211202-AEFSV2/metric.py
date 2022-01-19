@@ -5,7 +5,8 @@ import dataset
 from models.ae import AutoEncoder
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-def run(dataset, tag='train'):
+def run(dataset):
+    dataset = dataset.Dataset()
     dataset.prepare()
     print('model, RPI_auc, RPI_aupr, RPI_aupr_avg, RDI_auc, RDI_aupr, RDI_aupr_avg')
     
@@ -16,13 +17,13 @@ def metric(dataset, tag):
     masks = np.loadtxt('output/{}_masks.txt'.format(tag), dtype=int, delimiter='\n')
 
     SR = dataset.drug_A # 药物相似性
-    drug_edge, drug_weight = dataset.edge(SR)
+    drug_edge, _ = dataset.edge(SR)
     
     SR = torch.from_numpy(SR).float().to(device)
 
     AE = AutoEncoder(
-        1024, [dataset.dnum, 2048], [dataset.pnum, 1024], [4192, 128],
-        1024, [dataset.dnum, 2048], [dataset.pnum, 1024], [4192, 128],
+        4096, [dataset.dnum, 2048], [dataset.pnum, 1024], [4192, 128],
+        2048, [dataset.dnum, 2048], [dataset.pnum, 1024], [4192, 128],
     ).to(device)
     AE_state_dict = torch.load("output/{}_model.pt".format(tag))
     AE.load_state_dict(AE_state_dict)

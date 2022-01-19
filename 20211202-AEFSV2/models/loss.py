@@ -61,7 +61,7 @@ class SONLoss(nn.Module):
         super(SONLoss, self).__init__()
         self.k = k
 
-    def forward(self, S_hat, S, eye, a):
+    def forward(self, S_hat, S, eye):
         '''
         S: 药似性矩阵
         S: 计算出的相似性估计矩阵
@@ -76,4 +76,4 @@ class SONLoss(nn.Module):
         diff_idx = S_hat_idx.bitwise_xor(S_idx)
         cal_flag = diff_idx.div(diff_idx).nan_to_num(0)  # 索引相同为1 不同为0
 
-        return a * S_hat_val.sub(S_val).pow(2).mul(cal_flag).sum(1).sqrt().sum()
+        return S_hat_val.sub(S_val).pow(2).mul(cal_flag).sum(1).sqrt().sum()
