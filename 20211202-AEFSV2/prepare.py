@@ -5,8 +5,8 @@ import torch.nn as nn
 import torch.nn.utils.rnn as rnn_utils
 from rdkit import Chem
 from rdkit.Chem import AllChem
+import deepchem as dc
 from sklearn.metrics import jaccard_score
-# from transformers import AutoTokenizer, AutoModelForMaskedLM
 
 from urllib import request
 from time import sleep
@@ -72,9 +72,16 @@ def smiles():
 
     np.savetxt('./data/drug_smiles.csv', seqs, fmt='%s', delimiter=',')
 
+def smiles2vec():
+    drugs = np.loadtxt('./data/DTINet/drug_smiles.csv', delimiter=',', dtype=str, comments=None)[:, 1]
+    featurizer = dc.feat.Mol2VecFingerprint()
+    features = featurizer.featurize(drugs)
+
+    np.savetxt('./data/DTINet/drug_vec.txt', features, fmt='%s', delimiter=',')
+
 def ecfps():
     seqs = []
-    radius = 6
+    radius = 8
     length = 4096
 
     drugs = np.loadtxt('./data/DTINet/drug_smiles.csv', delimiter=',', dtype=str, comments=None)
@@ -123,5 +130,6 @@ def drug_sim():
 
 if __name__=='__main__':
     # proteins()
-    ecfps()
+    # ecfps()
     # drug_sim()
+    smiles2vec()

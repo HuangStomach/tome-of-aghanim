@@ -27,6 +27,12 @@ class Dataset:
     def data(self, name, dtype=int, delimiter=' '):
         return self.handler.data(name, dtype, delimiter)
 
+    def splits(self):
+        drug_count = self.drugs().shape[0]
+        shuffled_drugs = np.arange(drug_count)
+        np.random.shuffle(shuffled_drugs)
+        return np.array_split(shuffled_drugs, 10)
+
     def edge(self, sim_mat, threshold = 0.5):
         l = sim_mat.shape[0]
         

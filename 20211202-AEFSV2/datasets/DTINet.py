@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from sklearn.preprocessing import minmax_scale
 
 from datasets.base import Base
 
@@ -13,6 +14,7 @@ class DTINet(Base):
 
         'drug_ecfps': base + 'drug_ecfps12.txt',
         'drug_se': base + 'mat_drug_se.txt',
+        'drug_vec': base + 'drug_vec.txt',
         'rpi': base + 'mat_drug_protein.txt',
         # 'rpi': base + 'mat_drug_protein_s.txt',
         'rri': base + 'mat_drug_drug.txt',
@@ -29,16 +31,16 @@ class DTINet(Base):
         # self.rri = self.mask(self.data('rri'))
 
         drug_fps = self.mask(self.data('drug_ecfps', delimiter=','))
-        drug_se = self.mask(self.data('drug_se'))
+        drug_vec = self.mask(self.data('drug_vec', dtype=float, delimiter=','))
         self.drug_A = self.mask(self.mask(
             self.data('drug_sim', dtype=float, delimiter='    ')
         ).T)
 
         # self.drug_x1 = np.matmul(self.drug_A, drug_fps) # ecfps
         self.drug_x1 = torch.from_numpy(drug_fps).float().to(self.device)
-        self.drug_x2 = torch.from_numpy(np.matmul(self.drug_A, self.rdi)).float().to(self.device)
-        self.drug_x3 = torch.from_numpy(np.matmul(self.drug_A, self.rpi)).float().to(self.device)
-        self.drug_x4 = torch.from_numpy(np.matmul(self.drug_A, drug_se)).float().to(self.device)
+        self.drug_x2 = torch.from_numpy(np.matmul(self.drug_A, self.rpi)).float().to(self.device)
+        self.drug_x3 = torch.from_numpy(np.matmul(self.drug_A, self.rdi)).float().to(self.device)
+        self.drug_x4 = torch.from_numpy(drug_vec).float().to(self.device)
 
         self.rnum = self.rpi.shape[0]
         self.pnum = self.rpi.shape[1]

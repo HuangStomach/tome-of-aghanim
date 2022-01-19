@@ -1,0 +1,4 @@
+EPOCH: 1000 LR: 6e-06 WD: 8e-06 sim_threshold: 0.5 loss_p_weight:0.998 loss_d_weight: 0.95 loss_weight:0.5 a1: 1e-07 a2: 1e-09
+pauc: 0.920235, paupr: 0.501741, paupr_m: 0.579997, dauc: 0.922573, daupr: 0.435891, daupr_m: 0.482059
+EPOCH: 1000 LR: 6e-06 WD: 1e-05 sim_threshold: 0.5 loss_p_weight: 0.998 loss_d_weight: 0.95 loss_weight:0.5 a1: 1e-07 a2: 1e-09
+pauc: 0.925276, paupr: 0.511625, paupr_m: 0.582808, dauc: 0.921034, daupr: 0.429319, daupr_m: 0.489652
