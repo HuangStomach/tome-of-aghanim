@@ -2,7 +2,7 @@ import numpy as np
 from lib import *
 
 class LRSSL:
-    prepared = False
+    init = False
     _path = {
         'DTINet': {
             'drugs': './data/DTINet/drug.txt',
@@ -38,7 +38,7 @@ class LRSSL:
     def drugs(self):
         return np.loadtxt(self.path['drugs'], dtype=str, delimiter='\n')
 
-    def prepare(self, mask_drugs=None):
+    def init(self, mask_drugs=None):
         print("Loading Data...")
         self.mask_drugs = mask_drugs
         self.rpi = self.mask(self.data('rpi'))
@@ -63,7 +63,7 @@ class LRSSL:
         self.pnum = self.rpi.shape[1]
         self.dnum = self.rdi.shape[1]
 
-        self.prepared = True
+        self.init = True
 
     def mask(self, mat):
         if self.mask_drugs is None: return mat
@@ -94,4 +94,4 @@ class LRSSL:
 
 if __name__=='__main__':
     dataset = Dataset()
-    dataset.prepare()
+    dataset.init()

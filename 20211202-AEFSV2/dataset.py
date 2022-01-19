@@ -17,9 +17,9 @@ class Dataset:
     def drugs(self):
         return self.handler.drugs()
 
-    def prepare(self, mask_drugs=None):
+    def init(self, mask_drugs=None):
         print("Loading Data...")
-        return self.handler.prepare(mask_drugs)
+        return self.handler.init(mask_drugs)
 
     def mask(self, mat):
         return self.handler.mask(mat)
@@ -66,4 +66,4 @@ class Dataset:
 
 if __name__=='__main__':
     dataset = Dataset()
-    dataset.prepare()
+    dataset.init()

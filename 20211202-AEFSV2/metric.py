@@ -7,7 +7,7 @@ from models.ae import AutoEncoder
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 def run(dataset):
     dataset = dataset.Dataset()
-    dataset.prepare()
+    dataset.init()
     print('model, RPI_auc, RPI_aupr, RPI_aupr_avg, RDI_auc, RDI_aupr, RDI_aupr_avg')
     
     for i in range(10):
