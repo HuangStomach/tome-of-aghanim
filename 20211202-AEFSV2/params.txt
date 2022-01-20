@@ -1,4 +1,5 @@
-EPOCH: 1000 LR: 6e-06 WD: 8e-06 sim_threshold: 0.5 loss_p_weight:0.998 loss_d_weight: 0.95 loss_weight:0.5 a1: 1e-07 a2: 1e-09
-pauc: 0.920235, paupr: 0.501741, paupr_m: 0.579997, dauc: 0.922573, daupr: 0.435891, daupr_m: 0.482059
-EPOCH: 1000 LR: 6e-06 WD: 1e-05 sim_threshold: 0.5 loss_p_weight: 0.998 loss_d_weight: 0.95 loss_weight:0.5 a1: 1e-07 a2: 1e-09
-pauc: 0.925276, paupr: 0.511625, paupr_m: 0.582808, dauc: 0.921034, daupr: 0.429319, daupr_m: 0.489652
+EPOCH: 1000 LR: 9e-05 WD: 6e-07 sim_threshold: 0.5 loss_p_weight: 0.998 loss_d_weight: 0.95 loss_weight:0.0001 a1: 1e-09 a2: 1e-09 graph_dropout: 0.1 dropout: 0.2
+Epoch: 939 loss: 0.000016, pauc: 0.948502, paupr: 0.492855, paupr_m: 0.600486, dauc: 0.919949, daupr: 0.426487, daupr_m: 0.501859
+
+EPOCH: 1000 LR: 9e-05 WD: 6e-07 sim_threshold: 0.5 loss_p_weight: 0.998 loss_d_weight: 0.95 loss_weight:0.0001 a1: 1e-09 a2: 1e-09 graph_dropout: 0.1 dropout: 0.2
+Epoch: 949 loss: 0.000017, pauc: 0.954361, paupr: 0.486695, paupr_m: 0.599789, dauc: 0.920178, daupr: 0.436164, daupr_m: 0.501393

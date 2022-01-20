@@ -7,6 +7,13 @@ from datasets.base import Base
 class DTINet(Base):
     inited = False
     base = './data/DTINet/'
+    params = {
+        'epoch': 1000, 'lr': 9e-05, 'wd': 6e-07,
+
+        'sim_threshold': 0.5, 'loss_p_weight': 0.998, 'loss_d_weight': 0.95, 'loss_weight': 0.0001,
+
+        'a1': 0.000000001, 'a2': 0.000000001,
+    }
     path = {
         'drugs': base + 'drug.txt',
         'drug_sim': base + 'Similarity_Matrix_Drugs.txt',
@@ -31,6 +38,7 @@ class DTINet(Base):
         # self.rri = self.mask(self.data('rri'))
 
         drug_fps = self.mask(self.data('drug_ecfps', delimiter=','))
+        # drug_vec = self.mask(self.data('drug_vec', delimiter=',')))
         self.drug_A = self.mask(self.mask(
             self.data('drug_sim', dtype=float, delimiter='    ')
         ).T)
@@ -39,6 +47,7 @@ class DTINet(Base):
         self.drug_x1 = torch.from_numpy(drug_fps).float().to(self.device)
         self.drug_x2 = torch.from_numpy(np.matmul(self.drug_A, self.rpi)).float().to(self.device)
         self.drug_x3 = torch.from_numpy(np.matmul(self.drug_A, self.rdi)).float().to(self.device)
+        # self.drug_x4 = torch.from_numpy(drug_vec).float().to(self.device)
 
         self.rnum = self.rpi.shape[0]
         self.pnum = self.rpi.shape[1]

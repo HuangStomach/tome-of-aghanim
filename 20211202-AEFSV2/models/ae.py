@@ -5,18 +5,18 @@ from lib import *
 
 class AutoEncoder(nn.Module):
     def __init__(self, 
-        feature_r1, feature_r2, feature_r3, feature_r4,
-        feature_p1, feature_p2, feature_p3, feature_p4,):
+        feature_r1, feature_r2, feature_r3,
+        feature_p1, feature_p2, feature_p3):
         super(AutoEncoder, self).__init__()
 
         # self.encoder_1 = self._gcn(feature_r1[0], feature_r1[1])
-        self.encoder_2 = self._gcn(feature_r2[0], feature_r2[1])
-        self.encoder_3 = self._gcn(feature_r3[0], feature_r3[1])
+        self.encoder_2 = self._gcn(feature_r2[0], feature_r2[1], 0.1)
+        self.encoder_3 = self._gcn(feature_r3[0], feature_r3[1], 0.1)
         # self.encoder_4 = self._gcn(feature_r4, feature_r4)
 
         # self.decoder_1 = self._gcn(feature_p1[0], feature_p1[1])
-        self.decoder_2 = self._gcn(feature_p2[0], feature_p2[1])
-        self.decoder_3 = self._gcn(feature_p3[0], feature_p3[1])
+        self.decoder_2 = self._gcn(feature_p2[0], feature_p2[1], 0.1)
+        self.decoder_3 = self._gcn(feature_p3[0], feature_p3[1], 0.1)
         # self.decoder_4 = self._gcn(feature_p4, feature_p4)
 
         self.encoder = nn.Sequential(
