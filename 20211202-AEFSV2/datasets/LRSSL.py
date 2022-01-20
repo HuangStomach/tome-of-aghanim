@@ -1,42 +1,24 @@
 import numpy as np
+from rdkit import Chem
+from rdkit.Chem import AllChem
 from lib import *
 
 class LRSSL:
-    init = False
-    _path = {
-        'DTINet': {
-            'drugs': './data/DTINet/drug.txt',
-            'drug_sim': './data/DTINet/Similarity_Matrix_Drugs.txt',
-            # 'protein_sim': './data/DTINet/Similarity_Matrix_Proteins.txt',
-            # 'drug_se': './data/DTINet/mat_drug_se.txt',
-            'drug_ecfps': './data/DTINet/drug_ecfps12.txt',
-            # 'protein_embed': './data/DTINet/protein_embeds.csv',
+    inited = False
+    base = './data/LRSSL/'
+    path = {
+        # 'drugs': base + 'drug.txt',
+        'drug_sim': base + 'Similarity_Matrix_Drugs.txt',
+        'drug_smiles': base + 'drug_smiles.csv',
 
-            # 'rpi': './data/DTINet/mat_drug_protein.txt',
-            'rpi': './data/DTINet/mat_drug_protein_s.txt',
-            # 'rri': './data/DTINet/mat_drug_drug.txt',
-            'rdi': './data/DTINet/mat_drug_disease.txt',
-        },
-        'LRSSL': {
-            'drugs': './data/drug.txt',
-            'drug_sim': './data/Similarity_Matrix_Drugs.txt',
-            # 'protein_sim': './data/Similarity_Matrix_Proteins.txt',
-
-            'drug_ecfps': './data/drug_ecfps8.txt',
-            # 'protein_embed': './data/protein_embeds.csv',
-
-            'rpi': './data/mat_drug_protein.txt',
-            # 'rpi': './data/mat_drug_protein_s.txt',
-            # 'rri': './data/mat_drug_drug.txt',
-            'rdi': './data/mat_drug_disease.txt',
-        },
+        'drug_ecfps': base + 'drug_ecfps12.txt',
+        'rpi': base + 'mat_drug_protein.txt',
+        'rri': base + 'mat_drug_drug.txt',
+        'rdi': base + 'drug_dis_mat.txt',
     }
 
-    def __init__(self, type="DTINet"):
-        self.path = self._path[type]
-
     def drugs(self):
-        return np.loadtxt(self.path['drugs'], dtype=str, delimiter='\n')
+        return np.loadtxt(self.path['rdi'], dtype=str, delimiter='\t')[1:, 0]
 
     def init(self, mask_drugs=None):
         print("Loading Data...")
@@ -63,13 +45,24 @@ class LRSSL:
         self.pnum = self.rpi.shape[1]
         self.dnum = self.rdi.shape[1]
 
-        self.init = True
+        self.inited = True
+    
+    def prepare(self):
+        seqs = []
+        radius = 6
+        length = 4096
 
-    def mask(self, mat):
-        if self.mask_drugs is None: return mat
-        mat = np.delete(mat, self.mask_drugs, axis=0)
-        return mat
+        drugs = np.loadtxt(self.path['drug_smiles'], delimiter=',', dtype=str, comments=None)
+        for drug in drugs:
+            try:
+                name, smiles = drug
+                mol = Chem.MolFromSmiles(smiles)
+                seqs.append(AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=length).ToList())
+            except Exception as e:
+                print(drug, e)
 
+        np.savetxt(self.path['drug_ecfps'], seqs, fmt='%s', delimiter=',')
+        
     def data(self, name, dtype=int, delimiter=' '):
         if hasattr(self, '_' + name):
             return getattr(self, '_' + name)()
@@ -77,21 +70,3 @@ class LRSSL:
         if name not in self.path: return []
 
         return np.loadtxt(self.path[name], dtype=dtype, delimiter=delimiter)
-
-    def edge(self, sim_mat):
-        l = sim_mat.shape[0]
-        
-        edge_index = [[], []]
-        edge_wight = []
-        for i in range(l):
-            for j in range(i + 1, l):
-                if sim_mat[i][j] < 0.5: continue
-                edge_index[0].append(i)
-                edge_index[1].append(j)
-                edge_wight.append(sim_mat[i][j])
-
-        return (np.array(edge_index), np.array(edge_wight))
-
-if __name__=='__main__':
-    dataset = Dataset()
-    dataset.init()

@@ -21,8 +21,8 @@ class Dataset:
         print("Loading Data...")
         return self.handler.init(mask_drugs)
 
-    def mask(self, mat):
-        return self.handler.mask(mat)
+    def prepare(self):
+        return self.handler.prepare()
 
     def data(self, name, dtype=int, delimiter=' '):
         return self.handler.data(name, dtype, delimiter)

@@ -1,4 +1,5 @@
 import gc
+import sys
 import time
 import numpy as np
 import torch
@@ -80,14 +81,19 @@ def train(trainData, testData, mask, logger, tag='train'):
 
 if __name__=='__main__':
     while True:
-        print("[0] train")
-        print("[1] metric")
-        print("[2] exit")
+        print("[0] prepare")
+        print("[1] train")
+        print("[2] metric")
+        print("[3] exit")
         str_in = input("Plz select the opt: ");
         if not str_in.isdigit(): continue
 
         index = int(str_in)
+        type = sys.argv[1] if len(sys.argv) > 1 else 'DTINet'
         if index == 0:
+            data = dataset.Dataset(type)
+            data.prepare()
+        elif index == 1:
             filename = './output/{}.log'.format(
                 time.strftime("%Y%m%d_%H%M%S", time.localtime())
             )
@@ -103,6 +109,7 @@ if __name__=='__main__':
             splits = trainData.splits()
             testData = dataset.Dataset()
             testData.init()
+            
             splits = [
                 [13, 248, 197, 152, 47, 228, 523, 695, 603, 657, 407, 515, 355, 287, 170, 281, 252, 125, 519, 351, 159, 364, 422, 65, 458, 678, 599, 538, 42, 405, 123, 385, 522, 528, 349, 644, 408, 529, 613, 670, 189, 676, 38, 102, 257, 21, 358, 576, 23, 276, 285, 681, 473, 275, 520, 388, 294, 153, 120, 48, 347, 687, 650, 593, 268, 486, 369, 524, 490, 463, 632],
                 [667, 607, 567, 149, 58, 688, 361, 148, 451, 239, 601, 70, 227, 472, 677, 450, 470, 352, 204, 693, 295, 264, 625, 662, 89, 299, 580, 704, 350, 69, 585, 512, 390, 346, 203, 672, 438, 439, 641, 6, 28, 324, 202, 309, 468, 3, 645, 611, 375, 646, 318, 222, 304, 595, 471, 37, 502, 332, 436, 414, 633, 605, 258, 126, 124, 168, 393, 88, 56, 138, 649],
@@ -124,8 +131,8 @@ if __name__=='__main__':
 
             del logger
             gc.collect()
-        elif index == 1:
-            metric.run()
         elif index == 2:
+            metric.run()
+        elif index == 3:
             quit()
         else: continue

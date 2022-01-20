@@ -17,11 +17,8 @@ class DTINet(Base):
     path = {
         'drugs': base + 'drug.txt',
         'drug_sim': base + 'Similarity_Matrix_Drugs.txt',
-        # 'drug_sim': 'base + 'Similarity_Matrix_Drugs_s.txt',
 
         'drug_ecfps': base + 'drug_ecfps12.txt',
-        'drug_se': base + 'mat_drug_se.txt',
-        'drug_vec': base + 'drug_vec.txt',
         'rpi': base + 'mat_drug_protein.txt',
         # 'rpi': base + 'mat_drug_protein_s.txt',
         'rri': base + 'mat_drug_drug.txt',
@@ -54,11 +51,6 @@ class DTINet(Base):
         self.dnum = self.rdi.shape[1]
 
         self.inited = True
-
-    def mask(self, mat):
-        if self.mask_drugs is None: return mat
-        mat = np.delete(mat, self.mask_drugs, axis=0)
-        return mat
 
     def data(self, name, dtype=int, delimiter=' '):
         if hasattr(self, '_' + name):
