@@ -11,14 +11,12 @@ class AutoEncoder(nn.Module):
 
         self.encoder_2 = self._gcn(fr[1][0], fr[1][1], params['graph_dropout'])
         self.encoder_3 = self._gcn(fr[2][0], fr[2][1], params['graph_dropout'])
-        if len(fr) > 3: self.encoder_4 = self._gcn(fr[3][0], fr[3][1], params['graph_dropout'])
 
         self.decoder_2 = self._gcn(fd[1][0], fd[1][1], params['graph_dropout'])
         self.decoder_3 = self._gcn(fd[2][0], fd[2][1], params['graph_dropout'])
-        if len(fd) > 3: self.encoder_4 = self._gcn(fd[3][0], fd[3][1], params['graph_dropout'])
 
         f_in = fr[0] + fr[1][1] + fr[2][1] 
-        if len(fr) > 3: f_in += fr[3][1]
+        if len(fr) > 3: f_in += fr[3]
         self.encoder = nn.Sequential(
             nn.Linear(f_in, 10240),
             nn.Dropout(params['dropout']),
@@ -29,7 +27,7 @@ class AutoEncoder(nn.Module):
         self.fc_disease = nn.Linear(10240, fd[0])
 
         f_in = fd[0] + fr[0] + fd[1][1] + fd[2][1]
-        if len(fd) > 3: f_in += fd[3][1]
+        if len(fd) > 3: f_in += fd[3]
         self.decoder = nn.Sequential(
             nn.Linear(f_in, 10240),
             nn.Dropout(params['dropout']),
@@ -47,7 +45,7 @@ class AutoEncoder(nn.Module):
         en = [data.drug_x1]
         en.append(self.encoder_2(data.drug_x2, data.drug_edge))
         en.append(self.encoder_3(data.drug_x3, data.drug_edge))
-        if len(self.fr) > 3: en.append(self.encoder_4(data.drug_x4, data.drug_edge))
+        if len(self.fr) > 3: en.append(data.drug_x4)
 
         drug_feature = torch.cat(en, dim=1)
         encoder0 = self.encoder(drug_feature)
@@ -59,7 +57,7 @@ class AutoEncoder(nn.Module):
         de.append(data.drug_x1)
         de.append(self.decoder_2(data.drug_x2, data.drug_edge))
         de.append(self.decoder_3(data.drug_x3, data.drug_edge))
-        if len(self.fd) > 3: de.append(self.decoder_4(data.x4, data.drug_edge))
+        if len(self.fd) > 3: de.append(data.drug_x4)
 
         diease_feature = torch.cat(de, dim=1)
         decoder0 = self.decoder(diease_feature)

@@ -24,7 +24,7 @@ class Dataset:
         return self.handler.data(name, dtype, delimiter)
 
     def splits(self):
-        if hasattr(self.handler, 'splits'): self.handler.splits()
+        if hasattr(self.handler, 'splits'): return self.handler.splits()
         
         drug_count = self.drugs().shape[0]
         shuffled_drugs = np.arange(drug_count)

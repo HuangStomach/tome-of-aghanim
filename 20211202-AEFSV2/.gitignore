@@ -4,6 +4,7 @@ data/**/*.csv
 data/**/*.tsv
 output/*
 !output/DTINet/.gitkeep
+!record/**/*.log
 metric.csv
 !.gitkeep
 *.*~
