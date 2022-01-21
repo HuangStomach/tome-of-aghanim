@@ -4,64 +4,64 @@ from torch_geometric.nn import Sequential, GCNConv
 from lib import *
 
 class AutoEncoder(nn.Module):
-    def __init__(self, 
-        feature_r1, feature_r2, feature_r3,
-        feature_p1, feature_p2, feature_p3):
+    def __init__(self, params):
         super(AutoEncoder, self).__init__()
+        self.fr = fr = params['fr_dim'] # [ecfps, rpi, rdi, rgo]
+        self.fd = fd = params['fd_dim'] # [ecfps, rpi, rdi, rgo]
 
-        # self.encoder_1 = self._gcn(feature_r1[0], feature_r1[1])
-        self.encoder_2 = self._gcn(feature_r2[0], feature_r2[1], 0.1)
-        self.encoder_3 = self._gcn(feature_r3[0], feature_r3[1], 0.1)
-        # self.encoder_4 = self._gcn(feature_r4, feature_r4)
+        self.encoder_2 = self._gcn(fr[1][0], fr[1][1], params['graph_dropout'])
+        self.encoder_3 = self._gcn(fr[2][0], fr[2][1], params['graph_dropout'])
+        if len(fr) > 3: self.encoder_4 = self._gcn(fr[3][0], fr[3][1], params['graph_dropout'])
 
-        # self.decoder_1 = self._gcn(feature_p1[0], feature_p1[1])
-        self.decoder_2 = self._gcn(feature_p2[0], feature_p2[1], 0.1)
-        self.decoder_3 = self._gcn(feature_p3[0], feature_p3[1], 0.1)
-        # self.decoder_4 = self._gcn(feature_p4, feature_p4)
+        self.decoder_2 = self._gcn(fd[1][0], fd[1][1], params['graph_dropout'])
+        self.decoder_3 = self._gcn(fd[2][0], fd[2][1], params['graph_dropout'])
+        if len(fd) > 3: self.encoder_4 = self._gcn(fd[3][0], fd[3][1], params['graph_dropout'])
 
+        f_in = fr[0] + fr[1][1] + fr[2][1] 
+        if len(fr) > 3: f_in += fr[3][1]
         self.encoder = nn.Sequential(
-            nn.Linear(feature_r1 + feature_r2[1] + feature_r3[1], 10240),
-            nn.Dropout(0.2),
+            nn.Linear(f_in, 10240),
+            nn.Dropout(params['dropout']),
             nn.ReLU(inplace=True),
-            # nn.BatchNorm1d(10240),
         )
 
-        self.fc_protein = nn.Linear(10240, feature_p2[0])
-        self.fc_disease = nn.Linear(10240, feature_p1)
-        
+        self.fc_protein = nn.Linear(10240, fd[1][0])
+        self.fc_disease = nn.Linear(10240, fd[0])
+
+        f_in = fd[0] + fr[0] + fd[1][1] + fd[2][1]
+        if len(fd) > 3: f_in += fd[3][1]
         self.decoder = nn.Sequential(
-            nn.Linear(feature_p1 + feature_r1 + feature_p2[1] + feature_p3[1], 10240),
-            nn.Dropout(0.2),
+            nn.Linear(f_in, 10240),
+            nn.Dropout(params['dropout']),
             nn.ReLU(inplace=True),
-            # nn.BatchNorm1d(10240),
-            nn.Linear(10240, feature_r3[0]),
+            nn.Linear(10240, fr[2][0]),
         )
 
-    def _gcn(self, feature_in, feature_out, dropout=0):
-        layers = [(GCNConv(feature_in, feature_out), 'x, edge_index -> x1',)]
+    def _gcn(self, f_in, f_out, dropout=0.0):
+        layers = [(GCNConv(f_in, f_out), 'x, edge_index -> x1',)]
         if dropout > 0: layers.append(nn.Dropout(dropout))
         layers.append(nn.Sigmoid())
         return Sequential('x, edge_index', layers)
 
-    def forward(self, x1, x2, x3, drug_edge):
-        en1 = x1
-        en2 = self.encoder_2(x2, drug_edge)
-        en3 = self.encoder_3(x3, drug_edge)
-        # en4 = self.encoder_4(x4, drug_edge)
+    def forward(self, data):
+        en = [data.drug_x1]
+        en.append(self.encoder_2(data.drug_x2, data.drug_edge))
+        en.append(self.encoder_3(data.drug_x3, data.drug_edge))
+        if len(self.fr) > 3: en.append(self.encoder_4(data.drug_x4, data.drug_edge))
 
-        drug_feature = torch.cat([en1, en2, en3], dim=1)
+        drug_feature = torch.cat(en, dim=1)
         encoder0 = self.encoder(drug_feature)
         rpi_hat = self.fc_protein(encoder0)
 
         SR_hat = rpi_hat.mm(rpi_hat.t())
 
-        de0 = self.fc_disease(encoder0)
-        de1 = x1
-        de2 = self.decoder_2(x2, drug_edge)
-        de3 = self.decoder_3(x3, drug_edge)
-        # de4 = self.encoder_4(x4, drug_edge)
+        de = [self.fc_disease(encoder0)]
+        de.append(data.drug_x1)
+        de.append(self.decoder_2(data.drug_x2, data.drug_edge))
+        de.append(self.decoder_3(data.drug_x3, data.drug_edge))
+        if len(self.fd) > 3: de.append(self.decoder_4(data.x4, data.drug_edge))
 
-        diease_feature = torch.cat([de0, de1, de2, de3], dim=1)
+        diease_feature = torch.cat(de, dim=1)
         decoder0 = self.decoder(diease_feature)
 
         return rpi_hat, SR_hat, decoder0, decoder0.mm(decoder0.t())

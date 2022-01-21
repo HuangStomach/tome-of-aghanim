@@ -15,25 +15,16 @@ from models.loss import SONLoss, WeightMSELoss
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 def train(trainData, testData, mask, logger, tag='train'):
-    SR = trainData.drug_A
-    SR_test = testData.drug_A
-
-    drug_edge, _ = trainData.edge(SR, trainData.params['sim_threshold'])
-    drug_edge_test, _ = testData.edge(SR_test, trainData.params['sim_threshold'])
-
     eye_R = torch.eye(trainData.rnum).float().to(device)
-    SR = torch.from_numpy(SR).float().to(device)
 
+    SR = torch.from_numpy(trainData.drug_A).float().to(device)
     RPI = torch.from_numpy(trainData.rpi).float().to(device)
     RDI = torch.from_numpy(trainData.rdi).float().to(device)
     RPI_test = testData.rpi[mask]
     RDI_test = testData.rdi[mask]
 
     print("Initialling model...")
-    AE = AutoEncoder(
-        4096, [trainData.pnum, 1024], [trainData.dnum, 2048],
-        2048, [trainData.pnum, 1024], [trainData.dnum, 2048]
-    ).to(device)
+    AE = AutoEncoder(trainData.params).to(device)
     optimizer = torch.optim.Adam(AE.parameters(), lr=trainData.params['lr'], weight_decay=trainData.params['wd'])
     son_loss = SONLoss(10)
     mse_loss_p = WeightMSELoss(trainData.params['loss_p_weight'])
@@ -41,10 +32,7 @@ def train(trainData, testData, mask, logger, tag='train'):
 
     print("Starting {}...".format(tag))
     for epoch in range(trainData.params['epoch']):
-        RPI_hat, SR_hat_1, RDI_hat, SR_hat_2 = AE(
-            trainData.drug_x1, trainData.drug_x2, trainData.drug_x3,
-            drug_edge
-        )
+        RPI_hat, SR_hat_1, RDI_hat, SR_hat_2 = AE(trainData)
 
         loss1 = mse_loss_p(RPI_hat, RPI) + trainData.params['a1'] * son_loss(SR_hat_1, SR, eye_R)
         loss2 = mse_loss_d(RDI_hat, RDI) + trainData.params['a2'] * son_loss(SR_hat_2, SR, eye_R)
@@ -56,10 +44,7 @@ def train(trainData, testData, mask, logger, tag='train'):
 
         if (epoch + 1) % 10 == 0 and torch.cuda.is_available():
             try:
-                RPI_hat_test, _, RDI_hat_test, _ = AE(
-                    testData.drug_x1, testData.drug_x2, testData.drug_x3,
-                    drug_edge_test
-                )
+                RPI_hat_test, _, RDI_hat_test, _ = AE(testData)
                 
                 RPI_hat_test = RPI_hat_test.detach().cpu().numpy()[mask]
                 RDI_hat_test = RDI_hat_test.detach().cpu().numpy()[mask]

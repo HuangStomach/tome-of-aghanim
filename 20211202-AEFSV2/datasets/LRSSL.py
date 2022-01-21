@@ -11,8 +11,12 @@ class LRSSL(Base):
     base = './data/LRSSL/'
     params = {
         'epoch': 1000, 'lr': 9e-05, 'wd': 6e-07,
-        'sim_threshold': 0.5, 'loss_p_weight': 0.998, 'loss_d_weight': 0.95, 'loss_weight': 0.0001,
-        'a1': 0.000000001, 'a2': 0.000000001,
+        'sim_threshold': 0.5, 'loss_p_weight': 0.993, 'loss_d_weight': 0.994, 'loss_weight': 1,
+        'a1': 0.00000000, 'a2': 0.00000000,
+        
+        'dropout': 0.2, 'graph_dropout': 0.1,
+        'fr_dim': [4096, [1426, 1024], [682, 256], [4447, 2048]],
+        'fd_dim': [2048, [1426, 1024], [682, 256], [4447, 2048]]
     }
     path = {
         # 'drugs': base + 'drug.txt',
@@ -43,6 +47,7 @@ class LRSSL(Base):
         self.drug_x2 = torch.from_numpy(np.matmul(self.drug_A, self.rpi)).float().to(self.device)
         self.drug_x3 = torch.from_numpy(np.matmul(self.drug_A, self.rdi)).float().to(self.device)
         # self.drug_x4 = torch.from_numpy(drug_vec).float().to(self.device)
+        self.drug_edge = self.edge(self.drug_A, self.params['sim_threshold'])
 
         self.rnum = self.rpi.shape[0]
         self.pnum = self.rpi.shape[1]

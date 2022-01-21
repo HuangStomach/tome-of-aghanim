@@ -1,15 +1,11 @@
 import numpy as np
 from sklearn import metrics
-import torch
 import importlib
-
-device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 class Dataset:
     def __init__(self, type="DTINet"):
         module = importlib.import_module('datasets.{}'.format(type))
         self.handler = getattr(module, type)()
-        self.handler.device = device
 
     def __getattr__(self, name):
         return getattr(self.handler, name)
@@ -34,22 +30,6 @@ class Dataset:
         shuffled_drugs = np.arange(drug_count)
         np.random.shuffle(shuffled_drugs)
         return np.array_split(shuffled_drugs, 10)
-
-    def edge(self, sim_mat, threshold = 0.5):
-        l = sim_mat.shape[0]
-        
-        edge_index = [[], []]
-        edge_wight = []
-        for i in range(l):
-            for j in range(i + 1, l):
-                if sim_mat[i][j] < threshold: continue
-                edge_index[0].append(i)
-                edge_index[1].append(j)
-                edge_wight.append(sim_mat[i][j])
-
-        drug_edge = torch.tensor(edge_index).long().to(device)
-        drug_weight = torch.tensor(edge_wight).long().to(device)
-        return (drug_edge, drug_weight)
 
     def metric(self, target, target_hat):
         aupr_list = []
