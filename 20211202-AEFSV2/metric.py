@@ -21,18 +21,12 @@ def metric(data, tag):
     
     SR = torch.from_numpy(SR).float().to(device)
 
-    AE = AutoEncoder(
-        4096, [data.pnum, 1024], [data.dnum, 2048], 
-        2048, [data.pnum, 1024], [data.dnum, 2048],
-    ).to(device)
+    AE = AutoEncoder(data).to(device)
     AE_state_dict = torch.load("output/{}_model.pt".format(tag))
     AE.load_state_dict(AE_state_dict)
     AE.eval()
 
-    RPI_hat, _, RDI_hat, _ = AE(
-        data.drug_x1, data.drug_x2, data.drug_x3,
-        drug_edge
-    )
+    RPI_hat, _, RDI_hat, _ = AE(data)
 
     RPI = data.rpi[masks]
     RDI = data.rdi[masks]
