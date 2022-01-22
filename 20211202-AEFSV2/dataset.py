@@ -20,9 +20,6 @@ class Dataset:
     def prepare(self):
         return self.handler.prepare()
 
-    def data(self, name, dtype=int, delimiter=' '):
-        return self.handler.data(name, dtype, delimiter)
-
     def splits(self):
         if hasattr(self.handler, 'splits'): self.handler.splits()
         
