@@ -24,12 +24,12 @@ class Dataset:
         return self.handler.data(name, dtype, delimiter)
 
     def splits(self):
-        if hasattr(self.handler, 'splits'): return self.handler.splits()
+        if hasattr(self.handler, 'splits'): return np.array(self.handler.splits(), dtype=object)
         
         drug_count = self.drugs().shape[0]
         shuffled_drugs = np.arange(drug_count)
         np.random.shuffle(shuffled_drugs)
-        return np.array_split(shuffled_drugs, 10)
+        return np.array(np.array_split(shuffled_drugs, 10), dtype=object)
 
     def metric(self, target, target_hat):
         aupr_list = []
