@@ -65,6 +65,8 @@ def train(trainData, testData, mask, logger, tag='train'):
     torch.save(AE.state_dict(), 'output/{}_model.pt'.format(tag))
 
 if __name__=='__main__':
+    type = sys.argv[1] if len(sys.argv) > 1 else 'DTINet'
+
     while True:
         print("[0] prepare")
         print("[1] train")
@@ -74,7 +76,6 @@ if __name__=='__main__':
         if not str_in.isdigit(): continue
 
         index = int(str_in)
-        type = sys.argv[1] if len(sys.argv) > 1 else 'DTINet'
         if index == 0:
             data = dataset.Dataset(type)
             data.prepare()
@@ -92,6 +93,7 @@ if __name__=='__main__':
 
             trainData = dataset.Dataset(type)
             splits = trainData.splits()
+            np.savetxt('output/mask.txt', splits, fmt='%s', delimiter=',')
             testData = dataset.Dataset(type)
             testData.init()
 
@@ -100,12 +102,11 @@ if __name__=='__main__':
                 trainData.init(mask_drugs=splits[i])
 
                 train(trainData, testData, splits[i], logger, i)
-                np.savetxt('output/{}_masks.txt'.format(i), splits[i], fmt='%d')
 
             del logger
             gc.collect()
         elif index == 2:
-            metric.run()
+            metric.run(type)
         elif index == 3:
             quit()
         else: continue
