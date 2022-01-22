@@ -93,6 +93,7 @@ if __name__=='__main__':
 
             trainData = dataset.Dataset(type)
             splits = trainData.splits()
+            np.savetxt('output/mask.txt', splits, fmt='%s', delimiter=',')
             testData = dataset.Dataset(type)
             testData.init()
 
@@ -101,7 +102,6 @@ if __name__=='__main__':
                 trainData.init(mask_drugs=splits[i])
 
                 train(trainData, testData, splits[i], logger, i)
-                np.savetxt('output/{}_masks.txt'.format(i), splits[i], fmt='%d')
 
             del logger
             gc.collect()
