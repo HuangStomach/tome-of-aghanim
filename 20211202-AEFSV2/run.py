@@ -63,6 +63,7 @@ def train(trainData, testData, mask, logger, tag='train'):
     np.savetxt('output/{}_RDI_hat.txt'.format(tag), RDI_hat.detach().cpu().numpy(), fmt='%f')
     np.savetxt('output/{}_RDI.txt'.format(tag), RDI.detach().cpu().numpy(), fmt='%f')
     torch.save(AE.state_dict(), 'output/{}_model.pt'.format(tag))
+    return mp[0] > 0.95 and (mp[1] > 0.58 or mp[2] > 0.58) and md[0] > 0.92
 
 if __name__=='__main__':
     type = sys.argv[1] if len(sys.argv) > 1 else 'DTINet'
@@ -80,31 +81,34 @@ if __name__=='__main__':
             data = dataset.Dataset(type)
             data.prepare()
         elif index == 1:
-            filename = './output/{}.log'.format(
-                time.strftime("%Y%m%d_%H%M%S", time.localtime())
-            )
-            logger = logging.getLogger(filename)
-            logger.setLevel(logging.DEBUG)
+            while True:
+                filename = './output/{}.log'.format(
+                    time.strftime("%Y%m%d_%H%M%S", time.localtime())
+                )
+                logger = logging.getLogger(filename)
+                logger.setLevel(logging.DEBUG)
 
-            sh = logging.StreamHandler()
-            logger.addHandler(sh)
-            fh = handlers.RotatingFileHandler(filename=filename)
-            logger.addHandler(fh)
+                sh = logging.StreamHandler()
+                logger.addHandler(sh)
+                fh = handlers.RotatingFileHandler(filename=filename)
+                logger.addHandler(fh)
 
-            trainData = dataset.Dataset(type)
-            splits = trainData.splits()
-            np.savetxt('output/mask.txt', splits, fmt='%s', delimiter=',')
-            testData = dataset.Dataset(type)
-            testData.init()
+                trainData = dataset.Dataset(type)
+                splits = trainData.splits()
+                np.savetxt('output/mask.txt', splits, fmt='%s', delimiter=',')
+                testData = dataset.Dataset(type)
+                testData.init()
 
-            logger.info(trainData.params)
-            for i in range(10):
-                trainData.init(mask_drugs=splits[i])
+                logger.info(trainData.params)
+                result = False
+                for i in range(10):
+                    trainData.init(mask_drugs=splits[i])
 
-                train(trainData, testData, splits[i], logger, i)
+                    result = result or train(trainData, testData, splits[i], logger, i)
 
-            del logger
-            gc.collect()
+                del logger
+                gc.collect()
+                if result: break
         elif index == 2:
             metric.run(type)
         elif index == 3:

@@ -9,7 +9,7 @@ class DTINet(Base):
     base = './data/DTINet/'
     params = {
         'epoch': 1000, 'lr': 9e-05, 'wd': 6e-07,
-        'sim_threshold': 0.5, 'loss_p_weight': 0.998, 'loss_d_weight': 0.95, 'loss_weight': 0.0001,
+        'sim_threshold': 0.5, 'loss_p_weight': 0.998, 'loss_d_weight': 0.95, 'loss_weight': 0.0002,
         'a1': 0.000000001, 'a2': 0.000000001,
         
         'dropout': 0.2, 'graph_dropout': 0.1,
