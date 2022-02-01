@@ -82,9 +82,8 @@ if __name__=='__main__':
             data.prepare()
         elif index == 1:
             while True:
-                filename = './output/{}.log'.format(
-                    time.strftime("%Y%m%d_%H%M%S", time.localtime())
-                )
+                localtime = time.strftime("%Y%m%d_%H%M%S", time.localtime())
+                filename = './output/{}.log'.format(localtime)
                 logger = logging.getLogger(filename)
                 logger.setLevel(logging.DEBUG)
 
@@ -95,7 +94,7 @@ if __name__=='__main__':
 
                 trainData = dataset.Dataset(type)
                 splits = trainData.splits()
-                np.savetxt('output/mask.txt', splits, fmt='%s', delimiter=',')
+                np.savetxt('output/{}_mask.txt'.format(localtime), splits, fmt='%s', delimiter=',')
                 testData = dataset.Dataset(type)
                 testData.init()
 
@@ -105,10 +104,11 @@ if __name__=='__main__':
                     trainData.init(mask_drugs=splits[i])
 
                     result = result or train(trainData, testData, splits[i], logger, i)
+                    # if i == 0 and result == False: break
 
                 del logger
                 gc.collect()
-                if result: break
+            if result: break
         elif index == 2:
             metric.run(type)
         elif index == 3:
