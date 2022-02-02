@@ -63,7 +63,7 @@ def train(trainData, testData, mask, logger, tag='train'):
     np.savetxt('output/{}_RDI_hat.txt'.format(tag), RDI_hat.detach().cpu().numpy(), fmt='%f')
     np.savetxt('output/{}_RDI.txt'.format(tag), RDI.detach().cpu().numpy(), fmt='%f')
     torch.save(AE.state_dict(), 'output/{}_model.pt'.format(tag))
-    return mp[0] > 0.95 and (mp[1] > 0.58 or mp[2] > 0.58) and md[0] > 0.92
+    return mp[0] >= 0.95 and (mp[1] >= 0.58 or mp[2] >= 0.58) and md[0] >= 0.92
 
 if __name__=='__main__':
     type = sys.argv[1] if len(sys.argv) > 1 else 'DTINet'
