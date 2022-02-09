@@ -103,8 +103,8 @@ if __name__=='__main__':
                 for i in range(10):
                     trainData.init(mask_drugs=splits[i])
 
-                    result = result or train(trainData, testData, splits[i], logger, i)
-                    # if i == 0 and result == False: break
+                    result = train(trainData, testData, splits[i], logger, i) or result
+                    if i == 0 and result == False: break
 
                 del logger
                 gc.collect()
