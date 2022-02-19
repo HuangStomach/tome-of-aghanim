@@ -1,7 +1,9 @@
 import numpy as np
 import torch
-from sklearn.preprocessing import minmax_scale
+import json
 
+from urllib import request
+from time import sleep
 from datasets.base import Base
 
 class DTINet(Base):
@@ -49,6 +51,34 @@ class DTINet(Base):
         self.dnum = self.rdi.shape[1]
 
         self.inited = True
+
+    def prepare(self):
+        seqs = []
+        protein_dict = np.loadtxt(self.base + '/protein.txt', dtype=str, delimiter='\n')
+        protein_url = 'https://rest.uniprot.org/beta/uniprotkb/{}.json'
+
+        for protein in protein_dict:
+            sleep(1)
+            try:
+                req = request.Request(protein_url.format(protein), headers={
+                    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'
+                })
+                data = request.urlopen(req).read()
+                text = json.loads(data)
+                
+                go_vectos = []
+                for item in text['uniProtKBCrossReferences']:
+                    if item['database'] != 'GO': continue
+                    go_vectos.append(item['id'])
+
+                seqs.append([protein, ";".join(go_vectos)])
+                print(protein, 'OK')
+
+            except Exception as e:
+                print(protein, e)
+                seqs.append([protein, 'ERROR'])
+        
+        np.savetxt(self.base + '/protein_go.csv', seqs, fmt='%s', delimiter=',')
 
     def data(self, name, dtype=int, delimiter=' '):
         if hasattr(self, '_' + name):
