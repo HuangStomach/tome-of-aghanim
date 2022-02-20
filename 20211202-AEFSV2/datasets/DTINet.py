@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import torch
 import json
 
@@ -15,14 +16,15 @@ class DTINet(Base):
         'a1': 0.000000001, 'a2': 0.000000001,
         
         'dropout': 0.15, 'graph_dropout': 0.1,
-        'fr_dim': [4096, [1512, 1024], [5603, 2048]],
-        'fd_dim': [2048, [1512, 1024], [5603, 2048]]
+        'fr_dim': [4096, [1512, 1024], [5603, 2048], 9075],
+        'fd_dim': [2048, [1512, 1024], [5603, 2048], 9075]
     }
     path = { 
         'drugs': base + 'drug.txt',
         'drug_sim': base + 'Similarity_Matrix_Drugs.txt',
 
         'drug_ecfps': base + 'drug_ecfps12.txt',
+        'drug_go': base + 'drug_go.csv', # 708*9075
         'rpi': base + 'mat_drug_protein.txt', # 708*1512
         'rri': base + 'mat_drug_drug.txt',
         'rdi': base + 'mat_drug_disease.txt', # 708*5603
@@ -37,6 +39,7 @@ class DTINet(Base):
         self.rdi = self.mask(self.data('rdi'))
 
         drug_fps = self.mask(self.data('drug_ecfps', delimiter=','))
+        drug_go = self.mask(pd.read_csv(self.path['drug_go'], index_col=0, header=0).to_numpy())
         self.drug_A = self.mask(self.mask(
             self.data('drug_sim', dtype=float, delimiter='    ')
         ).T)
@@ -44,6 +47,7 @@ class DTINet(Base):
         self.drug_x1 = torch.from_numpy(drug_fps).float().to(self.device)
         self.drug_x2 = torch.from_numpy(np.matmul(self.drug_A, self.rpi)).float().to(self.device)
         self.drug_x3 = torch.from_numpy(np.matmul(self.drug_A, self.rdi)).float().to(self.device)
+        self.drug_x4 = torch.from_numpy(drug_go).float().to(self.device)
         self.drug_edge = self.edge(self.drug_A, self.params['sim_threshold'])[0]
 
         self.rnum = self.rpi.shape[0]
@@ -53,32 +57,50 @@ class DTINet(Base):
         self.inited = True
 
     def prepare(self):
-        seqs = []
-        protein_dict = np.loadtxt(self.base + '/protein.txt', dtype=str, delimiter='\n')
-        protein_url = 'https://rest.uniprot.org/beta/uniprotkb/{}.json'
+        # seqs = []
+        # protein_dict = np.loadtxt(self.base + '/protein.txt', dtype=str, delimiter='\n')
+        # protein_url = 'https://rest.uniprot.org/beta/uniprotkb/{}.json'
 
-        for protein in protein_dict:
-            sleep(1)
-            try:
-                req = request.Request(protein_url.format(protein), headers={
-                    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'
-                })
-                data = request.urlopen(req).read()
-                text = json.loads(data)
+        # for protein in protein_dict:
+        #     sleep(1)
+        #     try:
+        #         req = request.Request(protein_url.format(protein), headers={
+        #             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'
+        #         })
+        #         data = request.urlopen(req).read()
+        #         text = json.loads(data)
                 
-                go_vectos = []
-                for item in text['uniProtKBCrossReferences']:
-                    if item['database'] != 'GO': continue
-                    go_vectos.append(item['id'])
+        #         go_vectos = []
+        #         for item in text['uniProtKBCrossReferences']:
+        #             if item['database'] != 'GO': continue
+        #             go_vectos.append(item['id'])
 
-                seqs.append([protein, ";".join(go_vectos)])
-                print(protein, 'OK')
+        #         seqs.append([protein, ";".join(go_vectos)])
+        #         print(protein, 'OK')
 
-            except Exception as e:
-                print(protein, e)
-                seqs.append([protein, 'ERROR'])
+        #     except Exception as e:
+        #         print(protein, e)
+        #         seqs.append([protein, 'ERROR'])
         
-        np.savetxt(self.base + '/protein_go.csv', seqs, fmt='%s', delimiter=',')
+        # np.savetxt(self.base + '/protein_go.csv', seqs, fmt='%s', delimiter=',')
+        # protein_go = np.loadtxt(self.base + '/protein_go.csv', dtype=str, delimiter=',')
+        # drugs = self.drugs()
+        # rpi = self.data('rpi')
+        # go_set = set()
+        # for _, go_vectors in protein_go:
+        #     for v in go_vectors.split(";"):
+        #         go_set.add(v)
+        
+        # df = pd.DataFrame(None, index=drugs, columns=go_set).fillna(0)
+        # for i, row in enumerate(rpi):
+        #     drug = drugs[i]
+        #     for j, item in enumerate(row):
+        #         if item == 0: continue
+        #         for go in protein_go[j][1].split(";"):
+        #             df.loc[drug, go] = 1
+
+        # df.to_csv(self.base + '/drug_go.csv')
+        pass
 
     def data(self, name, dtype=int, delimiter=' '):
         if hasattr(self, '_' + name):
@@ -88,7 +110,7 @@ class DTINet(Base):
 
         return np.loadtxt(self.path[name], dtype=dtype, delimiter=delimiter)
 
-    def splits(self) -> list:
+    def _splits(self) -> list:
         return [
             [448, 646, 467, 400, 180, 544, 55, 401, 572, 479, 307, 553, 110, 445, 90, 56, 564, 452
             , 253, 222, 601, 168, 305, 557, 322, 362, 313, 62, 459, 609, 357, 135, 374, 672, 585, 294
