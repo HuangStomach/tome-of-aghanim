@@ -6,9 +6,7 @@ import torch.nn.functional as F
 import dgl
 from dgl.nn.pytorch import GraphConv
 from GCNLayer import *
-
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
-
 
 class SemanticAttention(nn.Module):
     def __init__(self, in_size, hidden_size=32):
@@ -32,7 +30,7 @@ class HANLayer(nn.Module):
 
         super(HANLayer, self).__init__()
         self.gat_layers = nn.ModuleList()
-        self.gat_layers.append(GraphConv(in_size, out_size, activation=F.relu).apply(init))
+        self.gat_layers.append(GraphConv(in_size, out_size, activation=F.relu, allow_zero_in_degree=True).apply(init))
         self.semantic_attention = SemanticAttention(in_size=out_size * layer_num_heads)
         self.meta_paths = list(tuple(meta_path) for meta_path in meta_paths)
         self._cached_graph = None
@@ -47,13 +45,12 @@ class HANLayer(nn.Module):
                 self._cached_coalesced_graph[meta_path] = dgl.metapath_reachable_graph(
                     g, meta_path)
         for i, meta_path in enumerate(self.meta_paths):
-            new_g = self._cached_coalesced_graph[meta_path]
+            new_g = self._cached_coalesced_graph[meta_path].to(device)
             semantic_embeddings.append(self.gat_layers[0](new_g, h).flatten(1))
 
         semantic_embeddings = torch.stack(semantic_embeddings, dim=1)  # (N, M, D * K)
 
         return self.semantic_attention(semantic_embeddings)  # (N, D * K)
-
 
 class HAN(nn.Module):
     def __init__(self, meta_paths, in_size, hidden_size, out_size, dropout, num_heads=1):
@@ -86,7 +83,6 @@ class HAN_DTI(nn.Module):
         h2 = self.sum_layers[1](s_g[1], s_h_2)
         return h1, h2
 
-
 class GCN(nn.Module):
     def __init__(self, nfeat, dropout):
         super(GCN, self).__init__()
@@ -102,7 +98,6 @@ class GCN(nn.Module):
         x2 = self.gc2(x1, adj)
         res = x2
         return res
-
 
 class CL_GCN(nn.Module):
     def __init__(self, nfeat, dropout,alpha = 0.8):
@@ -143,12 +138,11 @@ class MLP(nn.Module):
             nn.Linear(nfeat, 32, bias=False).apply(init),
             nn.ELU(),
             nn.Linear(32, 2, bias=False),
-            nn.LogSoftmax(dim=1)
+            nn.LogSoftmax(dim=1))
             # nn.Sigmoid())
     def forward(self, x):
         output = self.MLP(x)
         return output
-
 
 class HMTCL(nn.Module):
     def __init__(self, all_meta_paths, in_size, hidden_size, out_size, dropout):
@@ -168,7 +162,6 @@ class HMTCL(nn.Module):
         if iftrain:
             return pred1, cl_loss1, d, p
         return pred1
-
 
 def init(i):
     if isinstance(i, nn.Linear):

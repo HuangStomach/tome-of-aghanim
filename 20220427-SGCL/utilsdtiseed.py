@@ -1,22 +1,15 @@
-import datetime
 import dgl
-import errno
 import numpy as np
-import os
-import pickle
 import random
 import torch
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.metrics import roc_auc_score, f1_score,  precision_recall_curve
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import roc_auc_score, f1_score, precision_recall_curve
 from sklearn.metrics import auc as auc3
-from dgl.data.utils import download, get_download_dir, _get_dgl_url
-from pprint import pprint
 from scipy import sparse
-from scipy import io as sio
 from sklearn.metrics.pairwise import cosine_similarity as cos
-import time
 import scipy.spatial.distance as dist
 from CLaugmentdti import *
+from lib import *
 
 
 def set_random_seed(seed=0):
@@ -228,8 +221,7 @@ def load_hetero(network_path):
                       [['similarity'], ["sequence"], ['pdi', 'dip'], ['pdd', 'ddp']]]
     return dateset, graph, node_num, all_meta_paths
 
-
-def load_homo(network_path, dataName):
+def load_homo(network_path):
     drug_protein = np.loadtxt(network_path + 'd_p_i.txt')
     protein_drug = drug_protein.T
     # drug_drug = comp_jaccard(drug_protein)
@@ -302,7 +294,6 @@ def load_homo(network_path, dataName):
                       [['similarity'], ['pd', 'dp']]]
     return data_set, graph, node_num, all_meta_paths
 
-
 def load_graph(feature_edges, n):
     fedges = np.array(list(feature_edges), dtype=np.int32).reshape(feature_edges.shape)
     fadj = sparse.coo_matrix((np.ones(fedges.shape[0]), (fedges[:, 0], fedges[:, 1])), shape=(n, n),
@@ -313,13 +304,11 @@ def load_graph(feature_edges, n):
 
     return nfadj
 
-
 def load_zeng(network_path):
     """
     meta_path of drug
 
     """
-
     drug_sideeffect = np.loadtxt(network_path + 'mat_drug_sideeffects.txt')
     drug_drug = np.loadtxt(network_path + 'mat_drug_chemical_sim.txt')
     sideeffect_drug = drug_sideeffect.T
@@ -331,6 +320,7 @@ def load_zeng(network_path):
     chemical_drug = drug_chemical.T
 
     drug_drug_protein = np.loadtxt(network_path + 'mat_drug_target_1.txt')
+
     """
     meta_path of protein
 
@@ -340,30 +330,27 @@ def load_zeng(network_path):
 
     protein_GO = np.loadtxt(network_path + 'mat_target_GO.txt')
     Go_protein = protein_GO.T
+    num_drug = drug_drug.shape[0]
+    num_protein = protein_protein.shape[0]
 
-    d_d = dgl.graph(sparse.csr_matrix(drug_drug), ntype='drug', etype='similarity')
-    num_drug = d_d.number_of_nodes()
-
-    d_di = dgl.bipartite(sparse.csr_matrix(drug_substituent), 'drug', 'ddi', 'substituent')
-    di_d = dgl.bipartite(sparse.csr_matrix(substituent_drug), 'substituent', 'did', 'drug')
-
-    d_d_p = dgl.bipartite(sparse.csr_matrix(drug_drug_protein), 'drug', 'ddp', 'protein')
-
-    d_se = dgl.bipartite(sparse.csr_matrix(drug_sideeffect), 'drug', 'dse', 'sideeffect')
-    se_d = dgl.bipartite(sparse.csr_matrix(sideeffect_drug), 'sideeffect', 'sed', 'drug')
-
-    d_ch = dgl.bipartite(sparse.csr_matrix(drug_chemical), 'drug', 'dch', 'chemical')
-    ch_d = dgl.bipartite(sparse.csr_matrix(chemical_drug), 'chemical', 'chd', 'drug')
-
-    p_p = dgl.graph(sparse.csr_matrix(protein_protein), ntype='protein', etype='similarity')
-    num_protein = p_p.number_of_nodes()
-    p_d_d = dgl.bipartite(sparse.csr_matrix(protein_protein_drug), 'protein', 'pdd', 'drug')
-
-    p_go = dgl.bipartite(sparse.csr_matrix(protein_GO), 'protein', 'pgo', 'GO')
-    go_p = dgl.bipartite(sparse.csr_matrix(Go_protein), 'GO', 'gop', 'protein')
-
-    dg = dgl.hetero_from_relations([d_d, d_se, se_d, d_di, di_d, d_d_p, p_d_d, d_ch, ch_d])
-    pg = dgl.hetero_from_relations([p_p, p_go, go_p, p_d_d, d_d_p])
+    dg = dgl.heterograph({
+        ('drug', 'similarity', 'drug'): node_tensors(drug_drug),
+        ('drug', 'dse', 'sideeffect'): node_tensors(drug_sideeffect),
+        ('sideeffect', 'sed', 'drug'): node_tensors(sideeffect_drug),
+        ('drug', 'ddi', 'substituent'): node_tensors(drug_substituent),
+        ('substituent', 'did', 'drug'): node_tensors(substituent_drug),
+        ('drug', 'ddp', 'protein'): node_tensors(drug_drug_protein),
+        ('protein', 'pdd', 'drug'): node_tensors(protein_protein_drug),
+        ('drug', 'dch', 'chemical'): node_tensors(drug_chemical),
+        ('chemical', 'chd', 'drug'): node_tensors(chemical_drug),
+    })
+    pg = dgl.heterograph({
+        ('protein', 'similarity', 'protein'): node_tensors(protein_protein),
+        ('protein', 'pgo', 'GO'): node_tensors(protein_GO),
+        ('GO', 'gop', 'protein'): node_tensors(Go_protein),
+        ('protein', 'pdd', 'drug'): node_tensors(protein_protein_drug),
+        ('drug', 'ddp', 'protein'): node_tensors(drug_drug_protein), 
+    })
     graph = [dg, pg]
 
     dti_o = np.loadtxt(network_path + 'mat_drug_target_train.txt')
@@ -374,13 +361,9 @@ def load_zeng(network_path):
 
     for i in range(np.shape(dti_o)[0]):
         for j in range(np.shape(dti_o)[1]):
-            if int(dti_o[i][j]) == 1:
-                train_positive_index.append([i, j])
-
-            elif int(dti_test[i][j]) == 1:
-                test_positive_index.append([i, j])
-            else:
-                whole_negative_index.append([i, j])
+            if int(dti_o[i][j]) == 1: train_positive_index.append([i, j])
+            elif int(dti_test[i][j]) == 1: test_positive_index.append([i, j])
+            else: whole_negative_index.append([i, j])
 
     negative_sample_index = np.random.choice(np.arange(len(whole_negative_index)),
                                              size=len(test_positive_index) + len(train_positive_index),
@@ -441,7 +424,6 @@ def load_zeng(network_path):
 
     return dateset, graph, node_num, all_meta_paths
 
-
 def normalize(mx):
     """Row-normalize sparse matrix"""
     rowsum = np.array(mx.sum(1))
@@ -451,7 +433,6 @@ def normalize(mx):
     mx = r_mat_inv.dot(mx)
     return mx
 
-
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     """Convert a scipy sparse matrix to a torch sparse tensor."""
     sparse_mx = sparse_mx.tocoo().astype(np.float32)
@@ -459,7 +440,6 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     values = torch.from_numpy(sparse_mx.data)
     shape = torch.Size(sparse_mx.shape)
     return torch.sparse.FloatTensor(indices, values, shape)
-
 
 def construct_fgraph(features, topk):
     ##### Kernel
@@ -481,7 +461,6 @@ def construct_fgraph(features, topk):
                 edge.append([i, vv])
     return edge
 
-
 def generate_knn(data):
     topk = 3
 
@@ -494,12 +473,9 @@ def generate_knn(data):
             res.append([start, end])
     return res
 
-
 def constructure_graph(dateset, h1, h2, task="dti", aug=False):
     feature = torch.cat((h1[dateset[:, :1]], h2[dateset[:, 1:2]]), dim=2)
-
     feature = feature.squeeze(1)
-
     edge = np.loadtxt(f"{task}edge.txt", dtype=int)
 
     # for i in range(dateset.shape[0]):
@@ -519,12 +495,9 @@ def constructure_graph(dateset, h1, h2, task="dti", aug=False):
 
     return edge, feature
 
-
 def constructure_knngraph(dateset, h1, h2, aug=False):
     feature = torch.cat((h1[dateset[:, :1]], h2[dateset[:, 1:2]]), dim=2)
-
     feature = feature.squeeze(1)
-
     fedge = np.array(generate_knn(feature.cpu().detach().numpy()))
 
     if aug:
@@ -532,13 +505,10 @@ def constructure_knngraph(dateset, h1, h2, aug=False):
         feature_aug = aug_random_mask(feature)
         fedge_aug = load_graph(np.array(fedge_aug), dateset.shape[0])
         fedge = load_graph(np.array(fedge), dateset.shape[0])
-
         return fedge, feature, fedge_aug, feature_aug
     else:
         fedge = load_graph(np.array(fedge), dateset.shape[0])
-
         return fedge, feature
-
 
 def get_clGraph(data, task):
     cledg = np.loadtxt(f"{task}_cledge.txt", dtype=int)
@@ -547,7 +517,6 @@ def get_clGraph(data, task):
     for i in cledg:
         cl[i[0]][i[1]] = 1
     return cl
-
 
 def get_set(data, split=5):
     """
@@ -562,6 +531,7 @@ def get_set(data, split=5):
         set1.append(train_index)
         set2.append(test_index)
     return set1[0].reshape(-1), set2[0].reshape(-1)
+
 def get_cross(data, split=5):
     """
     :param data: dataset and label
@@ -576,24 +546,21 @@ def get_cross(data, split=5):
         set2.append(test_index)
     return set1, set2
 
-
 def get_roc(out, label):
     return roc_auc_score(label.cpu(), out[:, 1:].cpu().detach().numpy())
+
 def get_pr(out, label):
     precision, recall, thresholds = precision_recall_curve(label.cpu(), out[:, 1:].cpu().detach().numpy())
     return auc3(recall, precision)
 
-
 def get_f1score(out, label):
     return f1_score(label.cpu(), out.argmax(dim=1).cpu().detach().numpy())
-
 
 def get_L2reg(parameters):
     reg = 0
     for param in parameters:
         reg += 0.5 * (param ** 2).sum()
     return reg
-
 
 def load_dataset(dateName):
     if dateName == "heter":
