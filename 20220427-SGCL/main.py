@@ -24,8 +24,8 @@ fold = 0
 
 args['device'] = "cuda:0" if torch.cuda.is_available() else "cpu"
 for name in ["zheng"]:
-    # for name in ["heter","Es","GPCRs","ICs","Ns","zheng"]:
-    dtidata, graph, num, all_meta_paths = load_dataset(name)
+    # dtidata 选取出的正反例，并且把相同的药物和蛋白进行连接
+    dtidata, graph, num, all_meta_paths = load_dataset(name) 
     # dataName heter Es GPCRs ICs Ns zheng
     dti_label = torch.tensor(dtidata[:, 2:3]).to(args['device'])
 
@@ -36,7 +36,7 @@ for name in ["zheng"]:
 
     node_feature = [features_d, features_p]
 
-    dti_cl = get_clGraph(dtidata, "dti").to(args['device'])
+    dti_cl = get_clGraph(dtidata, "dti").to(args['device']) # 正例中相同的节点连接起来
 
     cl = dti_cl
     data = dtidata

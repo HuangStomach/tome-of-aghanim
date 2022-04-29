@@ -58,6 +58,7 @@ class HAN(nn.Module):
         self.layers = nn.ModuleList()
         self.predict = nn.Linear(hidden_size * num_heads, out_size, bias=False).apply(init)
         self.layers.append(
+            # 从某个图中找到所有的元路径 根据路径进行聚合 再通过attention进行特征聚合
             HANLayer(meta_paths, in_size, hidden_size, num_heads, dropout)
         )
 
@@ -72,15 +73,16 @@ class HAN_DTI(nn.Module):
         super(HAN_DTI, self).__init__()
         self.sum_layers = nn.ModuleList()
 
-        for i in range(0, len(all_meta_paths)):
+        for i in range(0, len(all_meta_paths)): # meta path就是定义好的元路径
             self.sum_layers.append(
-                HAN(all_meta_paths[i], in_size[i], hidden_size[i], out_size[i], dropout))
+                HAN(all_meta_paths[i], in_size[i], hidden_size[i], out_size[i], dropout)
+            )
         # self.dtrans = nn.Sequential(nn.Linear(out_size, 100), nn.ReLU())
         # self.ptrans = nn.Sequential(nn.Linear(out_size, 400), nn.ReLU())
 
     def forward(self, s_g, s_h_1, s_h_2):
-        h1 = self.sum_layers[0](s_g[0], s_h_1)
-        h2 = self.sum_layers[1](s_g[1], s_h_2)
+        h1 = self.sum_layers[0](s_g[0], s_h_1) # 药物图
+        h2 = self.sum_layers[1](s_g[1], s_h_2) # 蛋白图
         return h1, h2
 
 class GCN(nn.Module):
@@ -154,8 +156,8 @@ class HMTCL(nn.Module):
     def forward(self, graph, h, cl, dateset_index, data, iftrain=True, d=None, p=None):
         if iftrain:
             d, p= self.HAN_DTI(graph, h[0], h[1])
-        edge, feature = constructure_graph(data, d, p)
-        f_edge, f_feature = constructure_knngraph(data, d, p)
+        edge, feature = constructure_graph(data, d, p) # 普通的全联接图
+        f_edge, f_feature = constructure_knngraph(data, d, p) # knn相似图
         feature1, feature2, cl_loss1 = self.CL_GCN(feature, edge, f_feature, f_edge, cl)
         pred1 = self.MLP(torch.cat((feature1, feature2), dim=1)[dateset_index])
 

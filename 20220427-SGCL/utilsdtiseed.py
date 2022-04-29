@@ -222,85 +222,6 @@ def load_hetero(network_path):
     return dateset, graph, node_num, all_meta_paths
 
 def load_homo(network_path):
-    drug_protein = np.loadtxt(network_path + 'd_p_i.txt')
-    protein_drug = drug_protein.T
-    # drug_drug = comp_jaccard(drug_protein)
-    # protein_protein = comp_jaccard(protein_drug)
-    drug_drug = np.loadtxt(network_path + "d_d.txt")
-    protein_protein = np.loadtxt(network_path + "p_p.txt")
-
-    dti_o = np.loadtxt(network_path + 'd_p_i.txt')
-
-    d_d = dgl.graph(sparse.csr_matrix(drug_drug), ntype='drug', etype='similarity')
-    p_p = dgl.graph(sparse.csr_matrix(protein_protein), ntype='protein', etype='similarity')
-    d_p = dgl.bipartite(sparse.csr_matrix(drug_protein), 'drug', 'dp', 'protein')
-    p_d = dgl.bipartite(sparse.csr_matrix(protein_drug), 'protein', 'pd', 'drug')
-    num_drug = d_d.number_of_nodes()
-    num_protein = p_p.number_of_nodes()
-    dg = dgl.hetero_from_relations([d_d, d_p, p_d])
-    pg = dgl.hetero_from_relations([p_p, p_d, d_p])
-    graph = [dg, pg]
-    whole_positive_index = []
-    whole_negative_index = []
-    for i in range(np.shape(dti_o)[0]):
-        for j in range(np.shape(dti_o)[1]):
-            if int(dti_o[i][j]) == 1:
-                whole_positive_index.append([i, j])
-            elif int(dti_o[i][j]) == 0:
-                whole_negative_index.append([i, j])
-
-    positive_shuffle_index = np.random.choice(np.arange(len(whole_positive_index)),
-                                              size=1 * len(whole_positive_index), replace=False)
-    whole_positive_index = np.array(whole_positive_index)
-    whole_positive_index = whole_positive_index[positive_shuffle_index]
-
-    negative_sample_index = np.random.choice(np.arange(len(whole_negative_index)),
-                                             size=1 * len(whole_positive_index), replace=False)
-
-    data_set = np.zeros((len(negative_sample_index) + len(whole_positive_index), 3), dtype=int)
-    count = 0
-    for ind, i in enumerate(whole_positive_index):
-        data_set[count][0] = i[0]
-        data_set[count][1] = i[1]
-        data_set[count][2] = 1
-        count += 1
-
-    f = open("dti_cledge.txt", "w", encoding="utf-8")
-    for i in range(count):
-        for j in range(count):
-            if data_set[i][0] == data_set[j][0] or data_set[i][1] == data_set[j][1]:
-                f.write(f"{i}\t{j}\n")
-
-    for ind, i in enumerate(negative_sample_index):
-        data_set[count][0] = whole_negative_index[i][0]
-        data_set[count][1] = whole_negative_index[i][1]
-        data_set[count][2] = 0
-        count += 1
-    f = open(f"dti_index.txt", "w", encoding="utf-8")
-    for i in data_set:
-        f.write(f"{i[0]}\t{i[1]}\t{i[2]}\n")
-    f.close()
-
-    dateset = data_set
-    f = open("dtiedge.txt", "w", encoding="utf-8")
-    for i in range(dateset.shape[0]):
-        for j in range(i, dateset.shape[0]):
-            if dateset[i][0] == dateset[j][0] or dateset[i][1] == dateset[j][1]:
-                f.write(f"{i}\t{j}\n")
-    f.close()
-    node_num = [num_drug, num_protein]
-
-    all_meta_paths = [[['similarity'], ['dp', 'pd']],
-                      [['similarity'], ['pd', 'dp']]]
-    return data_set, graph, node_num, all_meta_paths
-
-def load_graph(feature_edges, n):
-    fedges = np.array(list(feature_edges), dtype=np.int32).reshape(feature_edges.shape)
-    fadj = sparse.coo_matrix((np.ones(fedges.shape[0]), (fedges[:, 0], fedges[:, 1])), shape=(n, n),
-                             dtype=np.float32)
-    fadj = fadj + fadj.T.multiply(fadj.T > fadj) - fadj.multiply(fadj.T > fadj)
-    nfadj = normalize(fadj + sparse.eye(fadj.shape[0]))
-    nfadj = sparse_mx_to_torch_sparse_tensor(nfadj)
 
     return nfadj
 
@@ -478,12 +399,6 @@ def constructure_graph(dateset, h1, h2, task="dti", aug=False):
     feature = feature.squeeze(1)
     edge = np.loadtxt(f"{task}edge.txt", dtype=int)
 
-    # for i in range(dateset.shape[0]):
-    #     for j in range(i, dateset.shape[0]):
-    #         if dateset[i][0] == dateset[j][0] or dateset[i][1] == dateset[j][1]:
-    #             edge.append([i, j])
-    # fedge = np.array(generate_knn(feature.cpu().detach().numpy()))
-
     if aug:
         edge_aug = aug_random_edge(np.array(edge))
         edge_aug = load_graph(np.array(edge_aug), dateset.shape[0])
@@ -561,6 +476,87 @@ def get_L2reg(parameters):
     for param in parameters:
         reg += 0.5 * (param ** 2).sum()
     return reg
+
+    drug_protein = np.loadtxt(network_path + 'd_p_i.txt')
+    protein_drug = drug_protein.T
+    # drug_drug = comp_jaccard(drug_protein)
+    # protein_protein = comp_jaccard(protein_drug)
+    drug_drug = np.loadtxt(network_path + "d_d.txt")
+    protein_protein = np.loadtxt(network_path + "p_p.txt")
+
+    dti_o = np.loadtxt(network_path + 'd_p_i.txt')
+
+    d_d = dgl.graph(sparse.csr_matrix(drug_drug), ntype='drug', etype='similarity')
+    p_p = dgl.graph(sparse.csr_matrix(protein_protein), ntype='protein', etype='similarity')
+    d_p = dgl.bipartite(sparse.csr_matrix(drug_protein), 'drug', 'dp', 'protein')
+    p_d = dgl.bipartite(sparse.csr_matrix(protein_drug), 'protein', 'pd', 'drug')
+    num_drug = d_d.number_of_nodes()
+    num_protein = p_p.number_of_nodes()
+    dg = dgl.hetero_from_relations([d_d, d_p, p_d])
+    pg = dgl.hetero_from_relations([p_p, p_d, d_p])
+    graph = [dg, pg]
+    whole_positive_index = []
+    whole_negative_index = []
+    for i in range(np.shape(dti_o)[0]):
+        for j in range(np.shape(dti_o)[1]):
+            if int(dti_o[i][j]) == 1:
+                whole_positive_index.append([i, j])
+            elif int(dti_o[i][j]) == 0:
+                whole_negative_index.append([i, j])
+
+    positive_shuffle_index = np.random.choice(np.arange(len(whole_positive_index)),
+                                              size=1 * len(whole_positive_index), replace=False)
+    whole_positive_index = np.array(whole_positive_index)
+    whole_positive_index = whole_positive_index[positive_shuffle_index]
+
+    negative_sample_index = np.random.choice(np.arange(len(whole_negative_index)),
+                                             size=1 * len(whole_positive_index), replace=False)
+
+    data_set = np.zeros((len(negative_sample_index) + len(whole_positive_index), 3), dtype=int)
+    count = 0
+    for ind, i in enumerate(whole_positive_index):
+        data_set[count][0] = i[0]
+        data_set[count][1] = i[1]
+        data_set[count][2] = 1
+        count += 1
+
+    f = open("dti_cledge.txt", "w", encoding="utf-8")
+    for i in range(count):
+        for j in range(count):
+            if data_set[i][0] == data_set[j][0] or data_set[i][1] == data_set[j][1]:
+                f.write(f"{i}\t{j}\n")
+
+    for ind, i in enumerate(negative_sample_index):
+        data_set[count][0] = whole_negative_index[i][0]
+        data_set[count][1] = whole_negative_index[i][1]
+        data_set[count][2] = 0
+        count += 1
+    f = open(f"dti_index.txt", "w", encoding="utf-8")
+    for i in data_set:
+        f.write(f"{i[0]}\t{i[1]}\t{i[2]}\n")
+    f.close()
+
+    dateset = data_set
+    f = open("dtiedge.txt", "w", encoding="utf-8")
+    for i in range(dateset.shape[0]):
+        for j in range(i, dateset.shape[0]):
+            if dateset[i][0] == dateset[j][0] or dateset[i][1] == dateset[j][1]:
+                f.write(f"{i}\t{j}\n")
+    f.close()
+    node_num = [num_drug, num_protein]
+
+    all_meta_paths = [[['similarity'], ['dp', 'pd']],
+                      [['similarity'], ['pd', 'dp']]]
+    return data_set, graph, node_num, all_meta_paths
+
+def load_graph(feature_edges, n):
+    fedges = np.array(list(feature_edges), dtype=np.int32).reshape(feature_edges.shape)
+    fadj = sparse.coo_matrix((np.ones(fedges.shape[0]), (fedges[:, 0], fedges[:, 1])), shape=(n, n),
+                             dtype=np.float32)
+    # https://blog.csdn.net/panbaoran913/article/details/124042046
+    fadj = fadj + fadj.T.multiply(fadj.T > fadj) - fadj.multiply(fadj.T > fadj) # 不太知道这个操作
+    nfadj = normalize(fadj + sparse.eye(fadj.shape[0]))
+    nfadj = sparse_mx_to_torch_sparse_tensor(nfadj)
 
 def load_dataset(dateName):
     if dateName == "heter":
