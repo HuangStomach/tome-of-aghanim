@@ -107,50 +107,45 @@ def get_binary_mask(total_size, indices):
 def load_hetero(network_path):
     """
     meta_path of drug
-
     """
     drug_drug = np.loadtxt(network_path + 'mat_drug_drug.txt')
-
     drug_chemical = np.loadtxt(network_path + 'Similarity_Matrix_Drugs.txt')
-
     drug_disease = np.loadtxt(network_path + 'mat_drug_disease.txt')
     disease_drug = drug_disease.T
     drug_sideeffect = np.loadtxt(network_path + 'mat_drug_se.txt')
-
     sideeffect_drug = drug_sideeffect.T
-
     drug_drug_protein = np.loadtxt(network_path + 'mat_drug_protein.txt')
+
     """
     meta_path of protein
-
     """
     protein_protein = np.loadtxt(network_path + 'mat_protein_protein.txt')
     protein_protein_drug = drug_drug_protein.T
-
     protein_sequence = np.loadtxt(network_path + 'Similarity_Matrix_Proteins.txt')
     protein_disease = np.loadtxt(network_path + 'mat_protein_disease.txt')
     disease_protein = protein_disease.T
 
-    d_d = dgl.graph(sparse.csr_matrix(drug_drug), ntype='drug', etype='similarity')
-    num_drug = d_d.number_of_nodes()
-    d_c = dgl.graph(sparse.csr_matrix(drug_chemical), ntype='drug', etype='chemical')
-    d_di = dgl.bipartite(sparse.csr_matrix(drug_disease), 'drug', 'ddi', 'disease')
-    di_d = dgl.bipartite(sparse.csr_matrix(disease_drug), 'disease', 'did', 'drug')
-    d_d_p = dgl.bipartite(sparse.csr_matrix(drug_drug_protein), 'drug', 'ddp', 'protein')
+    num_drug = drug_drug.shape[0]
+    num_protein = protein_protein.shape[0]
 
-    d_se = dgl.bipartite(sparse.csr_matrix(drug_sideeffect), 'drug', 'dse', 'sideeffect')
-    se_d = dgl.bipartite(sparse.csr_matrix(sideeffect_drug), 'sideeffect', 'sed', 'drug')
-
-    p_p = dgl.graph(sparse.csr_matrix(protein_protein), ntype='protein', etype='similarity')
-    num_protein = p_p.number_of_nodes()
-    p_s = dgl.graph(sparse.csr_matrix(protein_sequence), ntype='protein', etype='sequence')
-    p_di = dgl.bipartite(sparse.csr_matrix(protein_disease), 'protein', 'pdi', 'disease')
-    p_d_d = dgl.bipartite(sparse.csr_matrix(protein_protein_drug), 'protein', 'pdd', 'drug')
-
-    di_p = dgl.bipartite(sparse.csr_matrix(disease_protein), 'disease', 'dip', 'protein')
-
-    dg = dgl.hetero_from_relations([d_d, d_c, d_se, se_d, d_di, di_d, d_d_p, p_d_d])
-    pg = dgl.hetero_from_relations([p_p, p_s, p_di, di_p, p_d_d, d_d_p])
+    dg = dgl.heterograph({
+        ('drug', 'similarity', 'drug'): node_tensors(drug_drug),
+        ('drug', 'chemical', 'drug'): node_tensors(drug_chemical),
+        ('drug', 'ddi', 'disease'): node_tensors(drug_disease),
+        ('disease', 'did', 'drug'): node_tensors(disease_drug),
+        ('drug', 'ddp', 'protein'): node_tensors(drug_drug_protein),
+        ('drug', 'dse', 'sideeffect'): node_tensors(drug_sideeffect),
+        ('sideeffect', 'sed', 'drug'): node_tensors(sideeffect_drug),
+        ('protein', 'pdd', 'drug'): node_tensors(protein_protein_drug),
+    })
+    pg = dgl.heterograph({
+        ('protein', 'similarity', 'protein'): node_tensors(protein_protein),
+        ('protein', 'sequence', 'protein'): node_tensors(protein_sequence),
+        ('protein', 'pdi', 'disease'): node_tensors(protein_disease),
+        ('disease', 'dip', 'protein'): node_tensors(disease_protein),
+        ('protein', 'pdd', 'drug'): node_tensors(protein_protein_drug),
+        ('drug', 'ddp', 'protein'): node_tensors(drug_drug_protein),
+    })
     graph = [dg, pg]
 
     dti_o = np.loadtxt(network_path + 'mat_drug_protein.txt')
@@ -159,19 +154,14 @@ def load_hetero(network_path):
 
     for i in range(np.shape(dti_o)[0]):
         for j in range(np.shape(dti_o)[1]):
-            if int(dti_o[i][j]) == 1:
-                train_positive_index.append([i, j])
-
-            else:
-                whole_negative_index.append([i, j])
+            if int(dti_o[i][j]) == 1: train_positive_index.append([i, j])
+            else: whole_negative_index.append([i, j])
 
     negative_sample_index = np.random.choice(np.arange(len(whole_negative_index)),
                                              size= len(train_positive_index),
                                              replace=False)
 
-
-    data_set = np.zeros((len(negative_sample_index) +  len(train_positive_index), 3),
-                        dtype=int)
+    data_set = np.zeros((len(negative_sample_index) + len(train_positive_index), 3), dtype=int)
     count = 0
 
     for i in train_positive_index:
@@ -222,8 +212,77 @@ def load_hetero(network_path):
     return dateset, graph, node_num, all_meta_paths
 
 def load_homo(network_path):
+    drug_protein = np.loadtxt(network_path + 'd_p_i.txt')
+    protein_drug = drug_protein.T
+    # drug_drug = comp_jaccard(drug_protein)
+    # protein_protein = comp_jaccard(protein_drug)
+    drug_drug = np.loadtxt(network_path + "d_d.txt")
+    protein_protein = np.loadtxt(network_path + "p_p.txt")
 
-    return nfadj
+    dti_o = np.loadtxt(network_path + 'd_p_i.txt')
+
+    d_d = dgl.graph(sparse.csr_matrix(drug_drug), ntype='drug', etype='similarity')
+    p_p = dgl.graph(sparse.csr_matrix(protein_protein), ntype='protein', etype='similarity')
+    d_p = dgl.bipartite(sparse.csr_matrix(drug_protein), 'drug', 'dp', 'protein')
+    p_d = dgl.bipartite(sparse.csr_matrix(protein_drug), 'protein', 'pd', 'drug')
+    num_drug = d_d.number_of_nodes()
+    num_protein = p_p.number_of_nodes()
+    dg = dgl.hetero_from_relations([d_d, d_p, p_d])
+    pg = dgl.hetero_from_relations([p_p, p_d, d_p])
+    graph = [dg, pg]
+    whole_positive_index = []
+    whole_negative_index = []
+    for i in range(np.shape(dti_o)[0]):
+        for j in range(np.shape(dti_o)[1]):
+            if int(dti_o[i][j]) == 1:
+                whole_positive_index.append([i, j])
+            elif int(dti_o[i][j]) == 0:
+                whole_negative_index.append([i, j])
+
+    positive_shuffle_index = np.random.choice(np.arange(len(whole_positive_index)),
+                                              size=1 * len(whole_positive_index), replace=False)
+    whole_positive_index = np.array(whole_positive_index)
+    whole_positive_index = whole_positive_index[positive_shuffle_index]
+
+    negative_sample_index = np.random.choice(np.arange(len(whole_negative_index)),
+                                             size=1 * len(whole_positive_index), replace=False)
+
+    data_set = np.zeros((len(negative_sample_index) + len(whole_positive_index), 3), dtype=int)
+    count = 0
+    for ind, i in enumerate(whole_positive_index):
+        data_set[count][0] = i[0]
+        data_set[count][1] = i[1]
+        data_set[count][2] = 1
+        count += 1
+
+    f = open("dti_cledge.txt", "w", encoding="utf-8")
+    for i in range(count):
+        for j in range(count):
+            if data_set[i][0] == data_set[j][0] or data_set[i][1] == data_set[j][1]:
+                f.write(f"{i}\t{j}\n")
+
+    for ind, i in enumerate(negative_sample_index):
+        data_set[count][0] = whole_negative_index[i][0]
+        data_set[count][1] = whole_negative_index[i][1]
+        data_set[count][2] = 0
+        count += 1
+    f = open(f"dti_index.txt", "w", encoding="utf-8")
+    for i in data_set:
+        f.write(f"{i[0]}\t{i[1]}\t{i[2]}\n")
+    f.close()
+
+    dateset = data_set
+    f = open("dtiedge.txt", "w", encoding="utf-8")
+    for i in range(dateset.shape[0]):
+        for j in range(i, dateset.shape[0]):
+            if dateset[i][0] == dateset[j][0] or dateset[i][1] == dateset[j][1]:
+                f.write(f"{i}\t{j}\n")
+    f.close()
+    node_num = [num_drug, num_protein]
+
+    all_meta_paths = [[['similarity'], ['dp', 'pd']],
+                      [['similarity'], ['pd', 'dp']]]
+    return data_set, graph, node_num, all_meta_paths
 
 def load_zeng(network_path):
     """
@@ -233,13 +292,10 @@ def load_zeng(network_path):
     drug_sideeffect = np.loadtxt(network_path + 'mat_drug_sideeffects.txt')
     drug_drug = np.loadtxt(network_path + 'mat_drug_chemical_sim.txt')
     sideeffect_drug = drug_sideeffect.T
-
     drug_substituent = np.loadtxt(network_path + 'mat_drug_sub_stituent.txt')
     substituent_drug = drug_substituent.T
-
     drug_chemical = np.loadtxt(network_path + "mat_drug_chemical_substructures.txt")
     chemical_drug = drug_chemical.T
-
     drug_drug_protein = np.loadtxt(network_path + 'mat_drug_target_1.txt')
 
     """
@@ -248,7 +304,6 @@ def load_zeng(network_path):
     """
     protein_protein = np.loadtxt(network_path + 'mat_target_GO_sim.txt')
     protein_protein_drug = drug_drug_protein.T
-
     protein_GO = np.loadtxt(network_path + 'mat_target_GO.txt')
     Go_protein = protein_GO.T
     num_drug = drug_drug.shape[0]
