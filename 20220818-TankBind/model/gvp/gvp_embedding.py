@@ -1,7 +1,9 @@
 import torch
 from torch import nn
 import torch.nn as nn
-from gvp import GVP, GVPConvLayer, LayerNorm
+from gvp import GVP
+from gvp_conv import GVPConvLayer
+from nn import LayerNorm
 
 class GVP_embedding(nn.Module):
     '''

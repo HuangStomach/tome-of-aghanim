@@ -12,8 +12,9 @@ from torch_scatter import scatter_mean
 from GATv2 import GAT
 from GINv2 import GIN
 
-from .gvp_embedding import GVP_embedding
-from .gnn import GNN
+from gvp.gvp_embedding import GVP_embedding
+from gnn import GNN
+from triangle import TriangleProteinToCompound, TriangleSelfAttentionRowWise, Transition
 
 class IaBNet_with_affinity(torch.nn.Module):
     def __init__(self, 
@@ -49,54 +50,68 @@ class IaBNet_with_affinity(torch.nn.Module):
             self.protein_pair_embedding = Linear(16, c)
             self.compound_pair_embedding = Linear(16, c)
             self.protein_to_compound_list = []
-            self.protein_to_compound_list = nn.ModuleList([TriangleProteinToCompound_v2(embedding_channels=embedding_channels, c=c) for _ in range(n_trigonometry_module_stack)])
-            self.triangle_self_attention_list = nn.ModuleList([TriangleSelfAttentionRowWise(embedding_channels=embedding_channels) for _ in range(n_trigonometry_module_stack)])
-            self.tranistion = Transition(embedding_channels=embedding_channels, n=4)
+            self.protein_to_compound_list = nn.ModuleList([
+                TriangleProteinToCompound(embedding_channels, c) for _ in range(n_trigonometry_module_stack)
+            ])
+            self.triangle_self_attention_list = nn.ModuleList([
+                TriangleSelfAttentionRowWise(embedding_channels) for _ in range(n_trigonometry_module_stack)
+            ])
+            self.tranistion = Transition(embedding_channels, n=4)
 
         self.linear = Linear(embedding_channels, 1)
         self.linear_energy = Linear(embedding_channels, 1)
-        if readout_mode == 2:
-            self.gate_linear = Linear(embedding_channels, 1)
+        if readout_mode == 2: self.gate_linear = Linear(embedding_channels, 1)
         # self.gate_linear = Linear(embedding_channels, 1)
         self.bias = torch.nn.Parameter(torch.ones(1))
         self.leaky = torch.nn.LeakyReLU()
         self.dropout = nn.Dropout2d(p=0.25)
+
     def forward(self, data):
+        # 首先利用GNN来聚合蛋白和药物的特征
+        # 数据应该是一个异构网络
         if self.protein_embed_mode == 0:
             x = data['protein'].x.float()
             edge_index = data[("protein", "p2p", "protein")].edge_index
             protein_batch = data['protein'].batch
             protein_out = self.conv_protein(x, edge_index)
-        if self.protein_embed_mode == 1:
-            nodes = (data['protein']['node_s'], data['protein']['node_v'])
-            edges = (data[("protein", "p2p", "protein")]["edge_s"], data[("protein", "p2p", "protein")]["edge_v"])
+        elif self.protein_embed_mode == 1:
+            nodes = (
+                data['protein']['node_s'], 
+                data['protein']['node_v']
+            )
+            edges = (
+                data[("protein", "p2p", "protein")]["edge_s"], 
+                data[("protein", "p2p", "protein")]["edge_v"]
+            )
             protein_batch = data['protein'].batch
             protein_out = self.conv_protein(nodes, data[("protein", "p2p", "protein")]["edge_index"], edges, data.seq)
 
+        compound_x = data['compound'].x.float()
+        compound_batch = data['compound'].batch
         if self.compound_embed_mode == 0:
-            compound_x = data['compound'].x.float()
-            compound_edge_index = data[("compound", "c2c", "compound")].edge_index
-            compound_batch = data['compound'].batch
+            compound_edge_index = data[("compound", "c2c", "compound")].edge_index.T
             compound_out = self.conv_compound(compound_x, compound_edge_index)
         elif self.compound_embed_mode == 1:
-            compound_x = data['compound'].x.float()
-            compound_edge_index = data[("compound", "c2c", "compound")].edge_index.T
             compound_edge_feature = data[("compound", "c2c", "compound")].edge_attr
             edge_weight = data[("compound", "c2c", "compound")].edge_weight
-            compound_batch = data['compound'].batch
-            compound_out = self.conv_compound(compound_edge_index,edge_weight,compound_edge_feature,compound_x.shape[0],compound_x)['node_feature']
+            compound_out = self.conv_compound(
+                compound_edge_index, edge_weight ,compound_edge_feature, compound_x.shape[0], compound_x
+            )['node_feature']
 
         # protein_batch version could further process b matrix. better than for loop.
         # protein_out_batched of shape b, n, c
+        # 图节点做batch的时候，会稀疏，这个方法把节点重新聚合成batch大小的矩阵
+        # 并一起返回一个mask来指明哪些节点是fake的，方便后续运算
         protein_out_batched, protein_out_mask = to_dense_batch(protein_out, protein_batch)
         compound_out_batched, compound_out_mask = to_dense_batch(compound_out, compound_batch)
 
         node_xyz = data.node_xyz
-
         p_coords_batched, p_coords_mask = to_dense_batch(node_xyz, protein_batch)
         # c_coords_batched, c_coords_mask = to_dense_batch(coords, compound_batch)
 
-        protein_pair = get_pair_dis_one_hot(p_coords_batched, bin_size=2, bin_min=-1, bin_max=self.protein_bin_max)
+        protein_pair = self.get_pair_dis_one_hot(
+            p_coords_batched, bin_size=2, bin_min=-1, bin_max=self.protein_bin_max
+        )
         # compound_pair = get_pair_dis_one_hot(c_coords_batched, bin_size=1, bin_min=-0.5, bin_max=15)
         compound_pair_batched, compound_pair_batched_mask = to_dense_batch(data.compound_pair, data.compound_pair_batch)
         batch_n = compound_pair_batched.shape[0]
@@ -144,3 +159,13 @@ class IaBNet_with_affinity(torch.nn.Module):
             pair_energy = (self.gate_linear(z).sigmoid() * self.linear_energy(z)).squeeze(-1) * z_mask
             affinity_pred = self.leaky(self.bias + ((pair_energy).sum(axis=(-1, -2))))
         return y_pred, affinity_pred
+
+    def get_pair_dis_one_hot(d, bin_size=2, bin_min=-1, bin_max=30):
+        # without compute_mode='donot_use_mm_for_euclid_dist' could lead to wrong result.
+        # cdist
+        # 计算两组行向量集合中每一对之间的p-norm距离。 这里是默认的欧式距离
+        pair_dis = torch.cdist(d, d, compute_mode='donot_use_mm_for_euclid_dist')
+        pair_dis[pair_dis>bin_max] = bin_max
+        pair_dis_bin_index = torch.div(pair_dis - bin_min, bin_size, rounding_mode='floor').long()
+        pair_dis_one_hot = torch.nn.functional.one_hot(pair_dis_bin_index, num_classes=16)
+        return pair_dis_one_hot
