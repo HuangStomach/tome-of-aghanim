@@ -7,6 +7,8 @@ from nn import LayerNorm
 
 class GVP_embedding(nn.Module):
     '''
+    通过GVP来对节点和边的特征进行嵌入
+
     Modified based on https://github.com/drorlab/gvp-pytorch/blob/main/gvp/models.py
     GVP-GNN for Model Quality Assessment as described in manuscript.
     
@@ -50,9 +52,9 @@ class GVP_embedding(nn.Module):
         )
 
         self.layers = nn.ModuleList(
-                GVPConvLayer(node_h_dim, edge_h_dim, drop_rate=drop_rate) 
-            for _ in range(num_layers))
-        
+            GVPConvLayer(node_h_dim, edge_h_dim, drop_rate=drop_rate) for _ in range(num_layers)
+        )
+
         ns, _ = node_h_dim
         self.W_out = nn.Sequential(
             LayerNorm(node_h_dim),
@@ -66,12 +68,12 @@ class GVP_embedding(nn.Module):
         :param seq: if not `None`, int `torch.Tensor` of shape [num_nodes]
                     to be embedded and appended to `h_V`
         '''
-        seq = self.W_s(seq)
+        seq = self.W_s(seq) # 对seq进行简单的嵌入，向量化
         h_V = (torch.cat([h_V[0], seq], dim=-1), h_V[1])
         h_V = self.W_v(h_V)
-        h_E = self.W_e(h_E)
+        h_E = self.W_e(h_E) # 对边和节点都走简单的GVP嵌入
         for layer in self.layers:
-            h_V = layer(h_V, edge_index, h_E)
+            h_V = layer(h_V, edge_index, h_E) # 再通过GVP的GNN进行消息传递
         out = self.W_out(h_V)
 
         return out

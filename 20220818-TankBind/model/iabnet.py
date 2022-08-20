@@ -44,7 +44,7 @@ class IaBNet_with_affinity(torch.nn.Module):
             self.conv_compound = GIN(
                 input_dim = 56, hidden_dims = [128,56,embedding_channels], 
                 edge_input_dim = 19, concat_hidden = False
-            )
+            ) # 药物特征使用的torch_drug走GIN
 
         if mode == 0:
             self.protein_pair_embedding = Linear(16, c)
@@ -84,7 +84,7 @@ class IaBNet_with_affinity(torch.nn.Module):
                 data[("protein", "p2p", "protein")]["edge_v"]
             )
             protein_batch = data['protein'].batch
-            protein_out = self.conv_protein(nodes, data[("protein", "p2p", "protein")]["edge_index"], edges, data.seq)
+            protein_out = self.conv_protein(nodes, data[("protein", "p2p", "protein")]["edge_index"], edges, data.seq) # 使用GVP提取蛋白特征，利用旋转不变性提取标量特征
 
         compound_x = data['compound'].x.float()
         compound_batch = data['compound'].batch
