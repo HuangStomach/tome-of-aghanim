@@ -18,6 +18,10 @@ class TriangleProteinToCompound(Module):
         self.linear_after_sum = Linear(c, embedding_channels)
 
     def forward(self, z, protein_pair, compound_pair, z_mask):
+        '''
+        z，特征的乘积, z_mask 标记这个大batch下哪些是真节点哪些是fake，方便过滤
+        protein_pair, compound_pair 距离的embedding
+        '''
         # z of shape b, i, j, embedding_channels, where i is protein dim, j is compound dim.
         z = self.layernorm(z)
         protein_pair = self.layernorm(protein_pair)
@@ -29,6 +33,7 @@ class TriangleProteinToCompound(Module):
         compound_pair = self.gate_linear1(compound_pair).sigmoid() * self.linear1(compound_pair)
 
         g = self.ending_gate_linear(z).sigmoid()
+        # 药物和蛋白的特征聚合矩阵z，经过线性换后，分别和各自药物蛋白间的距离进行矩阵乘法，不懂具体的含义。
         block1 = torch.einsum("bikc,bkjc->bijc", protein_pair, ab1) # 相当于两者进行乘法使得 ij = ik * kj
         block2 = torch.einsum("bikc,bjkc->bijc", ab2, compound_pair) #
         # print(g.shape, block1.shape, block2.shape)
