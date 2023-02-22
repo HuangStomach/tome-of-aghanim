@@ -130,7 +130,7 @@ for i in range(len(train_data)):
 
 train_binding_matrix = train_binding_matrix.fillna(5)
 
-model = NMF(n_components=latent_dim, init='random', random_state=0)
+model = NMF(n_components=latent_dim, init='random', n_iter_int=1000, random_state=0)
 P = model.fit_transform(train_binding_matrix)
 Q = model.components_
 
@@ -183,10 +183,6 @@ grid_search = RandomizedSearchCV(
     model, param_grid, random_state=0, cv=5, n_iter=10)
 grid_result = grid_search.fit(X_train, Y_train)
 
-print("best parameters are:")
-grid_result.best_params_
-
-
 def plot_model_results(results):
     epochs = len(results['validation_0']['rmse'])
     x_axis = range(0, epochs)
@@ -204,7 +200,7 @@ max_depth = grid_result.best_params_['max_depth']
 colsample_bytree = grid_result.best_params_['colsample_bytree']
 subsample = grid_result.best_params_['subsample']
 
-model = xgboost.XGBRegressor(objective='reg:linear', learning_rate=learning_rate,
+model = xgboost.XGBRegressor(objective='reg:squarederror', learning_rate=learning_rate,
                              colsample_bytree=colsample_bytree,
                              max_depth=max_depth,
                              subsample=subsample,
