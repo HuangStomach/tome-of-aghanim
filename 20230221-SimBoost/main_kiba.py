@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import igraph
 from sklearn.decomposition import NMF
-
-import xgboost
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import RandomizedSearchCV
+
+import xgboost
 
 target_gene_names = pd.read_csv("data/kiba/target_gene_names.txt", header=None, index_col=0)
 drug_pubchemIDs = pd.read_csv("data/kiba/drug_PubChem_CIDs.txt", header=None, index_col=0) 
@@ -92,8 +92,6 @@ sim_drugs = sim_drugs.reindex(sorted(sim_drugs.columns), axis=1)  # sorting colu
 drug_sim_threshold = 0.6
 target_sim_threshold = 0.6
 
-print('igraph')
-
 drug_m = np.zeros((len(sim_drugs), len(sim_drugs)))
 target_m = np.zeros((len(sim_targets), len(sim_targets)))
 
@@ -170,14 +168,14 @@ test_ratio = 0.2
 X_train, X_test, Y_train, Y_test = train_test_split(
     X, Y, test_size = 1 - train_ratio)
 
-X_val, X_test, Y_val, Y_test = train_test_split(
-    X_test, Y_test, test_size = test_ratio / (test_ratio + val_ratio))
+# X_val, X_test, Y_val, Y_test = train_test_split(
+#     X_test, Y_test, test_size = test_ratio / (test_ratio + val_ratio))
 
 model = xgboost.XGBRegressor()
 
 param_grid = {
-    'learning_rate': np.arange(0.0005, 0.3, 0.0005),
-    'n_estimators': [5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 200],
+    'learning_rate': np.arange(0.01, 0.3, 0.001),
+    'n_estimators': [100, 120, 140, 160, 200, 250, 300, 400, 500],
     'max_depth': [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 20],
     'colsample_bytree': np.arange(0.1, 1.0, 0.01),
     'subsample': np.arange(0.01, 1.0, 0.01)
@@ -193,14 +191,15 @@ max_depth = grid_result.best_params_['max_depth']
 colsample_bytree = grid_result.best_params_['colsample_bytree']
 subsample = grid_result.best_params_['subsample']
 
-model = xgboost.XGBRegressor(objective='reg:squarederror', learning_rate=learning_rate,
-                             colsample_bytree=colsample_bytree, nthread=6,
-                             max_depth=max_depth,
-                             subsample=subsample,
-                             n_estimators=n_estimators,
-                             eval_metric='rmse')
+model = xgboost.XGBRegressor(
+    objective='reg:squarederror', learning_rate=learning_rate,
+    colsample_bytree=colsample_bytree, nthread=6,
+    max_depth=max_depth, subsample=subsample,
+    n_estimators=n_estimators,
+    eval_metric=mean_squared_error
+)
 
-model.fit(X_train, Y_train, eval_set=[(X_train, Y_train), (X_test, Y_test)], verbose=False)
+model.fit(X_train, Y_train, eval_set=[(X_train, Y_train)], verbose=False)
 
-validation_mse = mean_squared_error(Y_val, model.predict(X_val))
+validation_mse = mean_squared_error(Y_test, model.predict(X_test))
 print("Validation MSE: %.3f" % validation_mse)
