@@ -25,8 +25,9 @@ sim_targets.index = id1
 sim_drugs = pd.read_csv("data/kiba/kiba_drug_sim.txt", sep="\t", header=None, names=id2)
 sim_drugs.index = id2
 
-sim_drugs_g = pd.read_csv("data/kiba/drug_sis.csv", sep=",", header=None, names=id2)
+sim_drugs_g = pd.read_csv("data/kiba/drug_jaccard.csv", sep=",", header=None, names=id2)
 sim_drugs_g.index = id2
+sim_drugs = sim_drugs_g
 
 transformed_bindings = pd.read_csv("data/kiba/kiba_binding_affinity_v2.txt", sep="\t", header=None,
     names=id1)
@@ -86,8 +87,8 @@ for i in range(len(train_data)):
 for i in drug_bindingvals:
     drug_pubchemIDs.loc[i, 'd_avg-binding'] = np.mean(drug_bindingvals[i])
 
-sim_drugs = sim_drugs.reindex(sorted(sim_drugs.columns), axis=1)  # sorting columns
-# sim_drugs = sim_drugs_g.reindex(sorted(sim_drugs_g.columns), axis=1)  # sorting columns
+# sim_drugs = sim_drugs.reindex(sorted(sim_drugs.columns), axis=1)  # sorting columns
+sim_drugs = sim_drugs_g.reindex(sorted(sim_drugs_g.columns), axis=1)  # sorting columns
 
 drug_sim_threshold = 0.6
 target_sim_threshold = 0.6
@@ -165,41 +166,42 @@ train_ratio = 0.7
 val_ratio = 0.1
 test_ratio = 0.2
 
-X_train, X_test, Y_train, Y_test = train_test_split(
-    X, Y, test_size = 1 - train_ratio)
+for i in range(5):
+    X_train, X_test, Y_train, Y_test = train_test_split(
+        X, Y, test_size = 1 - train_ratio)
 
-# X_val, X_test, Y_val, Y_test = train_test_split(
-#     X_test, Y_test, test_size = test_ratio / (test_ratio + val_ratio))
+    X_val, X_test, Y_val, Y_test = train_test_split(
+        X_test, Y_test, test_size = test_ratio / (test_ratio + val_ratio))
 
-model = xgboost.XGBRegressor()
+    model = xgboost.XGBRegressor()
 
-param_grid = {
-    'learning_rate': np.arange(0.01, 0.3, 0.001),
-    'n_estimators': [100, 120, 140, 160, 200, 250, 300, 400, 500],
-    'max_depth': [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 20],
-    'colsample_bytree': np.arange(0.1, 1.0, 0.01),
-    'subsample': np.arange(0.01, 1.0, 0.01)
-}
-grid_search = RandomizedSearchCV(
-    model, param_grid, random_state=0, cv=5, n_iter=10, n_jobs=-1
-)
-grid_result = grid_search.fit(X_train, Y_train)
+    param_grid = {
+        'learning_rate': np.arange(0.01, 0.3, 0.001),
+        'n_estimators': [100, 120, 140, 160, 200, 250, 300, 400, 500],
+        'max_depth': [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 20],
+        'colsample_bytree': np.arange(0.1, 1.0, 0.01),
+        'subsample': np.arange(0.01, 1.0, 0.01)
+    }
+    grid_search = RandomizedSearchCV(
+        model, param_grid, random_state=0, cv=5, n_iter=10, n_jobs=-1
+    )
+    grid_result = grid_search.fit(X_train, Y_train)
 
-learning_rate = grid_result.best_params_['learning_rate']
-n_estimators = grid_result.best_params_['n_estimators']
-max_depth = grid_result.best_params_['max_depth']
-colsample_bytree = grid_result.best_params_['colsample_bytree']
-subsample = grid_result.best_params_['subsample']
+    learning_rate = grid_result.best_params_['learning_rate']
+    n_estimators = grid_result.best_params_['n_estimators']
+    max_depth = grid_result.best_params_['max_depth']
+    colsample_bytree = grid_result.best_params_['colsample_bytree']
+    subsample = grid_result.best_params_['subsample']
 
-model = xgboost.XGBRegressor(
-    objective='reg:squarederror', learning_rate=learning_rate,
-    colsample_bytree=colsample_bytree, nthread=6,
-    max_depth=max_depth, subsample=subsample,
-    n_estimators=n_estimators,
-    eval_metric=mean_squared_error
-)
+    model = xgboost.XGBRegressor(
+        objective='reg:squarederror', learning_rate=learning_rate,
+        colsample_bytree=colsample_bytree, nthread=6,
+        max_depth=max_depth, subsample=subsample,
+        n_estimators=n_estimators,
+        eval_metric=mean_squared_error
+    )
 
-model.fit(X_train, Y_train, eval_set=[(X_train, Y_train)], verbose=False)
+    model.fit(X_train, Y_train, eval_set=[(X_train, Y_train), (X_val, Y_val)], verbose=False)
 
-validation_mse = mean_squared_error(Y_test, model.predict(X_test))
-print("Validation MSE: %.3f" % validation_mse)
+    validation_mse = mean_squared_error(Y_test, model.predict(X_test))
+    print("Validation MSE: %.3f" % validation_mse)
