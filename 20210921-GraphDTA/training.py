@@ -42,7 +42,7 @@ def predicting(model, device, loader):
     return total_labels.numpy().flatten(),total_preds.numpy().flatten()
 
 
-datasets = [['balance','unbalance'][int(sys.argv[1])]] 
+datasets = [['metz'][int(sys.argv[1])]] 
 modeling = [GINConvNet, GATNet, GAT_GCN, GCNNet][int(sys.argv[2])]
 model_st = modeling.__name__
 
@@ -87,12 +87,15 @@ for dataset in datasets:
         result_file_name = 'result_' + model_st + '_' + dataset +  '.csv'
         for epoch in range(NUM_EPOCHS):
             train(model, device, train_loader, optimizer, epoch+1)
-            if (epoch + 1) % 100 == 0:
-                torch.save(model.cpu(), './data/{}/model_GIN_epoch_{}.pkl'.format(dataset, epoch + 1))
-            model = model.cuda()
+            # if (epoch + 1) % 100 == 0:
+                # torch.save(model.cpu(), './data/{}/model_GIN_epoch_{}.pkl'.format(dataset, epoch + 1))
+            # model = model.cuda()
+
             # train(model, device, train_loader, optimizer, epoch+1)
-            # G,P = predicting(model, device, test_loader)
-            # ret = [rmse(G,P),mse(G,P),pearson(G,P),spearman(G,P),ci(G,P)]
+            if (epoch + 1) % 10 == 0:
+                G,P = predicting(model, device, test_loader)
+                ret = [rmse(G,P),mse(G,P),pearson(G,P),spearman(G,P),ci(G,P)]
+                print(ret)
             # if ret[1]<best_mse:
             #     torch.save(model.state_dict(), model_file_name)
             #     with open(result_file_name,'w') as f:
