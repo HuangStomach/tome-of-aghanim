@@ -1,7 +1,0 @@
-__pycache__
-data/**/*.txt
-data/**/*.out
-data/**/*.csv
-data/*/Y
-*.pt
-!data/balance/.gitkeep
