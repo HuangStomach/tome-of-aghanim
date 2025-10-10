@@ -6,9 +6,18 @@ import importlib
 from pathlib import Path
 
 def list_dirs(path):
-    for file in os.listdir(path):
-        if file == '__pycache__': continue
-        print(file.rstrip(".py"))
+    print('modules can use: ')
+    for p in os.listdir(path):
+        if p.startswith('_'): continue
+        is_dir = 'this is a directory' if os.path.isdir(path + '/' + p) else ''
+        print('\t'.expandtabs(4) + p.rstrip(".py") + '\t'.expandtabs(4) + is_dir)
+
+def list_funcs(module):
+    print('functions can use: ')
+    for name in dir(module):
+        func = getattr(module, name)
+        if not inspect.isfunction(func) or not getattr(func, '__cli__', False): continue
+        print('\t'.expandtabs(4) + name + '\t'.expandtabs(4) + func.__remark__)
 
 if __name__ == "__main__":
     pwd = 'cli/'
@@ -26,19 +35,21 @@ if __name__ == "__main__":
         if os.path.isfile(path + '.py'):
             module = importlib.import_module(path.replace('/', '.'))
             
-            if len(rest) == 0:
-                funcs = [name for name in dir(module) if inspect.isfunction(getattr(module, name))]
-                for func in funcs:
-                    print(func)
+            if len(rest) == 0: 
+                list_funcs(module)
                 break
 
             if hasattr(module, rest[0]):
                 func = getattr(module, rest[0])
-                if callable(func): func(*rest[1:])
+                if callable(func):
+                    try:
+                        func(*rest[1:])
+                    except Exception as e:
+                        print(e)
 
         if os.path.isdir(path):
             if len(rest) == 0:
                 list_dirs(path)
             pwd = path + '/'
     i += 1
-    # create_all();
+
