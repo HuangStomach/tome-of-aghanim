@@ -1,0 +1,20 @@
+services:
+  database:
+    image: mariadb:focal
+    container_name: mariadb
+    expose:
+      - "3306"
+    ports:
+      - "3306:3306" # 只是考虑方便数据库工具访问
+    # volumes:
+    #  - db-volume:/var/lib/mysql
+    # logging:
+    #  driver: none
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: cpmcp
+      MARIADB_USER: cpmcp
+      MARIADB_PASSWORD: balabala
+# volumes:
+#   db-volume:
