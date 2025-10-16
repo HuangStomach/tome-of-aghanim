@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from models.bridge import *
+# from models.bridge import *
 from models.base import Write, write_engine
 
 # this is the Alembic Config object, which provides

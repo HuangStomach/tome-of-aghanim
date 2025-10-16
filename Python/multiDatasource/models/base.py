@@ -15,3 +15,6 @@ class Write(DeclarativeBase):
 class Read(DeclarativeBase):
     metadata = read_meta
 
+import models.user
+import models.course
+import models.relations
