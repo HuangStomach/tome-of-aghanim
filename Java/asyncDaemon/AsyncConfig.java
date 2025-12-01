@@ -2,7 +2,6 @@
 @Configuration
 @EnableAsync
 public class AsyncConfig {
-    
     @Bean(name = "fileWriteExecutor")
     public Executor fileWriteExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

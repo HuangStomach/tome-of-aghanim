@@ -2,6 +2,7 @@
 package com.example.multidatasource.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
@@ -21,42 +22,40 @@ import java.util.Map;
 
 @Configuration
 @EnableJpaRepositories(
-    basePackages = "com.example.multidatasource.repository.a",
-    entityManagerFactoryRef = "entityManagerFactoryA",
-    transactionManagerRef = "transactionManagerA"
+    basePackages = "com.example.multidatasource.repository.c",
+    entityManagerFactoryRef = "entityManagerFactoryC",
+    transactionManagerRef = "transactionManagerC"
 )
-public class DataSourceConfigA {
-    @Primary
-    @Bean(name = "dataSourceA")
-    @ConfigurationProperties(prefix = "spring.datasource.a")
-    public DataSource dataSourceA() {
+public class DataSourceConfigC {
+    @Bean(name = "dataSourceC")
+    @ConfigurationProperties(prefix = "spring.datasource.c")
+    public DataSource dataSourceC() {
         return DataSourceBuilder.create().build();
     }
 
-    @Primary
-    @Bean(name = "entityManagerFactoryA")
-    public LocalContainerEntityManagerFactoryBean entityManagerFactoryA(
+    @Bean(name = "jpaPropertiesC")
+    @ConfigurationProperties(prefix = "spring.jpa.c")
+    public JpaProperties jpaPropertiesC() {
+        return new JpaProperties();
+    }
+
+    @Bean(name = "entityManagerFactoryC")
+    public LocalContainerEntityManagerFactoryBean entityManagerFactoryC(
             EntityManagerFactoryBuilder builder,
-            @Qualifier("dataSourceA") DataSource dataSource) {
+            @Qualifier("dataSourceC") DataSource dataSource) {
+        Map<String, String> props = jpaPropertiesB().getProperties();
+
         return builder
                 .dataSource(dataSource)
-                .packages("com.example.multidatasource.model.a")
-                .persistenceUnit("a")
-                .properties(jpaPropertiesA())
+                .packages("com.example.multidatasource.entity.c")
+                .persistenceUnit("c")
+                .properties(props())
                 .build();
     }
 
-    private Map<String, Object> jpaPropertiesA() {
-        Map<String, Object> props = new HashMap<>();
-        props.put("hibernate.hbm2ddl.auto", "update");
-        props.put("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect");
-        return props;
-    }
-
-    @Primary
-    @Bean(name = "transactionManagerA")
-    public PlatformTransactionManager transactionManagerA(
-            @Qualifier("entityManagerFactoryA") EntityManagerFactory entityManagerFactory) {
+    @Bean(name = "transactionManagerC")
+    public PlatformTransactionManager transactionManagerC(
+            @Qualifier("entityManagerFactoryC") EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
     }
 }

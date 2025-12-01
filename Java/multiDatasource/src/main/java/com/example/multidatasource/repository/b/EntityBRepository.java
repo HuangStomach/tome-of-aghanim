@@ -1,7 +1,6 @@
-
 package com.example.multidatasource.repository.b;
 
-import com.example.multidatasource.model.b.EntityB;
+import com.example.multidatasource.entity.b.EntityB;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

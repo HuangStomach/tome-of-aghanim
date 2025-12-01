@@ -1,5 +1,4 @@
-
-package com.example.multidatasource.model.c;
+package com.example.multidatasource.entity.c;
 
 import lombok.Data;
 import javax.persistence.*;
